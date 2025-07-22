@@ -1,0 +1,95 @@
+{% extends "admin/base.html" %}
+
+{% block title %}New Door/Window Spec - Admin Panel{% endblock %}
+{% block page_title %}Create New Door/Window Spec{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Add New Door/Window Spec</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="unit_type_id" class="form-label">Unit Type</label>
+                    <select class="form-select" id="unit_type_id" name="unit_type_id" required>
+                        <option value="">Select Unit Type</option>
+                        {% for ut in unit_types %}
+                        <option value="{{ ut.unit_type_id }}">{{ ut.type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="item_type" class="form-label">Item Type</label>
+                    <input type="text" class="form-control" id="item_type" name="item_type" required>
+                </div>
+                <div class="mb-3">
+                    <label for="location" class="form-label">Location</label>
+                    <input type="text" class="form-control" id="location" name="location">
+                </div>
+                <div class="mb-3">
+                    <label for="width" class="form-label">Width</label>
+                    <input type="number" step="0.01" class="form-control" id="width" name="width">
+                </div>
+                <div class="mb-3">
+                    <label for="height" class="form-label">Height</label>
+                    <input type="number" step="0.01" class="form-control" id="height" name="height">
+                </div>
+                <div class="mb-3">
+                    <label for="thickness" class="form-label">Thickness</label>
+                    <input type="number" step="0.01" class="form-control" id="thickness" name="thickness">
+                </div>
+                <div class="mb-3">
+                    <label for="material" class="form-label">Material</label>
+                    <input type="text" class="form-control" id="material" name="material">
+                </div>
+                <div class="mb-3">
+                    <label for="finish" class="form-label">Finish</label>
+                    <input type="text" class="form-control" id="finish" name="finish">
+                </div>
+                <div class="mb-3">
+                    <label for="brand" class="form-label">Brand</label>
+                    <input type="text" class="form-control" id="brand" name="brand">
+                </div>
+                <div class="mb-3">
+                    <label for="grade" class="form-label">Grade</label>
+                    <input type="text" class="form-control" id="grade" name="grade">
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="is_security_door" name="is_security_door">
+                    <label class="form-check-label" for="is_security_door">Security Door</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="has_grill" name="has_grill">
+                    <label class="form-check-label" for="has_grill">Has Grill</label>
+                </div>
+                <div class="mb-3">
+                    <label for="opening_type" class="form-label">Opening Type</label>
+                    <input type="text" class="form-control" id="opening_type" name="opening_type">
+                </div>
+                <div class="mb-3">
+                    <label for="lock_type" class="form-label">Lock Type</label>
+                    <input type="text" class="form-control" id="lock_type" name="lock_type">
+                </div>
+                <div class="mb-3">
+                    <label for="handle_type" class="form-label">Handle Type</label>
+                    <input type="text" class="form-control" id="handle_type" name="handle_type">
+                </div>
+                <div class="mb-3">
+                    <label for="handle_material" class="form-label">Handle Material</label>
+                    <input type="text" class="form-control" id="handle_material" name="handle_material">
+                </div>
+                <div class="mb-3">
+                    <label for="glass_type" class="form-label">Glass Type</label>
+                    <input type="text" class="form-control" id="glass_type" name="glass_type">
+                </div>
+                <div class="mb-3">
+                    <label for="glass_thickness" class="form-label">Glass Thickness</label>
+                    <input type="number" step="0.01" class="form-control" id="glass_thickness" name="glass_thickness">
+                </div>
+                <button type="submit" class="btn btn-primary">Create Spec</button>
+                <a href="{{ url_for('admin.door_window_specs') }}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

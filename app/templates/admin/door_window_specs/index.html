@@ -1,0 +1,175 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Door/Window Specs - Admin Panel{% endblock %}
+{% block page_title %}Door/Window Specs Management{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="search-filter mb-3">
+    <form method="GET" action="{{ url_for('admin.door_window_specs') }}">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Door/Window Specs</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by item type or location...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Door/Window Specs Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Door/Window Specs</h4>
+            <a href="{{ url_for('admin.new_door_window_spec') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Spec
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Unit Type</th>
+                        <th>Item Type</th>
+                        <th>Location</th>
+                        <th>Width</th>
+                        <th>Height</th>
+                        <th>Thickness</th>
+                        <th>Material</th>
+                        <th>Finish</th>
+                        <th>Brand</th>
+                        <th>Grade</th>
+                        <th>Security Door</th>
+                        <th>Grill</th>
+                        <th>Opening Type</th>
+                        <th>Lock Type</th>
+                        <th>Handle Type</th>
+                        <th>Handle Material</th>
+                        <th>Glass Type</th>
+                        <th>Glass Thickness</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for spec in door_window_specs.items %}
+                    <tr>
+                        <td>{{ spec.spec_id }}</td>
+                        <td>{{ spec.unit_type.type_name if spec.unit_type else 'N/A' }}</td>
+                        <td>{{ spec.item_type or 'N/A' }}</td>
+                        <td>{{ spec.location or 'N/A' }}</td>
+                        <td>{{ spec.width or 'N/A' }}</td>
+                        <td>{{ spec.height or 'N/A' }}</td>
+                        <td>{{ spec.thickness or 'N/A' }}</td>
+                        <td>{{ spec.material or 'N/A' }}</td>
+                        <td>{{ spec.finish or 'N/A' }}</td>
+                        <td>{{ spec.brand or 'N/A' }}</td>
+                        <td>{{ spec.grade or 'N/A' }}</td>
+                        <td><span class="badge bg-{{ 'success' if spec.is_security_door else 'secondary' }}">{{ 'Yes' if spec.is_security_door else 'No' }}</span></td>
+                        <td><span class="badge bg-{{ 'success' if spec.has_grill else 'secondary' }}">{{ 'Yes' if spec.has_grill else 'No' }}</span></td>
+                        <td>{{ spec.opening_type or 'N/A' }}</td>
+                        <td>{{ spec.lock_type or 'N/A' }}</td>
+                        <td>{{ spec.handle_type or 'N/A' }}</td>
+                        <td>{{ spec.handle_material or 'N/A' }}</td>
+                        <td>{{ spec.glass_type or 'N/A' }}</td>
+                        <td>{{ spec.glass_thickness or 'N/A' }}</td>
+                        <td>{{ spec.created_at.strftime('%Y-%m-%d') if spec.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_door_window_spec', spec_id=spec.spec_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('admin.edit_door_window_spec', spec_id=spec.spec_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('admin.delete_door_window_spec', spec_id=spec.spec_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination and Results Summary (unchanged) -->
+        {% if door_window_specs.pages > 1 %}
+        <nav aria-label="Door/Window Specs pagination">
+            <ul class="pagination">
+                {% if door_window_specs.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.door_window_specs', page=door_window_specs.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_num in door_window_specs.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != door_window_specs.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.door_window_specs', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if door_window_specs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.door_window_specs', page=door_window_specs.next_num, search=search) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        <div class="text-muted mt-3">
+            Showing {{ door_window_specs.items|length }} of {{ door_window_specs.total }} door/window specs
+            {% if search %}(filtered results){% endif %}
+        </div>
+    </div>
+</div>
+<!-- Export Options (unchanged) -->
+{% if door_window_specs.items %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-download"></i> Export Options</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_door_window_specs', export_type='csv') }}'" download>
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterSpecsTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterSpecsTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %}

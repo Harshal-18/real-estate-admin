@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+
+{% block title %}View Door/Window Spec - Admin Panel{% endblock %}
+{% block page_title %}Door/Window Spec{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Door/Window Spec</h3>
+            <dl class="row">
+                <dt class="col-sm-3">Unit Type</dt>
+                <dd class="col-sm-9">{{ spec.unit_type.type_name if spec.unit_type else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Item Type</dt>
+                <dd class="col-sm-9">{{ spec.item_type }}</dd>
+
+                <dt class="col-sm-3">Location</dt>
+                <dd class="col-sm-9">{{ spec.location or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Width</dt>
+                <dd class="col-sm-9">{{ spec.width or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Height</dt>
+                <dd class="col-sm-9">{{ spec.height or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Thickness</dt>
+                <dd class="col-sm-9">{{ spec.thickness or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Material</dt>
+                <dd class="col-sm-9">{{ spec.material or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Finish</dt>
+                <dd class="col-sm-9">{{ spec.finish or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Brand</dt>
+                <dd class="col-sm-9">{{ spec.brand or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Grade</dt>
+                <dd class="col-sm-9">{{ spec.grade or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Security Door</dt>
+                <dd class="col-sm-9">{{ 'Yes' if spec.is_security_door else 'No' }}</dd>
+
+                <dt class="col-sm-3">Grill</dt>
+                <dd class="col-sm-9">{{ 'Yes' if spec.has_grill else 'No' }}</dd>
+
+                <dt class="col-sm-3">Opening Type</dt>
+                <dd class="col-sm-9">{{ spec.opening_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Lock Type</dt>
+                <dd class="col-sm-9">{{ spec.lock_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Handle Type</dt>
+                <dd class="col-sm-9">{{ spec.handle_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Handle Material</dt>
+                <dd class="col-sm-9">{{ spec.handle_material or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Glass Type</dt>
+                <dd class="col-sm-9">{{ spec.glass_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Glass Thickness</dt>
+                <dd class="col-sm-9">{{ spec.glass_thickness or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ spec.created_at.strftime('%Y-%m-%d') if spec.created_at else 'N/A' }}</dd>
+            </dl>
+            <a href="{{ url_for('admin.edit_door_window_spec', spec_id=spec.spec_id) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('admin.door_window_specs') }}" class="btn btn-secondary ms-2">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

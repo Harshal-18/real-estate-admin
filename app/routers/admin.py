@@ -3,7 +3,7 @@ from app import db
 from app.models import (
     Project, Developer, City, Locality, Amenity, Approval, ProjectApproval, Tower, 
     User, UnitType, PropertyUnit, Review, Notification, ProjectMedia,
-    ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory, BalconyDetail
+    ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory, BalconyDetail, DoorWindowSpec
 )
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -1920,5 +1920,106 @@ def export_balcony_details(export_type):
     else:
         flash('Invalid export type.', 'danger')
         return redirect(url_for('admin.balcony_details'))
+
+# Door/Window Specs Routes
+@admin.route('/door-window-specs')
+def door_window_specs():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = DoorWindowSpec.query
+    if search:
+        query = query.filter(DoorWindowSpec.item_type.ilike(f'%{search}%'))
+    door_window_specs = query.order_by(DoorWindowSpec.created_at.desc()).paginate(page=page, per_page=10, error_out=False)
+    return render_template('admin/door_window_specs/index.html', door_window_specs=door_window_specs, search=search)
+
+@admin.route('/door-window-specs/new', methods=['GET', 'POST'])
+def new_door_window_spec():
+    from app.models import UnitType
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        for field in ['width', 'height', 'thickness', 'glass_thickness']:
+            data[field] = float(data[field]) if data.get(field) else None
+        for field in ['is_security_door', 'has_grill']:
+            data[field] = field in request.form
+        spec = DoorWindowSpec(**data)
+        db.session.add(spec)
+        db.session.commit()
+        flash('Door/Window spec created successfully!', 'success')
+        return redirect(url_for('admin.door_window_specs'))
+    return render_template('admin/door_window_specs/new.html', unit_types=unit_types)
+
+@admin.route('/door-window-specs/<int:spec_id>/edit', methods=['GET', 'POST'])
+def edit_door_window_spec(spec_id):
+    from app.models import UnitType
+    spec = DoorWindowSpec.query.get_or_404(spec_id)
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        for field in ['width', 'height', 'thickness', 'glass_thickness']:
+            data[field] = float(data[field]) if data.get(field) else None
+        for field in ['is_security_door', 'has_grill']:
+            data[field] = field in request.form
+        for key, value in data.items():
+            if hasattr(spec, key):
+                setattr(spec, key, value)
+        db.session.commit()
+        flash('Door/Window spec updated successfully!', 'success')
+        return redirect(url_for('admin.door_window_specs'))
+    return render_template('admin/door_window_specs/edit.html', spec=spec, unit_types=unit_types)
+
+@admin.route('/door-window-specs/<int:spec_id>')
+def view_door_window_spec(spec_id):
+    spec = DoorWindowSpec.query.get_or_404(spec_id)
+    return render_template('admin/door_window_specs/view.html', spec=spec)
+
+@admin.route('/door-window-specs/<int:spec_id>/delete', methods=['POST'])
+def delete_door_window_spec(spec_id):
+    spec = DoorWindowSpec.query.get_or_404(spec_id)
+    db.session.delete(spec)
+    db.session.commit()
+    flash('Door/Window spec deleted successfully!', 'success')
+    return redirect(url_for('admin.door_window_specs'))
+
+@admin.route('/door-window-specs/export/<export_type>')
+def export_door_window_specs(export_type):
+    import pandas as pd
+    from io import BytesIO, StringIO
+    specs = DoorWindowSpec.query.all()
+    data = []
+    for s in specs:
+        data.append({
+            'ID': s.spec_id,
+            'Unit Type': s.unit_type.type_name if s.unit_type else '',
+            'Item Type': s.item_type or '',
+            'Location': s.location or '',
+            'Width': s.width or '',
+            'Height': s.height or '',
+            'Thickness': s.thickness or '',
+            'Material': s.material or '',
+            'Finish': s.finish or '',
+            'Brand': s.brand or '',
+            'Grade': s.grade or '',
+            'Security Door': 'Yes' if s.is_security_door else 'No',
+            'Grill': 'Yes' if s.has_grill else 'No',
+            'Opening Type': s.opening_type or '',
+            'Lock Type': s.lock_type or '',
+            'Handle Type': s.handle_type or '',
+            'Handle Material': s.handle_material or '',
+            'Glass Type': s.glass_type or '',
+            'Glass Thickness': s.glass_thickness or '',
+            'Created': s.created_at.strftime('%Y-%m-%d') if s.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='door_window_specs.csv')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.door_window_specs'))
 
  
