@@ -2022,4 +2022,108 @@ def export_door_window_specs(export_type):
         flash('Invalid export type.', 'danger')
         return redirect(url_for('admin.door_window_specs'))
 
+# Price History Routes
+@admin.route('/price-history')
+def price_history():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = PriceHistory.query
+    if search:
+        query = query.filter(PriceHistory.change_reason.ilike(f'%{search}%'))
+    price_history = query.order_by(PriceHistory.created_at.desc()).paginate(page=page, per_page=10, error_out=False)
+    return render_template('admin/price_history/index.html', price_history=price_history, search=search)
+
+@admin.route('/price-history/new', methods=['GET', 'POST'])
+def new_price_history():
+    from app.models import Project, UnitType
+    projects = Project.query.all()
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
+        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        for field in ['old_price', 'new_price', 'old_price_per_sqft', 'new_price_per_sqft', 'change_percentage']:
+            data[field] = float(data[field]) if data.get(field) else None
+        for field in ['effective_date']:
+            if data.get(field):
+                from datetime import datetime
+                data[field] = datetime.strptime(data[field], '%Y-%m-%d').date()
+            else:
+                data[field] = None
+        ph = PriceHistory(**data)
+        db.session.add(ph)
+        db.session.commit()
+        flash('Price history record created successfully!', 'success')
+        return redirect(url_for('admin.price_history'))
+    return render_template('admin/price_history/new.html', projects=projects, unit_types=unit_types)
+
+@admin.route('/price-history/<int:price_history_id>/edit', methods=['GET', 'POST'])
+def edit_price_history(price_history_id):
+    from app.models import Project, UnitType
+    ph = PriceHistory.query.get_or_404(price_history_id)
+    projects = Project.query.all()
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
+        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        for field in ['old_price', 'new_price', 'old_price_per_sqft', 'new_price_per_sqft', 'change_percentage']:
+            data[field] = float(data[field]) if data.get(field) else None
+        for field in ['effective_date']:
+            if data.get(field):
+                from datetime import datetime
+                data[field] = datetime.strptime(data[field], '%Y-%m-%d').date()
+            else:
+                data[field] = None
+        for key, value in data.items():
+            if hasattr(ph, key):
+                setattr(ph, key, value)
+        db.session.commit()
+        flash('Price history record updated successfully!', 'success')
+        return redirect(url_for('admin.price_history'))
+    return render_template('admin/price_history/edit.html', ph=ph, projects=projects, unit_types=unit_types)
+
+@admin.route('/price-history/<int:price_history_id>')
+def view_price_history(price_history_id):
+    ph = PriceHistory.query.get_or_404(price_history_id)
+    return render_template('admin/price_history/view.html', ph=ph)
+
+@admin.route('/price-history/<int:price_history_id>/delete', methods=['POST'])
+def delete_price_history(price_history_id):
+    ph = PriceHistory.query.get_or_404(price_history_id)
+    db.session.delete(ph)
+    db.session.commit()
+    flash('Price history record deleted successfully!', 'success')
+    return redirect(url_for('admin.price_history'))
+
+@admin.route('/price-history/export/<export_type>')
+def export_price_history(export_type):
+    import pandas as pd
+    from io import BytesIO, StringIO
+    price_history = PriceHistory.query.all()
+    data = []
+    for ph in price_history:
+        data.append({
+            'ID': ph.price_history_id,
+            'Project': ph.project.name if ph.project else '',
+            'Unit Type': ph.unit_type.type_name if ph.unit_type else '',
+            'Old Price': ph.old_price or '',
+            'New Price': ph.new_price or '',
+            'Old Price/Sqft': ph.old_price_per_sqft or '',
+            'New Price/Sqft': ph.new_price_per_sqft or '',
+            'Change %': ph.change_percentage or '',
+            'Reason': ph.change_reason or '',
+            'Effective Date': ph.effective_date.strftime('%Y-%m-%d') if ph.effective_date else '',
+            'Created': ph.created_at.strftime('%Y-%m-%d') if ph.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='price_history.csv')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.price_history'))
+
  

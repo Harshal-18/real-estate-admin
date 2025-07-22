@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+
+{% block title %}View Price History - Admin Panel{% endblock %}
+{% block page_title %}Price History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Price History</h3>
+            <dl class="row">
+                <dt class="col-sm-3">Project</dt>
+                <dd class="col-sm-9">{{ ph.project.name if ph.project else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Unit Type</dt>
+                <dd class="col-sm-9">{{ ph.unit_type.type_name if ph.unit_type else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Old Price</dt>
+                <dd class="col-sm-9">{{ ph.old_price or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">New Price</dt>
+                <dd class="col-sm-9">{{ ph.new_price or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Old Price/Sqft</dt>
+                <dd class="col-sm-9">{{ ph.old_price_per_sqft or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">New Price/Sqft</dt>
+                <dd class="col-sm-9">{{ ph.new_price_per_sqft or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Change %</dt>
+                <dd class="col-sm-9">{{ ph.change_percentage or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Reason</dt>
+                <dd class="col-sm-9">{{ ph.change_reason or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Effective Date</dt>
+                <dd class="col-sm-9">{{ ph.effective_date.strftime('%Y-%m-%d') if ph.effective_date else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ ph.created_at.strftime('%Y-%m-%d') if ph.created_at else 'N/A' }}</dd>
+            </dl>
+            <a href="{{ url_for('admin.edit_price_history', price_history_id=ph.price_history_id) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('admin.price_history') }}" class="btn btn-secondary ms-2">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

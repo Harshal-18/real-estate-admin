@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Price History - Admin Panel{% endblock %}
+{% block page_title %}Edit Price History{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Edit Price History</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="project_id" class="form-label">Project</label>
+                    <select class="form-select" id="project_id" name="project_id" required>
+                        <option value="">Select Project</option>
+                        {% for project in projects %}
+                        <option value="{{ project.project_id }}" {% if project.project_id == ph.project_id %}selected{% endif %}>{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="unit_type_id" class="form-label">Unit Type</label>
+                    <select class="form-select" id="unit_type_id" name="unit_type_id" required>
+                        <option value="">Select Unit Type</option>
+                        {% for ut in unit_types %}
+                        <option value="{{ ut.unit_type_id }}" {% if ut.unit_type_id == ph.unit_type_id %}selected{% endif %}>{{ ut.type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="old_price" class="form-label">Old Price</label>
+                    <input type="number" step="0.01" class="form-control" id="old_price" name="old_price" value="{{ ph.old_price }}">
+                </div>
+                <div class="mb-3">
+                    <label for="new_price" class="form-label">New Price</label>
+                    <input type="number" step="0.01" class="form-control" id="new_price" name="new_price" value="{{ ph.new_price }}">
+                </div>
+                <div class="mb-3">
+                    <label for="old_price_per_sqft" class="form-label">Old Price/Sqft</label>
+                    <input type="number" step="0.01" class="form-control" id="old_price_per_sqft" name="old_price_per_sqft" value="{{ ph.old_price_per_sqft }}">
+                </div>
+                <div class="mb-3">
+                    <label for="new_price_per_sqft" class="form-label">New Price/Sqft</label>
+                    <input type="number" step="0.01" class="form-control" id="new_price_per_sqft" name="new_price_per_sqft" value="{{ ph.new_price_per_sqft }}">
+                </div>
+                <div class="mb-3">
+                    <label for="change_percentage" class="form-label">Change %</label>
+                    <input type="number" step="0.01" class="form-control" id="change_percentage" name="change_percentage" value="{{ ph.change_percentage }}">
+                </div>
+                <div class="mb-3">
+                    <label for="change_reason" class="form-label">Change Reason</label>
+                    <input type="text" class="form-control" id="change_reason" name="change_reason" value="{{ ph.change_reason }}">
+                </div>
+                <div class="mb-3">
+                    <label for="effective_date" class="form-label">Effective Date</label>
+                    <input type="date" class="form-control" id="effective_date" name="effective_date" value="{{ ph.effective_date.strftime('%Y-%m-%d') if ph.effective_date else '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Price History</button>
+                <a href="{{ url_for('admin.price_history') }}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

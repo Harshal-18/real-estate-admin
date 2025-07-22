@@ -1,0 +1,157 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Price History - Admin Panel{% endblock %}
+{% block page_title %}Price History Management{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="search-filter mb-3">
+    <form method="GET" action="{{ url_for('admin.price_history') }}">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Price History</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by project or reason...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Price History Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Price History</h4>
+            <a href="{{ url_for('admin.new_price_history') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Price History
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Project</th>
+                        <th>Unit Type</th>
+                        <th>Old Price</th>
+                        <th>New Price</th>
+                        <th>Old Price/Sqft</th>
+                        <th>New Price/Sqft</th>
+                        <th>Change %</th>
+                        <th>Reason</th>
+                        <th>Effective Date</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ph in price_history.items %}
+                    <tr>
+                        <td>{{ ph.price_history_id }}</td>
+                        <td>{{ ph.project.name if ph.project else 'N/A' }}</td>
+                        <td>{{ ph.unit_type.type_name if ph.unit_type else 'N/A' }}</td>
+                        <td>{{ ph.old_price or 'N/A' }}</td>
+                        <td>{{ ph.new_price or 'N/A' }}</td>
+                        <td>{{ ph.old_price_per_sqft or 'N/A' }}</td>
+                        <td>{{ ph.new_price_per_sqft or 'N/A' }}</td>
+                        <td>{{ ph.change_percentage or 'N/A' }}</td>
+                        <td>{{ ph.change_reason[:30] ~ ('...' if ph.change_reason and ph.change_reason|length > 30 else '') if ph.change_reason else 'N/A' }}</td>
+                        <td>{{ ph.effective_date.strftime('%Y-%m-%d') if ph.effective_date else 'N/A' }}</td>
+                        <td>{{ ph.created_at.strftime('%Y-%m-%d') if ph.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_price_history', price_history_id=ph.price_history_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('admin.edit_price_history', price_history_id=ph.price_history_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('admin.delete_price_history', price_history_id=ph.price_history_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination and Results Summary (unchanged) -->
+        {% if price_history.pages > 1 %}
+        <nav aria-label="Price History pagination">
+            <ul class="pagination">
+                {% if price_history.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.price_history', page=price_history.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_num in price_history.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != price_history.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.price_history', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if price_history.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.price_history', page=price_history.next_num, search=search) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        <div class="text-muted mt-3">
+            Showing {{ price_history.items|length }} of {{ price_history.total }} price history records
+            {% if search %}(filtered results){% endif %}
+        </div>
+    </div>
+</div>
+<!-- Export Options (unchanged) -->
+{% if price_history.items %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-download"></i> Export Options</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_price_history', export_type='csv') }}'" download>
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterPriceHistoryTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterPriceHistoryTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %}
