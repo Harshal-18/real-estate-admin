@@ -1,0 +1,41 @@
+{% extends "admin/base.html" %}
+
+{% block title %}View Locality - Admin Panel{% endblock %}
+{% block page_title %}Locality Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Locality Details</h3>
+            <dl class="row">
+                <dt class="col-sm-3">Name</dt>
+                <dd class="col-sm-9">{{ locality.name }}</dd>
+
+                <dt class="col-sm-3">City</dt>
+                <dd class="col-sm-9">{{ locality.city.name if locality.city else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Type</dt>
+                <dd class="col-sm-9">{{ locality.locality_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Pincode</dt>
+                <dd class="col-sm-9">{{ locality.pincode or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Latitude</dt>
+                <dd class="col-sm-9">{{ locality.latitude or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Longitude</dt>
+                <dd class="col-sm-9">{{ locality.longitude or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Description</dt>
+                <dd class="col-sm-9">{{ locality.description or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ locality.created_at.strftime('%Y-%m-%d') if locality.created_at else 'N/A' }}</dd>
+            </dl>
+            <a href="{{ url_for('admin.edit_locality', locality_id=locality.locality_id) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('admin.localities') }}" class="btn btn-secondary ms-2">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1735,4 +1735,88 @@ def export_media(export_type):
         flash('Invalid export type.', 'danger')
         return redirect(url_for('admin.media'))
 
+# Localities Routes
+@admin.route('/localities')
+def localities():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = Locality.query
+    if search:
+        query = query.filter(Locality.name.ilike(f'%{search}%'))
+    localities = query.order_by(Locality.created_at.desc()).paginate(page=page, per_page=10, error_out=False)
+    return render_template('admin/localities/index.html', localities=localities, search=search)
+
+@admin.route('/localities/new', methods=['GET', 'POST'])
+def new_locality():
+    cities = City.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['city_id'] = int(data['city_id']) if data.get('city_id') else None
+        data['latitude'] = float(data['latitude']) if data.get('latitude') else None
+        data['longitude'] = float(data['longitude']) if data.get('longitude') else None
+        locality = Locality(**data)
+        db.session.add(locality)
+        db.session.commit()
+        flash('Locality created successfully!', 'success')
+        return redirect(url_for('admin.localities'))
+    return render_template('admin/localities/new.html', cities=cities)
+
+@admin.route('/localities/<int:locality_id>/edit', methods=['GET', 'POST'])
+def edit_locality(locality_id):
+    locality = Locality.query.get_or_404(locality_id)
+    cities = City.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['city_id'] = int(data['city_id']) if data.get('city_id') else None
+        data['latitude'] = float(data['latitude']) if data.get('latitude') else None
+        data['longitude'] = float(data['longitude']) if data.get('longitude') else None
+        for key, value in data.items():
+            if hasattr(locality, key):
+                setattr(locality, key, value)
+        db.session.commit()
+        flash('Locality updated successfully!', 'success')
+        return redirect(url_for('admin.localities'))
+    return render_template('admin/localities/edit.html', locality=locality, cities=cities)
+
+@admin.route('/localities/<int:locality_id>')
+def view_locality(locality_id):
+    locality = Locality.query.get_or_404(locality_id)
+    return render_template('admin/localities/view.html', locality=locality)
+
+@admin.route('/localities/<int:locality_id>/delete', methods=['POST'])
+def delete_locality(locality_id):
+    locality = Locality.query.get_or_404(locality_id)
+    db.session.delete(locality)
+    db.session.commit()
+    flash('Locality deleted successfully!', 'success')
+    return redirect(url_for('admin.localities'))
+
+@admin.route('/localities/export/<export_type>')
+def export_localities(export_type):
+    import pandas as pd
+    from io import BytesIO, StringIO
+    localities = Locality.query.all()
+    data = []
+    for l in localities:
+        data.append({
+            'ID': l.locality_id,
+            'Name': l.name,
+            'City': l.city.name if l.city else '',
+            'Type': l.locality_type or '',
+            'Pincode': l.pincode or '',
+            'Latitude': l.latitude or '',
+            'Longitude': l.longitude or '',
+            'Description': l.description or '',
+            'Created': l.created_at.strftime('%Y-%m-%d') if l.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='localities.csv')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.localities'))
+
  

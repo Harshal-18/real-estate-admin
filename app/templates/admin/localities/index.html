@@ -1,0 +1,153 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Localities - Admin Panel{% endblock %}
+{% block page_title %}Localities Management{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="search-filter mb-3">
+    <form method="GET" action="{{ url_for('admin.localities') }}">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Localities</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by locality name...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Localities Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Localities</h4>
+            <a href="{{ url_for('admin.new_locality') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Locality
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>City</th>
+                        <th>Type</th>
+                        <th>Pincode</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Description</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for locality in localities.items %}
+                    <tr>
+                        <td>{{ locality.locality_id }}</td>
+                        <td>{{ locality.name }}</td>
+                        <td>{{ locality.city.name if locality.city else 'N/A' }}</td>
+                        <td>{{ locality.locality_type or 'N/A' }}</td>
+                        <td>{{ locality.pincode or 'N/A' }}</td>
+                        <td>{{ locality.latitude or 'N/A' }}</td>
+                        <td>{{ locality.longitude or 'N/A' }}</td>
+                        <td>{{ locality.description[:40] ~ ('...' if locality.description and locality.description|length > 40 else '') if locality.description else 'N/A' }}</td>
+                        <td>{{ locality.created_at.strftime('%Y-%m-%d') if locality.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_locality', locality_id=locality.locality_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('admin.edit_locality', locality_id=locality.locality_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('admin.delete_locality', locality_id=locality.locality_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination and Results Summary (unchanged) -->
+        {% if localities.pages > 1 %}
+        <nav aria-label="Localities pagination">
+            <ul class="pagination">
+                {% if localities.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.localities', page=localities.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_num in localities.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != localities.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.localities', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if localities.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.localities', page=localities.next_num, search=search) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        <div class="text-muted mt-3">
+            Showing {{ localities.items|length }} of {{ localities.total }} localities
+            {% if search %}(filtered results){% endif %}
+        </div>
+    </div>
+</div>
+<!-- Export Options (unchanged) -->
+{% if localities.items %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-download"></i> Export Options</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_localities', export_type='csv') }}'" download>
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterLocalitiesTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterLocalitiesTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %}
