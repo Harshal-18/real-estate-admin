@@ -1,0 +1,59 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add Project Amenity - Admin Panel{% endblock %}
+{% block page_title %}Add New Project Amenity{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Add New Project Amenity</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="project_id" class="form-label">Project</label>
+                    <select class="form-select" id="project_id" name="project_id" required>
+                        <option value="">Select Project</option>
+                        {% for project in projects %}
+                        <option value="{{ project.project_id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="amenity_id" class="form-label">Amenity</label>
+                    <select class="form-select" id="amenity_id" name="amenity_id" required>
+                        <option value="">Select Amenity</option>
+                        {% for amenity in amenities %}
+                        <option value="{{ amenity.amenity_id }}">{{ amenity.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="is_available" class="form-label">Is Available</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_available" name="is_available">
+                        <label class="form-check-label" for="is_available">Available</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="area_size" class="form-label">Area Size</label>
+                    <input type="number" step="0.01" class="form-control" id="area_size" name="area_size">
+                </div>
+                <div class="mb-3">
+                    <label for="capacity" class="form-label">Capacity</label>
+                    <input type="number" class="form-control" id="capacity" name="capacity">
+                </div>
+                <div class="mb-3">
+                    <label for="operating_hours" class="form-label">Operating Hours</label>
+                    <input type="text" class="form-control" id="operating_hours" name="operating_hours">
+                </div>
+                <button type="submit" class="btn btn-primary">Add Project Amenity</button>
+                <a href="{{ url_for('admin.project_amenities') }}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

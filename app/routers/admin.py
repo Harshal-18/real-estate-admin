@@ -3,7 +3,8 @@ from app import db
 from app.models import (
     Project, Developer, City, Locality, Amenity, Approval, ProjectApproval, Tower, 
     User, UnitType, PropertyUnit, Review, Notification, ProjectMedia,
-    ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory, BalconyDetail, DoorWindowSpec
+    ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory, BalconyDetail, DoorWindowSpec,
+    ProjectAmenity
 )
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -2125,5 +2126,100 @@ def export_price_history(export_type):
     else:
         flash('Invalid export type.', 'danger')
         return redirect(url_for('admin.price_history'))
+
+@admin.route('/project-amenities')
+def project_amenities():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = ProjectAmenity.query
+    if search:
+        query = query.join(Project).join(Amenity).filter(
+            (Project.name.ilike(f'%{search}%')) |
+            (Amenity.name.ilike(f'%{search}%')) |
+            (ProjectAmenity.description.ilike(f'%{search}%'))
+        )
+    project_amenities = query.order_by(ProjectAmenity.created_at.desc()).paginate(page=page, per_page=10, error_out=False)
+    return render_template('admin/project_amenities/index.html', project_amenities=project_amenities, search=search)
+
+@admin.route('/project-amenities/export/<export_type>')
+def export_project_amenities(export_type):
+    import pandas as pd
+    from io import BytesIO, StringIO
+    project_amenities = ProjectAmenity.query.all()
+    data = []
+    for pa in project_amenities:
+        data.append({
+            'Project': pa.project.name if pa.project else '',
+            'Amenity': pa.amenity.name if pa.amenity else '',
+            'Is Available': 'Yes' if pa.is_available else 'No',
+            'Description': pa.description or '',
+            'Area Size': pa.area_size or '',
+            'Capacity': pa.capacity or '',
+            'Operating Hours': pa.operating_hours or '',
+            'Created': pa.created_at.strftime('%Y-%m-%d') if pa.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='project_amenities.csv')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.project_amenities'))
+
+@admin.route('/project-amenities/<int:project_id>/<int:amenity_id>')
+def view_project_amenity(project_id, amenity_id):
+    pa = ProjectAmenity.query.filter_by(project_id=project_id, amenity_id=amenity_id).first_or_404()
+    return render_template('admin/project_amenities/view.html', pa=pa)
+
+@admin.route('/project-amenities/<int:project_id>/<int:amenity_id>/edit', methods=['GET', 'POST'])
+def edit_project_amenity(project_id, amenity_id):
+    pa = ProjectAmenity.query.filter_by(project_id=project_id, amenity_id=amenity_id).first_or_404()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        pa.is_available = 'is_available' in request.form
+        pa.description = data.get('description', '')
+        pa.area_size = float(data['area_size']) if data.get('area_size') else None
+        pa.capacity = int(data['capacity']) if data.get('capacity') else None
+        pa.operating_hours = data.get('operating_hours', '')
+        db.session.commit()
+        flash('Project amenity updated successfully!', 'success')
+        return redirect(url_for('admin.project_amenities'))
+    return render_template('admin/project_amenities/edit.html', pa=pa)
+
+@admin.route('/project-amenities/<int:project_id>/<int:amenity_id>/delete', methods=['POST'])
+def delete_project_amenity(project_id, amenity_id):
+    pa = ProjectAmenity.query.filter_by(project_id=project_id, amenity_id=amenity_id).first_or_404()
+    db.session.delete(pa)
+    db.session.commit()
+    flash('Project amenity deleted successfully!', 'success')
+    return redirect(url_for('admin.project_amenities'))
+
+@admin.route('/project-amenities/new', methods=['GET', 'POST'])
+def new_project_amenity():
+    projects = Project.query.all()
+    amenities = Amenity.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
+        data['amenity_id'] = int(data['amenity_id']) if data.get('amenity_id') else None
+        data['is_available'] = 'is_available' in request.form
+        data['area_size'] = float(data['area_size']) if data.get('area_size') else None
+        data['capacity'] = int(data['capacity']) if data.get('capacity') else None
+        pa = ProjectAmenity(
+            project_id=data['project_id'],
+            amenity_id=data['amenity_id'],
+            is_available=data['is_available'],
+            description=data.get('description', ''),
+            area_size=data.get('area_size'),
+            capacity=data.get('capacity'),
+            operating_hours=data.get('operating_hours', '')
+        )
+        db.session.add(pa)
+        db.session.commit()
+        flash('Project amenity added successfully!', 'success')
+        return redirect(url_for('admin.project_amenities'))
+    return render_template('admin/project_amenities/new.html', projects=projects, amenities=amenities)
 
  
