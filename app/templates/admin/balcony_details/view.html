@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+
+{% block title %}View Balcony Detail - Admin Panel{% endblock %}
+{% block page_title %}Balcony Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Balcony Detail</h3>
+            <dl class="row">
+                <dt class="col-sm-3">Unit Type</dt>
+                <dd class="col-sm-9">{{ balcony.unit_type.type_name if balcony.unit_type else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Name</dt>
+                <dd class="col-sm-9">{{ balcony.balcony_name }}</dd>
+
+                <dt class="col-sm-3">Sequence</dt>
+                <dd class="col-sm-9">{{ balcony.balcony_sequence or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Length</dt>
+                <dd class="col-sm-9">{{ balcony.balcony_length or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Width</dt>
+                <dd class="col-sm-9">{{ balcony.balcony_width or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Area</dt>
+                <dd class="col-sm-9">{{ balcony.balcony_area or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Connected Room</dt>
+                <dd class="col-sm-9">{{ balcony.connected_room or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Access Type</dt>
+                <dd class="col-sm-9">{{ balcony.access_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Balcony Type</dt>
+                <dd class="col-sm-9">{{ balcony.balcony_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Provision for Washing Machine</dt>
+                <dd class="col-sm-9">{{ 'Yes' if balcony.has_provision_for_washing_machine else 'No' }}</dd>
+
+                <dt class="col-sm-3">Provision for Drying</dt>
+                <dd class="col-sm-9">{{ 'Yes' if balcony.has_provision_for_drying else 'No' }}</dd>
+
+                <dt class="col-sm-3">Safety Grill</dt>
+                <dd class="col-sm-9">{{ 'Yes' if balcony.has_safety_grill else 'No' }}</dd>
+
+                <dt class="col-sm-3">Facing Direction</dt>
+                <dd class="col-sm-9">{{ balcony.facing_direction or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">View Description</dt>
+                <dd class="col-sm-9">{{ balcony.view_description or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Floor Level</dt>
+                <dd class="col-sm-9">{{ balcony.floor_level or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ balcony.created_at.strftime('%Y-%m-%d') if balcony.created_at else 'N/A' }}</dd>
+            </dl>
+            <a href="{{ url_for('admin.edit_balcony_detail', balcony_id=balcony.balcony_id) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('admin.balcony_details') }}" class="btn btn-secondary ms-2">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

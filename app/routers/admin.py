@@ -3,7 +3,7 @@ from app import db
 from app.models import (
     Project, Developer, City, Locality, Amenity, Approval, ProjectApproval, Tower, 
     User, UnitType, PropertyUnit, Review, Notification, ProjectMedia,
-    ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory
+    ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory, BalconyDetail
 )
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -1818,5 +1818,107 @@ def export_localities(export_type):
     else:
         flash('Invalid export type.', 'danger')
         return redirect(url_for('admin.localities'))
+
+# Balcony Details Routes
+@admin.route('/balcony-details')
+def balcony_details():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = BalconyDetail.query
+    if search:
+        query = query.filter(BalconyDetail.balcony_name.ilike(f'%{search}%'))
+    balcony_details = query.order_by(BalconyDetail.created_at.desc()).paginate(page=page, per_page=10, error_out=False)
+    return render_template('admin/balcony_details/index.html', balcony_details=balcony_details, search=search)
+
+@admin.route('/balcony-details/new', methods=['GET', 'POST'])
+def new_balcony_detail():
+    from app.models import UnitType
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        for field in ['balcony_length', 'balcony_width', 'balcony_area']:
+            data[field] = float(data[field]) if data.get(field) else None
+        for field in ['balcony_sequence']:
+            data[field] = int(data[field]) if data.get(field) else None
+        for field in ['has_provision_for_washing_machine', 'has_provision_for_drying', 'has_safety_grill']:
+            data[field] = field in request.form
+        balcony = BalconyDetail(**data)
+        db.session.add(balcony)
+        db.session.commit()
+        flash('Balcony detail created successfully!', 'success')
+        return redirect(url_for('admin.balcony_details'))
+    return render_template('admin/balcony_details/new.html', unit_types=unit_types)
+
+@admin.route('/balcony-details/<int:balcony_id>/edit', methods=['GET', 'POST'])
+def edit_balcony_detail(balcony_id):
+    from app.models import UnitType
+    balcony = BalconyDetail.query.get_or_404(balcony_id)
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        for field in ['balcony_length', 'balcony_width', 'balcony_area']:
+            data[field] = float(data[field]) if data.get(field) else None
+        for field in ['balcony_sequence']:
+            data[field] = int(data[field]) if data.get(field) else None
+        for field in ['has_provision_for_washing_machine', 'has_provision_for_drying', 'has_safety_grill']:
+            data[field] = field in request.form
+        for key, value in data.items():
+            if hasattr(balcony, key):
+                setattr(balcony, key, value)
+        db.session.commit()
+        flash('Balcony detail updated successfully!', 'success')
+        return redirect(url_for('admin.balcony_details'))
+    return render_template('admin/balcony_details/edit.html', balcony=balcony, unit_types=unit_types)
+
+@admin.route('/balcony-details/<int:balcony_id>')
+def view_balcony_detail(balcony_id):
+    balcony = BalconyDetail.query.get_or_404(balcony_id)
+    return render_template('admin/balcony_details/view.html', balcony=balcony)
+
+@admin.route('/balcony-details/<int:balcony_id>/delete', methods=['POST'])
+def delete_balcony_detail(balcony_id):
+    balcony = BalconyDetail.query.get_or_404(balcony_id)
+    db.session.delete(balcony)
+    db.session.commit()
+    flash('Balcony detail deleted successfully!', 'success')
+    return redirect(url_for('admin.balcony_details'))
+
+@admin.route('/balcony-details/export/<export_type>')
+def export_balcony_details(export_type):
+    import pandas as pd
+    from io import BytesIO, StringIO
+    balcony_details = BalconyDetail.query.all()
+    data = []
+    for b in balcony_details:
+        data.append({
+            'ID': b.balcony_id,
+            'Unit Type': b.unit_type.type_name if b.unit_type else '',
+            'Name': b.balcony_name or '',
+            'Sequence': b.balcony_sequence or '',
+            'Length': b.balcony_length or '',
+            'Width': b.balcony_width or '',
+            'Area': b.balcony_area or '',
+            'Connected Room': b.connected_room or '',
+            'Access Type': b.access_type or '',
+            'Type': b.balcony_type or '',
+            'Washing Machine': 'Yes' if b.has_provision_for_washing_machine else 'No',
+            'Drying': 'Yes' if b.has_provision_for_drying else 'No',
+            'Safety Grill': 'Yes' if b.has_safety_grill else 'No',
+            'Facing': b.facing_direction or '',
+            'View Description': b.view_description or '',
+            'Floor Level': b.floor_level or '',
+            'Created': b.created_at.strftime('%Y-%m-%d') if b.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='balcony_details.csv')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.balcony_details'))
 
  

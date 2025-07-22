@@ -1,0 +1,83 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Balcony Detail - Admin Panel{% endblock %}
+{% block page_title %}Edit Balcony Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Edit Balcony Detail</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="unit_type_id" class="form-label">Unit Type</label>
+                    <select class="form-select" id="unit_type_id" name="unit_type_id" required>
+                        <option value="">Select Unit Type</option>
+                        {% for ut in unit_types %}
+                        <option value="{{ ut.unit_type_id }}" {% if ut.unit_type_id == balcony.unit_type_id %}selected{% endif %}>{{ ut.type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="balcony_name" class="form-label">Balcony Name</label>
+                    <input type="text" class="form-control" id="balcony_name" name="balcony_name" value="{{ balcony.balcony_name }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="balcony_sequence" class="form-label">Sequence</label>
+                    <input type="number" class="form-control" id="balcony_sequence" name="balcony_sequence" value="{{ balcony.balcony_sequence }}">
+                </div>
+                <div class="mb-3">
+                    <label for="balcony_length" class="form-label">Length</label>
+                    <input type="number" step="0.01" class="form-control" id="balcony_length" name="balcony_length" value="{{ balcony.balcony_length }}">
+                </div>
+                <div class="mb-3">
+                    <label for="balcony_width" class="form-label">Width</label>
+                    <input type="number" step="0.01" class="form-control" id="balcony_width" name="balcony_width" value="{{ balcony.balcony_width }}">
+                </div>
+                <div class="mb-3">
+                    <label for="balcony_area" class="form-label">Area</label>
+                    <input type="number" step="0.01" class="form-control" id="balcony_area" name="balcony_area" value="{{ balcony.balcony_area }}">
+                </div>
+                <div class="mb-3">
+                    <label for="connected_room" class="form-label">Connected Room</label>
+                    <input type="text" class="form-control" id="connected_room" name="connected_room" value="{{ balcony.connected_room }}">
+                </div>
+                <div class="mb-3">
+                    <label for="access_type" class="form-label">Access Type</label>
+                    <input type="text" class="form-control" id="access_type" name="access_type" value="{{ balcony.access_type }}">
+                </div>
+                <div class="mb-3">
+                    <label for="balcony_type" class="form-label">Balcony Type</label>
+                    <input type="text" class="form-control" id="balcony_type" name="balcony_type" value="{{ balcony.balcony_type }}">
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="has_provision_for_washing_machine" name="has_provision_for_washing_machine" {% if balcony.has_provision_for_washing_machine %}checked{% endif %}>
+                    <label class="form-check-label" for="has_provision_for_washing_machine">Provision for Washing Machine</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="has_provision_for_drying" name="has_provision_for_drying" {% if balcony.has_provision_for_drying %}checked{% endif %}>
+                    <label class="form-check-label" for="has_provision_for_drying">Provision for Drying</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="has_safety_grill" name="has_safety_grill" {% if balcony.has_safety_grill %}checked{% endif %}>
+                    <label class="form-check-label" for="has_safety_grill">Safety Grill</label>
+                </div>
+                <div class="mb-3">
+                    <label for="facing_direction" class="form-label">Facing Direction</label>
+                    <input type="text" class="form-control" id="facing_direction" name="facing_direction" value="{{ balcony.facing_direction }}">
+                </div>
+                <div class="mb-3">
+                    <label for="view_description" class="form-label">View Description</label>
+                    <textarea class="form-control" id="view_description" name="view_description" rows="2">{{ balcony.view_description }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="floor_level" class="form-label">Floor Level</label>
+                    <input type="text" class="form-control" id="floor_level" name="floor_level" value="{{ balcony.floor_level }}">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Balcony Detail</button>
+                <a href="{{ url_for('admin.balcony_details') }}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
