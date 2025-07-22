@@ -1,0 +1,408 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - Real Estate Admin Panel{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon">
+            <i class="fas fa-project-diagram"></i>
+        </div>
+        <div class="stat-number">{{ stats.total_projects }}</div>
+        <div class="stat-label">Total Projects</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-number">{{ stats.total_developers }}</div>
+        <div class="stat-label">Developers</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="stat-number">{{ stats.total_users }}</div>
+        <div class="stat-label">Registered Users</div>
+    </div>
+    
+    <div class="stat-card danger">
+        <div class="stat-icon">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-number">{{ stats.total_reviews }}</div>
+        <div class="stat-label">Total Reviews</div>
+    </div>
+    
+    <div class="stat-card primary">
+        <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-number">{{ stats.active_projects }}</div>
+        <div class="stat-label">Active Projects</div>
+    </div>
+    
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-number">{{ stats.pending_approvals }}</div>
+        <div class="stat-label">Pending Approvals</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="stat-icon">
+            <i class="fas fa-rupee-sign"></i>
+        </div>
+        <div class="stat-number">{{ "₹{:,.0f}".format(stats.total_revenue) }}</div>
+        <div class="stat-label">Total Revenue</div>
+    </div>
+    
+    <div class="stat-card info">
+        <div class="stat-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="stat-number">{{ "₹{:,.0f}".format(avg_revenue) }}</div>
+        <div class="stat-label">Avg. Project Value</div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="row">
+    <!-- Recent Projects -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-project-diagram"></i> Recent Projects</h5>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_projects %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Developer</th>
+                                <th>Status</th>
+                                <th>Type</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in stats.recent_projects %}
+                            <tr>
+                                <td>
+                                    <strong>{{ project.name }}</strong>
+                                    {% if project.is_active %}
+                                        <span class="badge badge-success ms-2">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary ms-2">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ project.developer.name if project.developer else 'N/A' }}</td>
+                                <td>
+                                    {% if project.status == 'upcoming' %}
+                                        <span class="badge badge-info">{{ project.status.title() }}</span>
+                                    {% elif project.status == 'under_construction' %}
+                                        <span class="badge badge-warning">{{ project.status.replace('_', ' ').title() }}</span>
+                                    {% elif project.status == 'ready_to_move' %}
+                                        <span class="badge badge-success">{{ project.status.replace('_', ' ').title() }}</span>
+                                    {% elif project.status == 'completed' %}
+                                        <span class="badge badge-primary">{{ project.status.title() }}</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">{{ project.status.title() }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ project.property_type.title() }}</td>
+                                <td>{{ project.created_at.strftime('%d %b %Y') if project.created_at else 'N/A' }}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('admin.view_project', project_id=project.project_id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip" title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.edit_project', project_id=project.project_id) }}" 
+                                           class="btn btn-sm btn-outline-warning" 
+                                           data-bs-toggle="tooltip" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('admin.projects') }}" class="btn btn-primary">
+                        View All Projects <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No projects found</h5>
+                    <p class="text-muted">Start by adding your first project</p>
+                    <a href="{{ url_for('admin.new_project') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Project
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activities -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Activities</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                <div class="activity-timeline">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="{{ activity.icon }}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">{{ activity.title }}</div>
+                            <div class="activity-time">{{ activity.time.strftime('%d %b %Y, %I:%M %p') if activity.time else 'N/A' }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-history fa-2x text-muted mb-3"></i>
+                    <p class="text-muted">No recent activities</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.new_project') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Project
+                    </a>
+                    <a href="{{ url_for('admin.new_developer') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus"></i> Add New Developer
+                    </a>
+                    <a href="{{ url_for('admin.new_user') }}" class="btn btn-outline-success">
+                        <i class="fas fa-user-plus"></i> Add New User
+                    </a>
+                    <a href="{{ url_for('admin.new_amenity') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-concierge-bell"></i> Add New Amenity
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mt-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie"></i> Project Status Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="projectStatusChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Monthly Project Growth</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="projectGrowthChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Project Status Chart
+const statusCtx = document.getElementById('projectStatusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Upcoming', 'Under Construction', 'Ready to Move', 'Completed'],
+        datasets: [{
+            data: [
+                {{ stats.recent_projects|selectattr('status', 'equalto', 'upcoming')|list|length }},
+                {{ stats.recent_projects|selectattr('status', 'equalto', 'under_construction')|list|length }},
+                {{ stats.recent_projects|selectattr('status', 'equalto', 'ready_to_move')|list|length }},
+                {{ stats.recent_projects|selectattr('status', 'equalto', 'completed')|list|length }}
+            ],
+            backgroundColor: [
+                '#3498db',
+                '#f39c12',
+                '#27ae60',
+                '#9b59b6'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Project Growth Chart
+const growthCtx = document.getElementById('projectGrowthChart').getContext('2d');
+const growthChart = new Chart(growthCtx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'New Projects',
+            data: [12, 19, 15, 25, 22, 30],
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.activity-timeline {
+    position: relative;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.activity-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 35px;
+    bottom: -20px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+}
+
+.activity-time {
+    color: #7f8c8d;
+    font-size: 0.8rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-card .stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.stat-card .stat-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.stat-card.primary .stat-icon { color: #3498db; }
+.stat-card.success .stat-icon { color: #27ae60; }
+.stat-card.warning .stat-icon { color: #f39c12; }
+.stat-card.danger .stat-icon { color: #e74c3c; }
+.stat-card.info .stat-icon { color: #17a2b8; }
+</style>
+{% endblock %} 

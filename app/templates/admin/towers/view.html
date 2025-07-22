@@ -1,0 +1,50 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ tower.tower_name }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ tower.tower_name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_tower', tower_id=tower.tower_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.towers') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Towers
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Tower Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Tower ID:</strong> {{ tower.tower_id }}</p>
+                    <p><strong>Name:</strong> {{ tower.tower_name }}</p>
+                    <p><strong>Number:</strong> {{ tower.tower_number or 'N/A' }}</p>
+                    <p><strong>Project:</strong> {{ tower.project.name if tower.project else 'N/A' }}</p>
+                    <p><strong>Total Floors:</strong> {{ tower.total_floors or 'N/A' }}</p>
+                    <p><strong>Units per Floor:</strong> {{ tower.units_per_floor or 'N/A' }}</p>
+                    <p><strong>Total Units:</strong> {{ tower.total_units or 'N/A' }}</p>
+                    <p><strong>Type:</strong> {{ tower.tower_type or 'N/A' }}</p>
+                    <p><strong>Construction Status:</strong> {{ tower.construction_status or 'N/A' }}</p>
+                    <p><strong>Possession Date:</strong> {{ tower.possession_date.strftime('%Y-%m-%d') if tower.possession_date else 'N/A' }}</p>
+                    <p><strong>Height (meters):</strong> {{ tower.height_meters or 'N/A' }}</p>
+                    <p><strong>Elevator Count:</strong> {{ tower.elevator_count or 'N/A' }}</p>
+                    <p><strong>Power Backup:</strong> <span class="badge bg-{{ 'success' if tower.has_power_backup else 'secondary' }}">{{ 'Yes' if tower.has_power_backup else 'No' }}</span></p>
+                    <p><strong>Water Backup:</strong> <span class="badge bg-{{ 'success' if tower.has_water_backup else 'secondary' }}">{{ 'Yes' if tower.has_water_backup else 'No' }}</span></p>
+                    <p><strong>Fire Safety:</strong> <span class="badge bg-{{ 'success' if tower.has_fire_safety else 'secondary' }}">{{ 'Yes' if tower.has_fire_safety else 'No' }}</span></p>
+                    <p><strong>Latitude:</strong> {{ tower.latitude or 'N/A' }}</p>
+                    <p><strong>Longitude:</strong> {{ tower.longitude or 'N/A' }}</p>
+                    <p><strong>Facing Direction:</strong> {{ tower.facing_direction or 'N/A' }}</p>
+                    <p><strong>Active:</strong> <span class="badge bg-{{ 'success' if tower.is_active else 'danger' }}">{{ 'Yes' if tower.is_active else 'No' }}</span></p>
+                    <p><strong>Created:</strong> {{ tower.created_at.strftime('%Y-%m-%d %H:%M') if tower.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

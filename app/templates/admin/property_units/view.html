@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Unit {{ property_unit.unit_number }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Unit {{ property_unit.unit_number }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_property_unit', unit_id=property_unit.unit_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.property_units') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Property Units
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Property Unit Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Unit ID:</strong> {{ property_unit.unit_id }}</p>
+                    <p><strong>Unit Number:</strong> {{ property_unit.unit_number }}</p>
+                    <p><strong>Project:</strong> {{ property_unit.project.name if property_unit.project else 'N/A' }}</p>
+                    <p><strong>Tower:</strong> {{ property_unit.tower.tower_name if property_unit.tower else 'N/A' }}</p>
+                    <p><strong>Unit Type:</strong> {{ property_unit.unit_type.type_name if property_unit.unit_type else 'N/A' }}</p>
+                    <p><strong>Floor Number:</strong> {{ property_unit.floor_number or 'N/A' }}</p>
+                    <p><strong>Position:</strong> {{ property_unit.unit_position or 'N/A' }}</p>
+                    <p><strong>Wing:</strong> {{ property_unit.wing or 'N/A' }}</p>
+                    <p><strong>Carpet Area:</strong> {{ property_unit.carpet_area or 'N/A' }}</p>
+                    <p><strong>Built Up Area:</strong> {{ property_unit.built_up_area or 'N/A' }}</p>
+                    <p><strong>Super Area:</strong> {{ property_unit.super_area or 'N/A' }}</p>
+                    <p><strong>Unit Price:</strong> {{ property_unit.unit_price or 'N/A' }}</p>
+                    <p><strong>Price per Sqft:</strong> {{ property_unit.price_per_sqft or 'N/A' }}</p>
+                    <p><strong>Maintenance Charge:</strong> {{ property_unit.maintenance_charge or 'N/A' }}</p>
+                    <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if property_unit.status == 'available' else 'warning' if property_unit.status == 'reserved' else 'danger' }}">{{ property_unit.status }}</span></p>
+                    <p><strong>Possession Date:</strong> {{ property_unit.possession_date.strftime('%Y-%m-%d') if property_unit.possession_date else 'N/A' }}</p>
+                    <p><strong>Active:</strong> <span class="badge bg-{{ 'success' if property_unit.is_active else 'danger' }}">{{ 'Yes' if property_unit.is_active else 'No' }}</span></p>
+                    <p><strong>Created:</strong> {{ property_unit.created_at.strftime('%Y-%m-%d %H:%M') if property_unit.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

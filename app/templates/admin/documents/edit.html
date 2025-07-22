@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Document - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Edit Document</h1>
+        <a href="{{ url_for('admin.documents') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Documents
+        </a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="project_id" class="form-label">Project</label>
+                            <select class="form-select" id="project_id" name="project_id">
+                                <option value="">Select Project (Optional)</option>
+                                {% for project in projects %}
+                                <option value="{{ project.project_id }}" {% if document.project_id == project.project_id %}selected{% endif %}>{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="document_type" class="form-label">Document Type</label>
+                            <select class="form-select" id="document_type" name="document_type" required>
+                                <option value="brochure" {% if document.document_type == 'brochure' %}selected{% endif %}>Brochure</option>
+                                <option value="floor_plan" {% if document.document_type == 'floor_plan' %}selected{% endif %}>Floor Plan</option>
+                                <option value="legal" {% if document.document_type == 'legal' %}selected{% endif %}>Legal Document</option>
+                                <option value="other" {% if document.document_type == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ document.title or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="2">{{ document.description or '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="file_url" class="form-label">File</label>
+                    {% if document.file_url %}
+                        <div class="mb-2">
+                            <a href="{{ document.file_url }}" target="_blank">Current File</a>
+                        </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="file_url" name="file_url">
+                    <div class="form-text">Leave blank to keep the current file.</div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="file_size" class="form-label">File Size (bytes)</label>
+                            <input type="text" class="form-control" id="file_size" name="file_size" value="{{ document.file_size or '' }}" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="file_type" class="form-label">File Type</label>
+                            <input type="text" class="form-control" id="file_type" name="file_type" value="{{ document.file_type or '' }}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="is_public" name="is_public" {% if document.is_public %}checked{% endif %}>
+                    <label class="form-check-label" for="is_public">Public Document</label>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Update Document</button>
+                    <a href="{{ url_for('admin.documents') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

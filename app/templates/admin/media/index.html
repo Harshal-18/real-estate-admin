@@ -1,0 +1,158 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Media - Admin Panel{% endblock %}
+
+{% block page_title %}Media Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Search and Filter Section -->
+    <div class="search-filter mb-3">
+        <form method="GET" action="{{ url_for('admin.media') }}">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search Media</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by title or type...">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Media Table (refactored to match projects page) -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Media</h4>
+                <a href="{{ url_for('admin.new_media') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Media
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Project</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Media URL</th>
+                            <th>Thumbnail</th>
+                            <th>Active</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for media_item in media.items %}
+                        <tr>
+                            <td>{{ media_item.media_id }}</td>
+                            <td>{{ media_item.project.name if media_item.project else 'N/A' }}</td>
+                            <td>{{ media_item.media_type or 'N/A' }}</td>
+                            <td>{{ media_item.media_category or 'N/A' }}</td>
+                            <td>{{ media_item.title or 'N/A' }}</td>
+                            <td>{% if media_item.description %}{{ media_item.description[:40] ~ ('...' if media_item.description|length > 40 else '') }}{% else %}N/A{% endif %}</td>
+                            <td>{% if media_item.media_url %}<a href="{{ media_item.media_url }}" target="_blank">View</a>{% else %}N/A{% endif %}</td>
+                            <td>{% if media_item.thumbnail_url %}<img src="{{ media_item.thumbnail_url }}" alt="Thumbnail" style="width:40px;height:40px;object-fit:cover;">{% else %}N/A{% endif %}</td>
+                            <td><span class="badge bg-{{ 'success' if media_item.is_active else 'danger' }}">{{ 'Yes' if media_item.is_active else 'No' }}</span></td>
+                            <td>{{ media_item.created_at.strftime('%Y-%m-%d') if media_item.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.view_media', media_id=media_item.media_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ url_for('admin.edit_media', media_id=media_item.media_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                                <form method="POST" action="{{ url_for('admin.delete_media', media_id=media_item.media_id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination and Results Summary (unchanged) -->
+            {% if media.pages > 1 %}
+            <nav aria-label="Media pagination">
+                <ul class="pagination">
+                    {% if media.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.media', page=media.prev_num, search=search) }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% for page_num in media.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != media.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.media', page=page_num, search=search) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if media.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.media', page=media.next_num, search=search) }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            <div class="text-muted mt-3">
+                Showing {{ media.items|length }} of {{ media.total }} media
+                {% if search %}(filtered results){% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Export Options (unchanged) -->
+    {% if media.items %}
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5><i class="fas fa-download"></i> Export Options</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_media', export_type='csv') }}'" download>
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-info w-100" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print List
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterMediaRows() {
+        var searchValue = $('#search').val().toLowerCase();
+        $('#media-table tbody tr').each(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterMediaRows);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %} 

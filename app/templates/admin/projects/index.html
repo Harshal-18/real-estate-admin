@@ -1,0 +1,206 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Projects - Real Estate Admin Panel{% endblock %}
+{% block page_title %}Projects Management{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="search-filter mb-3">
+    <form method="GET" action="{{ url_for('admin.projects') }}">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Projects</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by project name...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Projects Table (refactored to match towers page) -->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Projects</h4>
+            <a href="{{ url_for('admin.new_project') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Project
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Developer</th>
+                        <th>Status</th>
+                        <th>Type</th>
+                        <th>Min Price</th>
+                        <th>Max Price</th>
+                        <th>Launch Date</th>
+                        <th>Possession Date</th>
+                        <th>RERA Number</th>
+                        <th>Active</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects.items %}
+                    <tr>
+                        <td>{{ project.project_id }}</td>
+                        <td>{{ project.name }}</td>
+                        <td>{{ project.developer.name if project.developer else 'N/A' }}</td>
+                        <td>{{ project.status or 'N/A' }}</td>
+                        <td>{{ project.project_type or 'N/A' }}</td>
+                        <td>{{ project.min_price or 'N/A' }}</td>
+                        <td>{{ project.max_price or 'N/A' }}</td>
+                        <td>{{ project.launch_date.strftime('%Y-%m-%d') if project.launch_date else 'N/A' }}</td>
+                        <td>{{ project.possession_date.strftime('%Y-%m-%d') if project.possession_date else 'N/A' }}</td>
+                        <td>{{ project.rera_number or 'N/A' }}</td>
+                        <td><span class="badge bg-{{ 'success' if project.is_active else 'danger' }}">{{ 'Yes' if project.is_active else 'No' }}</span></td>
+                        <td>{{ project.created_at.strftime('%Y-%m-%d') if project.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_project', project_id=project.project_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('admin.edit_project', project_id=project.project_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('admin.delete_project', project_id=project.project_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination and Results Summary (unchanged) -->
+        {% if projects.pages > 1 %}
+        <nav aria-label="Projects pagination">
+            <ul class="pagination">
+                {% if projects.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.projects', page=projects.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_num in projects.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != projects.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.projects', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if projects.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.projects', page=projects.next_num, search=search) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        <div class="text-muted mt-3">
+            Showing {{ projects.items|length }} of {{ projects.total }} projects
+            {% if search %}(filtered results){% endif %}
+        </div>
+    </div>
+</div>
+<!-- Export Options (unchanged) -->
+{% if projects.items %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-download"></i> Export Options</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_projects', export_type='csv') }}'" download>
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tooltips
+$(document).ready(function() {
+    $('[data-bs-toggle="tooltip"]').tooltip();
+    // Update bulk actions when checkboxes change
+    // Removed the following lines as checkboxes are removed
+    // $('.item-checkbox').on('change', function() {
+    //     updateBulkActions();
+    // });
+    // Instant search and status filter for projects table
+    function filterProjectsTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        var statusValue = $('#status').val().replace(/[_\s]+/g, '').toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var statusCell = $(this).find('td:nth-child(5)');
+            var statusText = statusCell.text().replace(/[_\s]+/g, '').toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            var statusMatch = (statusValue === "") || (statusText === statusValue);
+            $(this).toggle(searchMatch && statusMatch);
+        });
+    }
+    $('#search').on('input', filterProjectsTable);
+    $('#status').on('change', filterProjectsTable);
+    // Prevent form submit on enter in search
+    $('#search').closest('form').on('submit', function(e) {
+        e.preventDefault();
+    });
+});
+// Bulk delete function
+function bulkDelete(url) {
+    // Removed the following lines as checkboxes are removed
+    // const checkedItems = $('.item-checkbox:checked');
+    // const itemIds = checkedItems.map(function() {
+    //     return $(this).val();
+    // }).get();
+    // if (itemIds.length === 0) {
+    //     showAlert('Please select projects to delete.', 'warning');
+    //     return;
+    // }
+    // if (confirm(`Are you sure you want to delete ${itemIds.length} selected projects? This action cannot be undone.`)) {
+    //     $.ajax({
+    //         url: url,
+    //         method: 'DELETE',
+    //         data: { ids: itemIds },
+    //         success: function(response) {
+    //             showAlert('Selected projects deleted successfully!', 'success');
+    //             location.reload();
+    //         },
+    //         error: function(xhr, status, error) {
+    //             let errorMessage = 'Error deleting selected projects.';
+    //             if (xhr.responseJSON && xhr.responseJSON.message) {
+    //                 errorMessage = xhr.responseJSON.message;
+    //             }
+    //             showAlert(errorMessage, 'danger');
+    //         }
+    //     });
+    // }
+}
+// Remove exportData JS for these buttons (keep only for client-side CSV if you want it as fallback).
+</script>
+{% endblock %} 

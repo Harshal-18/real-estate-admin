@@ -1,0 +1,115 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Developer - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Edit Developer</h1>
+        <a href="{{ url_for('admin.developers') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Developers
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Developer Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ developer.name }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="established_year" class="form-label">Established Year</label>
+                            <input type="number" class="form-control" id="established_year" name="established_year" value="{{ developer.established_year or '' }}" min="1800" max="{{ current_year }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="4">{{ developer.description or '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="logo_url" class="form-label">Developer Logo</label>
+                    <input type="file" class="form-control" id="logo_url" name="logo_url" accept="image/*">
+                    {% if developer.logo_url %}
+                    <div class="mt-2">
+                        <img src="{{ url_for('static', filename='uploads/' + developer.logo_url) }}" class="image-preview" alt="Developer Logo">
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="contact_email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ developer.contact_email or '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="contact_phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="contact_phone" name="contact_phone" value="{{ developer.contact_phone or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="website_url" class="form-label">Website URL</label>
+                    <input type="url" class="form-control" id="website_url" name="website_url" value="{{ developer.website_url or '' }}" placeholder="https://example.com">
+                </div>
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="3">{{ developer.address or '' }}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="total_projects" class="form-label">Total Projects</label>
+                            <input type="number" class="form-control" id="total_projects" name="total_projects" value="{{ developer.total_projects or 0 }}" min="0">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="completed_projects" class="form-label">Completed Projects</label>
+                            <input type="number" class="form-control" id="completed_projects" name="completed_projects" value="{{ developer.completed_projects or 0 }}" min="0">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="ongoing_projects" class="form-label">Ongoing Projects</label>
+                            <input type="number" class="form-control" id="ongoing_projects" name="ongoing_projects" value="{{ developer.ongoing_projects or 0 }}" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Average Rating</label>
+                            <input type="number" class="form-control" id="rating" name="rating" value="{{ developer.rating or '' }}" min="0" max="5" step="0.01" placeholder="0.00">
+                            <div class="form-text">Rating from 0.00 to 5.00</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="total_reviews" class="form-label">Total Reviews</label>
+                            <input type="number" class="form-control" id="total_reviews" name="total_reviews" value="{{ developer.total_reviews or 0 }}" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified" {% if developer.is_verified %}checked{% endif %}>
+                        <label class="form-check-label" for="is_verified">Verified Developer</label>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Update Developer</button>
+                    <a href="{{ url_for('admin.developers') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

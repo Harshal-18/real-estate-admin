@@ -1,0 +1,1738 @@
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, current_app, session, send_file, make_response
+from app import db
+from app.models import (
+    Project, Developer, City, Locality, Amenity, Approval, ProjectApproval, Tower, 
+    User, UnitType, PropertyUnit, Review, Notification, ProjectMedia,
+    ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory
+)
+from sqlalchemy import func
+from datetime import datetime, timedelta
+from werkzeug.utils import secure_filename
+import os
+import pandas as pd
+import io
+try:
+    import pdfkit
+    PDFKIT_AVAILABLE = True
+except ImportError:
+    PDFKIT_AVAILABLE = False
+from flask import session, redirect, url_for, render_template, request, flash
+from werkzeug.security import generate_password_hash, check_password_hash
+from app.models import User
+
+admin = Blueprint('admin', __name__, url_prefix='/admin')
+
+@admin.route('/')
+@admin.route('/dashboard')
+def dashboard():
+    """Admin Dashboard"""
+    # Get statistics
+    stats = {
+        'total_projects': Project.query.count(),
+        'total_developers': Developer.query.count(),
+        'total_users': User.query.count(),
+        'total_reviews': Review.query.count(),
+        'active_projects': Project.query.filter_by(is_active=True).count(),
+        'pending_approvals': ProjectApproval.query.filter_by(status='pending').count(),
+        'total_revenue': db.session.query(func.sum(PropertyUnit.total_price)).scalar() or 0,
+        'recent_projects': Project.query.order_by(Project.created_at.desc()).limit(5).all()
+    }
+    # Calculate average revenue per project (avoid division by zero)
+    avg_revenue = stats['total_revenue'] / (stats['total_projects'] if stats['total_projects'] else 1)
+    
+    # Get recent activities
+    recent_activities = []
+    
+    # Recent projects
+    recent_projects = Project.query.order_by(Project.created_at.desc()).limit(3).all()
+    for project in recent_projects:
+        recent_activities.append({
+            'type': 'project',
+            'title': f'New project "{project.name}" added',
+            'time': project.created_at,
+            'icon': 'fas fa-project-diagram'
+        })
+    
+    # Recent reviews
+    recent_reviews = Review.query.order_by(Review.created_at.desc()).limit(3).all()
+    for review in recent_reviews:
+        recent_activities.append({
+            'type': 'review',
+            'title': f'New review for project "{review.project.name}"',
+            'time': review.created_at,
+            'icon': 'fas fa-star'
+        })
+    
+    # Sort activities by time
+    recent_activities.sort(key=lambda x: x['time'], reverse=True)
+    recent_activities = recent_activities[:10]
+    
+    return render_template('admin/dashboard.html', stats=stats, avg_revenue=avg_revenue, recent_activities=recent_activities)
+
+# Projects Routes
+@admin.route('/projects')
+def projects():
+    """List all projects"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')
+    
+    query = Project.query
+    
+    if search:
+        query = query.filter(Project.name.ilike(f'%{search}%'))
+    
+    if status:
+        query = query.filter(Project.status == status)
+    
+    projects = query.order_by(Project.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/projects/index.html', projects=projects, search=search, status=status)
+
+@admin.route('/projects/new', methods=['GET', 'POST'])
+def new_project():
+    """Create new project"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        action = request.form.get('action')
+        # Convert checkbox to boolean
+        data['is_active'] = 'is_active' in request.form
+        # Handle file uploads
+        if 'master_plan' in request.files:
+            file = request.files['master_plan']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['master_plan_url'] = filename
+        if 'brochure' in request.files:
+            file = request.files['brochure']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['brochure_url'] = filename
+        if action == 'draft':
+            session['project_draft'] = data
+            flash('Draft saved! You can resume it later.', 'info')
+            return redirect(url_for('admin.new_project'))
+        else:
+            session.pop('project_draft', None)
+            data.pop('is_draft', None)  # Remove is_draft if present
+            # Prepare a new dict for Project fields with correct types
+            project_data = {}
+            # Numbers and decimals
+            for field in [
+                'total_land_area', 'unit_density', 'open_area_percentage', 'park_area', 'clubhouse_area',
+                'min_price', 'max_price', 'price_per_sqft', 'latitude', 'longitude', 'approach_road_width',
+                'nearest_metro_distance', 'airport_distance']:
+                value = data.get(field, None)
+                if value == '' or value is None:
+                    project_data[field] = None
+                else:
+                    try:
+                        project_data[field] = float(value)
+                    except Exception:
+                        project_data[field] = None
+            # Integers
+            for field in ['total_units', 'developer_id', 'locality_id']:
+                value = data.get(field, None)
+                if value == '' or value is None:
+                    project_data[field] = None
+                else:
+                    try:
+                        project_data[field] = int(value)
+                    except Exception:
+                        project_data[field] = None
+            # Dates
+            from datetime import datetime
+            for field in ['launch_date', 'possession_date', 'completion_date']:
+                value = data.get(field, None)
+                if value == '' or value is None:
+                    project_data[field] = None
+                else:
+                    try:
+                        project_data[field] = datetime.strptime(value, '%Y-%m-%d').date()
+                    except Exception:
+                        project_data[field] = None
+            # Booleans
+            project_data['is_active'] = data.get('is_active', False)
+            # Strings and other fields
+            for field in [
+                'name', 'project_type', 'property_type', 'status', 'currency', 'address',
+                'rera_number', 'rera_website', 'rera_status', 'description', 'highlights',
+                'master_plan_url', 'brochure_url', 'meta_title', 'meta_description']:
+                value = data.get(field, None)
+                project_data[field] = value if value != '' else None
+            project = Project(**project_data)
+            db.session.add(project)
+            db.session.commit()
+            flash('Project created successfully!', 'success')
+            return redirect(url_for('admin.projects'))
+    # GET: pre-fill form with draft if present
+    draft = session.get('project_draft')
+    developers = Developer.query.all()
+    localities = Locality.query.all()
+    return render_template('admin/projects/new.html', developers=developers, localities=localities, draft=draft)
+
+@admin.route('/projects/<int:project_id>')
+def view_project(project_id):
+    """View project details"""
+    project = Project.query.get_or_404(project_id)
+    return render_template('admin/projects/view.html', project=project)
+
+@admin.route('/projects/<int:project_id>/edit', methods=['GET', 'POST'])
+def edit_project(project_id):
+    """Edit project"""
+    project = Project.query.get_or_404(project_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert booleans
+        data['is_active'] = 'is_active' in request.form
+        # Convert numbers and decimals
+        for field in [
+            'total_land_area', 'unit_density', 'open_area_percentage', 'park_area', 'clubhouse_area',
+            'min_price', 'max_price', 'price_per_sqft', 'latitude', 'longitude', 'approach_road_width',
+            'nearest_metro_distance', 'airport_distance']:
+            if data.get(field):
+                try:
+                    data[field] = float(data[field])
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        # Convert integers
+        for field in ['total_units', 'developer_id', 'locality_id']:
+            if data.get(field):
+                try:
+                    data[field] = int(data[field])
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        # Convert dates
+        from datetime import datetime
+        for field in ['launch_date', 'possession_date', 'completion_date']:
+            if data.get(field):
+                try:
+                    data[field] = datetime.strptime(data[field], '%Y-%m-%d').date()
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        # Handle file uploads
+        if 'master_plan' in request.files:
+            file = request.files['master_plan']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['master_plan_url'] = filename
+        if 'brochure' in request.files:
+            file = request.files['brochure']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['brochure_url'] = filename
+        # Update all fields
+        for key, value in data.items():
+            if hasattr(project, key):
+                setattr(project, key, value)
+        db.session.commit()
+        flash('Project updated successfully!', 'success')
+        return redirect(url_for('admin.projects'))
+    
+    developers = Developer.query.all()
+    localities = Locality.query.all()
+    
+    return render_template('admin/projects/edit.html', project=project, developers=developers, localities=localities)
+
+@admin.route('/projects/<int:project_id>/delete', methods=['POST', 'DELETE'])
+@admin.route('/projects/<int:project_id>/delete/', methods=['POST', 'DELETE'])
+def delete_project(project_id):
+    """Delete project"""
+    project = Project.query.get_or_404(project_id)
+    db.session.delete(project)
+    db.session.commit()
+    if request.method == 'DELETE' or request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True, 'message': 'Project deleted successfully!'})
+    flash('Project deleted successfully!', 'success')
+    return redirect(url_for('admin.projects'))
+
+# Developers Routes
+@admin.route('/developers')
+def developers():
+    """List all developers"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = Developer.query
+    
+    if search:
+        query = query.filter(Developer.name.ilike(f'%{search}%'))
+    
+    developers = query.order_by(Developer.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/developers/index.html', developers=developers, search=search)
+
+@admin.route('/developers/new', methods=['GET', 'POST'])
+def new_developer():
+    """Create new developer"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        
+        # Handle logo upload
+        if 'logo' in request.files:
+            file = request.files['logo']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['logo_url'] = filename
+        
+        developer = Developer(**data)
+        db.session.add(developer)
+        db.session.commit()
+        
+        flash('Developer created successfully!', 'success')
+        return redirect(url_for('admin.developers'))
+    
+    return render_template('admin/developers/new.html')
+
+@admin.route('/developers/<int:developer_id>')
+def view_developer(developer_id):
+    """View developer details"""
+    developer = Developer.query.get_or_404(developer_id)
+    return render_template('admin/developers/view.html', developer=developer)
+
+@admin.route('/developers/<int:developer_id>/edit', methods=['GET', 'POST'])
+def edit_developer(developer_id):
+    """Edit developer"""
+    developer = Developer.query.get_or_404(developer_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        
+        # Handle logo upload
+        if 'logo' in request.files:
+            file = request.files['logo']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['logo_url'] = filename
+        
+        for key, value in data.items():
+            if hasattr(developer, key):
+                setattr(developer, key, value)
+        
+        db.session.commit()
+        flash('Developer updated successfully!', 'success')
+        return redirect(url_for('admin.developers'))
+    
+    return render_template('admin/developers/edit.html', developer=developer)
+
+@admin.route('/developers/<int:developer_id>/delete', methods=['POST'])
+def delete_developer(developer_id):
+    """Delete developer"""
+    developer = Developer.query.get_or_404(developer_id)
+    db.session.delete(developer)
+    db.session.commit()
+    flash('Developer deleted successfully!', 'success')
+    return redirect(url_for('admin.developers'))
+
+# Cities Routes
+@admin.route('/cities')
+def cities():
+    """List all cities"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = City.query
+    
+    if search:
+        query = query.filter(City.name.ilike(f'%{search}%'))
+    
+    cities = query.order_by(City.name).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/cities/index.html', cities=cities, search=search)
+
+@admin.route('/cities/new', methods=['GET', 'POST'])
+def new_city():
+    """Create new city"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        city = City(**data)
+        db.session.add(city)
+        db.session.commit()
+        flash('City created successfully!', 'success')
+        return redirect(url_for('admin.cities'))
+    
+    return render_template('admin/cities/new.html')
+
+@admin.route('/cities/<int:city_id>/edit', methods=['GET', 'POST'])
+def edit_city(city_id):
+    """Edit city"""
+    city = City.query.get_or_404(city_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        for key, value in data.items():
+            if hasattr(city, key):
+                setattr(city, key, value)
+        
+        db.session.commit()
+        flash('City updated successfully!', 'success')
+        return redirect(url_for('admin.cities'))
+    
+    return render_template('admin/cities/edit.html', city=city)
+
+@admin.route('/cities/<int:city_id>/delete', methods=['POST'])
+def delete_city(city_id):
+    """Delete city"""
+    city = City.query.get_or_404(city_id)
+    db.session.delete(city)
+    db.session.commit()
+    flash('City deleted successfully!', 'success')
+    return redirect(url_for('admin.cities'))
+
+@admin.route('/cities/<int:city_id>')
+def view_city(city_id):
+    city = City.query.get_or_404(city_id)
+    return render_template('admin/cities/view.html', city=city)
+
+# Amenities Routes
+@admin.route('/amenities')
+def amenities():
+    """List all amenities"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = Amenity.query
+    
+    if search:
+        query = query.filter(Amenity.name.ilike(f'%{search}%'))
+    
+    amenities = query.order_by(Amenity.name).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/amenities/index.html', amenities=amenities, search=search)
+
+@admin.route('/amenities/new', methods=['GET', 'POST'])
+def new_amenity():
+    """Create new amenity"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['is_active'] = 'is_active' in request.form
+        data['is_rare'] = 'is_rare' in request.form
+        amenity = Amenity(**data)
+        db.session.add(amenity)
+        db.session.commit()
+        flash('Amenity created successfully!', 'success')
+        return redirect(url_for('admin.amenities'))
+    
+    return render_template('admin/amenities/new.html')
+
+@admin.route('/amenities/<int:amenity_id>/edit', methods=['GET', 'POST'])
+def edit_amenity(amenity_id):
+    """Edit amenity"""
+    amenity = Amenity.query.get_or_404(amenity_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['is_active'] = 'is_active' in request.form
+        data['is_rare'] = 'is_rare' in request.form
+        for key, value in data.items():
+            if key in ['is_active', 'is_rare']:
+                setattr(amenity, key, value)
+            elif hasattr(amenity, key):
+                setattr(amenity, key, value)
+        db.session.commit()
+        flash('Amenity updated successfully!', 'success')
+        return redirect(url_for('admin.amenities'))
+    
+    return render_template('admin/amenities/edit.html', amenity=amenity)
+
+@admin.route('/amenities/<int:amenity_id>/delete', methods=['POST'])
+def delete_amenity(amenity_id):
+    """Delete amenity"""
+    amenity = Amenity.query.get_or_404(amenity_id)
+    db.session.delete(amenity)
+    db.session.commit()
+    flash('Amenity deleted successfully!', 'success')
+    return redirect(url_for('admin.amenities'))
+
+@admin.route('/amenities/<int:amenity_id>')
+def view_amenity(amenity_id):
+    amenity = Amenity.query.get_or_404(amenity_id)
+    return render_template('admin/amenities/view.html', amenity=amenity)
+
+# Approvals Routes
+@admin.route('/approvals')
+def approvals():
+    """List all approvals"""
+    page = request.args.get('page', 1, type=int)
+    category = request.args.get('category', '')
+    
+    query = Approval.query
+    
+    if category:
+        query = query.filter(Approval.category == category)
+    
+    approvals = query.order_by(Approval.approval_id.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/approvals/index.html', approvals=approvals, category=category)
+
+@admin.route('/approvals/new', methods=['GET', 'POST'])
+def new_approval():
+    """Create new approval"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['is_mandatory'] = 'is_mandatory' in request.form
+        approval = Approval(**data)
+        db.session.add(approval)
+        db.session.commit()
+        flash('Approval created successfully!', 'success')
+        return redirect(url_for('admin.approvals'))
+    
+    return render_template('admin/approvals/new.html')
+
+@admin.route('/approvals/<int:approval_id>/edit', methods=['GET', 'POST'])
+def edit_approval(approval_id):
+    """Edit approval"""
+    approval = Approval.query.get_or_404(approval_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['is_mandatory'] = 'is_mandatory' in request.form
+        for key, value in data.items():
+            if hasattr(approval, key):
+                setattr(approval, key, value)
+        
+        db.session.commit()
+        flash('Approval updated successfully!', 'success')
+        return redirect(url_for('admin.approvals'))
+    
+    return render_template('admin/approvals/edit.html', approval=approval)
+
+@admin.route('/approvals/<int:approval_id>/delete', methods=['POST'])
+def delete_approval(approval_id):
+    """Delete approval"""
+    approval = Approval.query.get_or_404(approval_id)
+    db.session.delete(approval)
+    db.session.commit()
+    flash('Approval deleted successfully!', 'success')
+    return redirect(url_for('admin.approvals'))
+
+@admin.route('/approvals/<int:approval_id>')
+def view_approval(approval_id):
+    approval = Approval.query.get_or_404(approval_id)
+    return render_template('admin/approvals/view.html', approval=approval)
+
+# Towers Routes
+@admin.route('/towers')
+def towers():
+    """List all towers"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = Tower.query
+    
+    if search:
+        query = query.filter(Tower.name.ilike(f'%{search}%'))
+    
+    towers = query.order_by(Tower.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/towers/index.html', towers=towers, search=search)
+
+@admin.route('/towers/new', methods=['GET', 'POST'])
+def new_tower():
+    """Create new tower"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert project_id to int
+        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
+        # Convert booleans
+        for field in ['has_power_backup', 'has_water_backup', 'has_fire_safety', 'is_active']:
+            data[field] = field in request.form
+        tower = Tower(**data)
+        db.session.add(tower)
+        db.session.commit()
+        flash('Tower created successfully!', 'success')
+        return redirect(url_for('admin.towers'))
+    
+    projects = Project.query.all()
+    return render_template('admin/towers/new.html', projects=projects)
+
+@admin.route('/towers/<int:tower_id>/edit', methods=['GET', 'POST'])
+def edit_tower(tower_id):
+    """Edit tower"""
+    tower = Tower.query.get_or_404(tower_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert project_id to int
+        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
+        # Convert booleans
+        for field in ['has_power_backup', 'has_water_backup', 'has_fire_safety', 'is_active']:
+            data[field] = field in request.form
+        for key, value in data.items():
+            if hasattr(tower, key):
+                setattr(tower, key, value)
+        db.session.commit()
+        flash('Tower updated successfully!', 'success')
+        return redirect(url_for('admin.towers'))
+    
+    projects = Project.query.all()
+    return render_template('admin/towers/edit.html', tower=tower, projects=projects)
+
+@admin.route('/towers/<int:tower_id>/delete', methods=['POST'])
+def delete_tower(tower_id):
+    """Delete tower"""
+    tower = Tower.query.get_or_404(tower_id)
+    db.session.delete(tower)
+    db.session.commit()
+    flash('Tower deleted successfully!', 'success')
+    return redirect(url_for('admin.towers'))
+
+@admin.route('/towers/<int:tower_id>')
+def view_tower(tower_id):
+    tower = Tower.query.get_or_404(tower_id)
+    return render_template('admin/towers/view.html', tower=tower)
+
+# Users Routes
+@admin.route('/users')
+def users():
+    """List all users"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = User.query
+    
+    if search:
+        query = query.filter(User.first_name.ilike(f'%{search}%') | User.last_name.ilike(f'%{search}%'))
+    
+    users = query.order_by(User.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/users/index.html', users=users, search=search)
+
+@admin.route('/users/new', methods=['GET', 'POST'])
+def new_user():
+    """Create new user"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        user = User(**data)
+        db.session.add(user)
+        db.session.commit()
+        flash('User created successfully!', 'success')
+        return redirect(url_for('admin.users'))
+    
+    return render_template('admin/users/new.html')
+
+@admin.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
+def edit_user(user_id):
+    """Edit user"""
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        for key, value in data.items():
+            if hasattr(user, key):
+                setattr(user, key, value)
+        
+        db.session.commit()
+        flash('User updated successfully!', 'success')
+        return redirect(url_for('admin.users'))
+    
+    return render_template('admin/users/edit.html', user=user)
+
+@admin.route('/users/<int:user_id>/delete', methods=['POST'])
+def delete_user(user_id):
+    """Delete user"""
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash('User deleted successfully!', 'success')
+    return redirect(url_for('admin.users'))
+
+@admin.route('/users/<int:user_id>')
+def view_user(user_id):
+    user = User.query.get_or_404(user_id)
+    return render_template('admin/users/view.html', user=user)
+
+# Unit Types Routes
+@admin.route('/unit-types')
+def unit_types():
+    """List all unit types"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = UnitType.query
+    
+    if search:
+        query = query.filter(UnitType.name.ilike(f'%{search}%'))
+    
+    unit_types = query.order_by(UnitType.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/unit_types/index.html', unit_types=unit_types, search=search)
+
+@admin.route('/unit-types/new', methods=['GET', 'POST'])
+def new_unit_type():
+    """Create new unit type"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        unit_type = UnitType(**data)
+        db.session.add(unit_type)
+        db.session.commit()
+        flash('Unit type created successfully!', 'success')
+        return redirect(url_for('admin.unit_types'))
+    
+    projects = Project.query.all()
+    return render_template('admin/unit_types/new.html', projects=projects)
+
+@admin.route('/unit-types/<int:unit_type_id>/edit', methods=['GET', 'POST'])
+def edit_unit_type(unit_type_id):
+    """Edit unit type"""
+    unit_type = UnitType.query.get_or_404(unit_type_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        for key, value in data.items():
+            if hasattr(unit_type, key):
+                setattr(unit_type, key, value)
+        
+        db.session.commit()
+        flash('Unit type updated successfully!', 'success')
+        return redirect(url_for('admin.unit_types'))
+    
+    projects = Project.query.all()
+    return render_template('admin/unit_types/edit.html', unit_type=unit_type, projects=projects)
+
+@admin.route('/unit-types/<int:unit_type_id>/delete', methods=['POST'])
+def delete_unit_type(unit_type_id):
+    """Delete unit type"""
+    unit_type = UnitType.query.get_or_404(unit_type_id)
+    db.session.delete(unit_type)
+    db.session.commit()
+    flash('Unit type deleted successfully!', 'success')
+    return redirect(url_for('admin.unit_types'))
+
+@admin.route('/unit-types/<int:unit_type_id>')
+def view_unit_type(unit_type_id):
+    unit_type = UnitType.query.get_or_404(unit_type_id)
+    return render_template('admin/unit_types/view.html', unit_type=unit_type)
+
+# Property Units Routes
+@admin.route('/property-units')
+def property_units():
+    """List all property units"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    
+    query = PropertyUnit.query
+    
+    if search:
+        query = query.filter(PropertyUnit.unit_number.ilike(f'%{search}%'))
+    
+    property_units = query.order_by(PropertyUnit.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/property_units/index.html', property_units=property_units, search=search)
+
+@admin.route('/property-units/new', methods=['GET', 'POST'])
+def new_property_unit():
+    """Create new property unit"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        property_unit = PropertyUnit(**data)
+        db.session.add(property_unit)
+        db.session.commit()
+        flash('Property unit created successfully!', 'success')
+        return redirect(url_for('admin.property_units'))
+    
+    projects = Project.query.all()
+    towers = Tower.query.all()
+    unit_types = UnitType.query.all()
+    
+    return render_template('admin/property_units/new.html', projects=projects, towers=towers, unit_types=unit_types)
+
+@admin.route('/property-units/<int:unit_id>/edit', methods=['GET', 'POST'])
+def edit_property_unit(unit_id):
+    """Edit property unit"""
+    property_unit = PropertyUnit.query.get_or_404(unit_id)
+    
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        for key, value in data.items():
+            if hasattr(property_unit, key):
+                setattr(property_unit, key, value)
+        
+        db.session.commit()
+        flash('Property unit updated successfully!', 'success')
+        return redirect(url_for('admin.property_units'))
+    
+    projects = Project.query.all()
+    towers = Tower.query.all()
+    unit_types = UnitType.query.all()
+    
+    return render_template('admin/property_units/edit.html', property_unit=property_unit, projects=projects, towers=towers, unit_types=unit_types)
+
+@admin.route('/property-units/<int:unit_id>/delete', methods=['POST'])
+def delete_property_unit(unit_id):
+    """Delete property unit"""
+    property_unit = PropertyUnit.query.get_or_404(unit_id)
+    db.session.delete(property_unit)
+    db.session.commit()
+    flash('Property unit deleted successfully!', 'success')
+    return redirect(url_for('admin.property_units'))
+
+@admin.route('/property-units/<int:unit_id>')
+def view_property_unit(unit_id):
+    property_unit = PropertyUnit.query.get_or_404(unit_id)
+    return render_template('admin/property_units/view.html', property_unit=property_unit)
+
+# Reviews Routes
+@admin.route('/reviews')
+def reviews():
+    """List all reviews"""
+    page = request.args.get('page', 1, type=int)
+    rating = request.args.get('rating', '')
+    
+    query = Review.query
+    
+    if rating:
+        query = query.filter(Review.rating == int(rating))
+    
+    reviews = query.order_by(Review.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/reviews/index.html', reviews=reviews, rating=rating)
+
+@admin.route('/reviews/new', methods=['GET', 'POST'])
+def new_review():
+    """Create new review"""
+    from app.models import Project, Developer, User, Review
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['is_verified'] = 'is_verified' in request.form
+        # Convert IDs to int
+        for field in ['project_id', 'developer_id', 'user_id', 'rating', 'construction_quality_rating', 'amenities_rating', 'location_rating', 'value_for_money_rating']:
+            if data.get(field):
+                try:
+                    data[field] = int(data[field])
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        review = Review(**data)
+        db.session.add(review)
+        db.session.commit()
+        flash('Review created successfully!', 'success')
+        return redirect(url_for('admin.reviews'))
+    projects = Project.query.all()
+    developers = Developer.query.all()
+    users = User.query.all()
+    return render_template('admin/reviews/new.html', projects=projects, developers=developers, users=users)
+
+@admin.route('/reviews/<int:review_id>/edit', methods=['GET', 'POST'])
+def edit_review(review_id):
+    """Edit review"""
+    from app.models import Project, Developer, User, Review
+    review = Review.query.get_or_404(review_id)
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['is_verified'] = 'is_verified' in request.form
+        # Convert IDs to int
+        for field in ['project_id', 'developer_id', 'user_id', 'rating', 'construction_quality_rating', 'amenities_rating', 'location_rating', 'value_for_money_rating']:
+            if data.get(field):
+                try:
+                    data[field] = int(data[field])
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        for key, value in data.items():
+            if hasattr(review, key):
+                setattr(review, key, value)
+        db.session.commit()
+        flash('Review updated successfully!', 'success')
+        return redirect(url_for('admin.reviews'))
+    projects = Project.query.all()
+    developers = Developer.query.all()
+    users = User.query.all()
+    return render_template('admin/reviews/edit.html', review=review, projects=projects, developers=developers, users=users)
+
+@admin.route('/reviews/<int:review_id>/delete', methods=['POST'])
+def delete_review(review_id):
+    """Delete review"""
+    review = Review.query.get_or_404(review_id)
+    db.session.delete(review)
+    db.session.commit()
+    flash('Review deleted successfully!', 'success')
+    return redirect(url_for('admin.reviews'))
+
+@admin.route('/reviews/<int:review_id>')
+def view_review(review_id):
+    review = Review.query.get_or_404(review_id)
+    return render_template('admin/reviews/view.html', review=review)
+
+# Notifications Routes
+@admin.route('/notifications')
+def notifications():
+    """List all notifications"""
+    page = request.args.get('page', 1, type=int)
+    is_read = request.args.get('is_read', '')
+    
+    query = Notification.query
+    
+    if is_read:
+        query = query.filter(Notification.is_read == (is_read == 'true'))
+    
+    notifications = query.order_by(Notification.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/notifications/index.html', notifications=notifications, is_read=is_read)
+
+@admin.route('/notifications/new', methods=['GET', 'POST'])
+def new_notification():
+    """Create new notification"""
+    from app.models import Project, User, Notification
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert booleans
+        data['is_read'] = 'is_read' in request.form
+        data['is_sent'] = 'is_sent' in request.form
+        # Convert IDs to int
+        for field in ['user_id', 'related_project_id']:
+            if data.get(field):
+                try:
+                    data[field] = int(data[field])
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        notification = Notification(**data)
+        db.session.add(notification)
+        db.session.commit()
+        flash('Notification created successfully!', 'success')
+        return redirect(url_for('admin.notifications'))
+    users = User.query.all()
+    projects = Project.query.all()
+    return render_template('admin/notifications/new.html', users=users, projects=projects)
+
+@admin.route('/notifications/<int:notification_id>/edit', methods=['GET', 'POST'])
+def edit_notification(notification_id):
+    """Edit notification"""
+    from app.models import Project, User, Notification
+    notification = Notification.query.get_or_404(notification_id)
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert booleans
+        data['is_read'] = 'is_read' in request.form
+        data['is_sent'] = 'is_sent' in request.form
+        # Convert IDs to int
+        for field in ['user_id', 'related_project_id']:
+            if data.get(field):
+                try:
+                    data[field] = int(data[field])
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        for key, value in data.items():
+            if hasattr(notification, key):
+                setattr(notification, key, value)
+        db.session.commit()
+        flash('Notification updated successfully!', 'success')
+        return redirect(url_for('admin.notifications'))
+    users = User.query.all()
+    projects = Project.query.all()
+    return render_template('admin/notifications/edit.html', notification=notification, users=users, projects=projects)
+
+@admin.route('/notifications/<int:notification_id>/delete', methods=['POST'])
+def delete_notification(notification_id):
+    """Delete notification"""
+    notification = Notification.query.get_or_404(notification_id)
+    db.session.delete(notification)
+    db.session.commit()
+    flash('Notification deleted successfully!', 'success')
+    return redirect(url_for('admin.notifications'))
+
+@admin.route('/notifications/<int:notification_id>')
+def view_notification(notification_id):
+    notification = Notification.query.get_or_404(notification_id)
+    return render_template('admin/notifications/view.html', notification=notification)
+
+# Media Routes
+@admin.route('/media')
+def media():
+    """List all media"""
+    page = request.args.get('page', 1, type=int)
+    media_type = request.args.get('type', '')
+    
+    query = ProjectMedia.query
+    
+    if media_type:
+        query = query.filter(ProjectMedia.media_type == media_type)
+    
+    media = query.order_by(ProjectMedia.created_at.desc()).paginate(
+        page=page, per_page=12, error_out=False
+    )
+    
+    return render_template('admin/media/index.html', media=media, media_type=media_type)
+
+@admin.route('/media/new', methods=['GET', 'POST'])
+def new_media():
+    """Upload new media"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert is_active checkbox to boolean
+        data['is_active'] = 'is_active' in request.form
+        # Convert project_id to int if present
+        if data.get('project_id'):
+            try:
+                data['project_id'] = int(data['project_id'])
+            except Exception:
+                data['project_id'] = None
+        else:
+            data['project_id'] = None
+        # Handle file upload for media_url
+        if 'media_url' in request.files:
+            file = request.files['media_url']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['media_url'] = filename
+            else:
+                data['media_url'] = None
+        media = ProjectMedia(**data)
+        db.session.add(media)
+        db.session.commit()
+        flash('Media uploaded successfully!', 'success')
+        return redirect(url_for('admin.media'))
+    projects = Project.query.all()
+    return render_template('admin/media/new.html', projects=projects)
+
+@admin.route('/media/<int:media_id>/edit', methods=['GET', 'POST'])
+def edit_media(media_id):
+    """Edit media"""
+    media = ProjectMedia.query.get_or_404(media_id)
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert is_active checkbox to boolean
+        data['is_active'] = 'is_active' in request.form
+        # Convert project_id to int if present
+        if data.get('project_id'):
+            try:
+                data['project_id'] = int(data['project_id'])
+            except Exception:
+                data['project_id'] = None
+        else:
+            data['project_id'] = None
+        # Handle file upload for media_url (optional)
+        if 'media_url' in request.files:
+            file = request.files['media_url']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['media_url'] = filename
+            else:
+                data['media_url'] = media.media_url  # keep current file if blank
+        else:
+            data['media_url'] = media.media_url
+        # Update all fields
+        for key, value in data.items():
+            if hasattr(media, key):
+                setattr(media, key, value)
+        db.session.commit()
+        flash('Media updated successfully!', 'success')
+        return redirect(url_for('admin.media'))
+    projects = Project.query.all()
+    return render_template('admin/media/edit.html', media=media, projects=projects)
+
+@admin.route('/media/<int:media_id>/delete', methods=['POST'])
+def delete_media(media_id):
+    """Delete media"""
+    media = ProjectMedia.query.get_or_404(media_id)
+    db.session.delete(media)
+    db.session.commit()
+    flash('Media deleted successfully!', 'success')
+    return redirect(url_for('admin.media'))
+
+@admin.route('/media/<int:media_id>')
+def view_media(media_id):
+    media = ProjectMedia.query.get_or_404(media_id)
+    return render_template('admin/media/view.html', media=media)
+
+# Documents Routes
+@admin.route('/documents')
+def documents():
+    """List all documents"""
+    page = request.args.get('page', 1, type=int)
+    doc_type = request.args.get('type', '')
+    
+    query = ProjectDocument.query
+    
+    if doc_type:
+        query = query.filter(ProjectDocument.document_type == doc_type)
+    
+    documents = query.order_by(ProjectDocument.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/documents/index.html', documents=documents, doc_type=doc_type)
+
+@admin.route('/documents/new', methods=['GET', 'POST'])
+def new_document():
+    """Upload new document"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert is_public checkbox to boolean
+        data['is_public'] = 'is_public' in request.form
+        # Convert project_id to int if present
+        if data.get('project_id'):
+            try:
+                data['project_id'] = int(data['project_id'])
+            except Exception:
+                data['project_id'] = None
+        else:
+            data['project_id'] = None
+        # Handle file upload for file_url, file_size, file_type
+        if 'file_url' in request.files:
+            file = request.files['file_url']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['file_url'] = filename
+                data['file_size'] = file.content_length or os.path.getsize(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['file_type'] = file.mimetype
+            else:
+                data['file_url'] = None
+                data['file_size'] = None
+                data['file_type'] = None
+        else:
+            data['file_url'] = None
+            data['file_size'] = None
+            data['file_type'] = None
+        # Ensure file_size is int or None
+        try:
+            if data.get('file_size') in [None, '', 'None']:
+                data['file_size'] = None
+            else:
+                data['file_size'] = int(data['file_size'])
+        except Exception:
+            data['file_size'] = None
+        # Ensure download_count is int or 0
+        try:
+            if data.get('download_count') in [None, '', 'None']:
+                data['download_count'] = 0
+            else:
+                data['download_count'] = int(data['download_count'])
+        except Exception:
+            data['download_count'] = 0
+        document = ProjectDocument(**data)
+        db.session.add(document)
+        db.session.commit()
+        flash('Document uploaded successfully!', 'success')
+        return redirect(url_for('admin.documents'))
+    projects = Project.query.all()
+    return render_template('admin/documents/new.html', projects=projects)
+
+@admin.route('/documents/<int:document_id>/edit', methods=['GET', 'POST'])
+def edit_document(document_id):
+    """Edit document"""
+    document = ProjectDocument.query.get_or_404(document_id)
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert is_public checkbox to boolean
+        data['is_public'] = 'is_public' in request.form
+        # Convert project_id to int if present
+        if data.get('project_id'):
+            try:
+                data['project_id'] = int(data['project_id'])
+            except Exception:
+                data['project_id'] = None
+        else:
+            data['project_id'] = None
+        # Handle file upload for file_url, file_size, file_type (optional)
+        if 'file_url' in request.files:
+            file = request.files['file_url']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['file_url'] = filename
+                data['file_size'] = file.content_length or os.path.getsize(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+                data['file_type'] = file.mimetype
+            else:
+                data['file_url'] = document.file_url
+                data['file_size'] = document.file_size
+                data['file_type'] = document.file_type
+        else:
+            data['file_url'] = document.file_url
+            data['file_size'] = document.file_size
+            data['file_type'] = document.file_type
+        # Ensure file_size is int or None
+        try:
+            if data.get('file_size') in [None, '', 'None']:
+                data['file_size'] = None
+            else:
+                data['file_size'] = int(data['file_size'])
+        except Exception:
+            data['file_size'] = None
+        # Ensure download_count is int or 0
+        try:
+            if data.get('download_count') in [None, '', 'None']:
+                data['download_count'] = 0
+            else:
+                data['download_count'] = int(data['download_count'])
+        except Exception:
+            data['download_count'] = 0
+        # Update all fields
+        for key, value in data.items():
+            if hasattr(document, key):
+                setattr(document, key, value)
+        db.session.commit()
+        flash('Document updated successfully!', 'success')
+        return redirect(url_for('admin.documents'))
+    projects = Project.query.all()
+    return render_template('admin/documents/edit.html', document=document, projects=projects)
+
+@admin.route('/documents/<int:document_id>/delete', methods=['POST'])
+def delete_document(document_id):
+    """Delete document"""
+    document = ProjectDocument.query.get_or_404(document_id)
+    db.session.delete(document)
+    db.session.commit()
+    flash('Document deleted successfully!', 'success')
+    return redirect(url_for('admin.documents'))
+
+@admin.route('/documents/<int:document_id>')
+def view_document(document_id):
+    document = ProjectDocument.query.get_or_404(document_id)
+    return render_template('admin/documents/view.html', document=document)
+
+@admin.route('/documents/export/<export_type>')
+def export_documents(export_type):
+    """Export documents data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    documents = ProjectDocument.query.all()
+    data = []
+    for d in documents:
+        data.append({
+            'ID': d.document_id,
+            'Project': d.project.name if d.project else '',
+            'Title': d.title or '',
+            'Description': d.description or '',
+            'File Name': d.file_name or '',
+            'File Type': d.file_type or '',
+            'File Size': d.file_size or '',
+            'Download Count': d.download_count or 0,
+            'Is Public': 'Yes' if d.is_public else 'No',
+            'Created': d.created_at.strftime('%Y-%m-%d') if d.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='documents.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Documents')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='documents.xlsx')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.documents'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='documents.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.documents'))
+
+ 
+@admin.route('/projects/export/<string:export_type>')
+def export_projects(export_type):
+    # Query all projects (no pagination)
+    projects = Project.query.order_by(Project.created_at.desc()).all()
+    data = []
+    for p in projects:
+        data.append({
+            'Name': p.name,
+            'Developer': p.developer.name if p.developer else '',
+            'Type': p.property_type,
+            'Status': p.status,
+            'Location': (p.locality.name + (', ' + p.locality.city.name if p.locality and p.locality.city else '')) if p.locality else '',
+            'Price Range': f"{p.min_price or ''} - {p.max_price or ''}",
+            'Units': p.total_units,
+            'Created': p.created_at.strftime('%Y-%m-%d') if p.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'excel':
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name='projects.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    elif export_type == 'csv':
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(io.BytesIO(output.getvalue().encode()), as_attachment=True, download_name='projects.csv', mimetype='text/csv')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            return 'PDF export requires pdfkit and wkhtmltopdf installed.', 501
+        # Render a simple HTML table for PDF
+        html = '<h2>Projects List</h2>' + df.to_html(index=False, border=0)
+        pdf = pdfkit.from_string(html, False)
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=projects.pdf'
+        return response
+    else:
+        return 'Invalid export type', 400
+
+ 
+@admin.route('/developers/export/<string:export_type>')
+def export_developers(export_type):
+    # Query all developers (no pagination)
+    developers = Developer.query.order_by(Developer.created_at.desc()).all()
+    data = []
+    for d in developers:
+        data.append({
+            'Name': d.name,
+            'Established Year': d.established_year or '',
+            'Email': d.contact_email or '',
+            'Phone': d.contact_phone or '',
+            'Website': d.website_url or '',
+            'Address': d.address or '',
+            'Total Projects': d.total_projects or 0,
+            'Completed Projects': d.completed_projects or 0,
+            'Ongoing Projects': d.ongoing_projects or 0,
+            'Rating': d.rating or '',
+            'Total Reviews': d.total_reviews or 0,
+            'Verified': 'Yes' if d.is_verified else 'No',
+            'Created': d.created_at.strftime('%Y-%m-%d') if d.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'excel':
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name='developers.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    elif export_type == 'csv':
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(io.BytesIO(output.getvalue().encode()), as_attachment=True, download_name='developers.csv', mimetype='text/csv')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            return 'PDF export requires pdfkit and wkhtmltopdf installed.', 501
+        html = '<h2>Developers List</h2>' + df.to_html(index=False, border=0)
+        pdf = pdfkit.from_string(html, False)
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=developers.pdf'
+        return response
+    else:
+        return 'Invalid export type', 400
+
+ 
+@admin.route('/cities/export/<string:export_type>')
+def export_cities(export_type):
+    cities = City.query.order_by(City.name).all()
+    data = []
+    for c in cities:
+        data.append({
+            'City Name': c.name,
+            'State': c.state,
+            'Country': c.country,
+            'Created': c.created_at.strftime('%Y-%m-%d') if c.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'excel':
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name='cities.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    elif export_type == 'csv':
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(io.BytesIO(output.getvalue().encode()), as_attachment=True, download_name='cities.csv', mimetype='text/csv')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            return 'PDF export requires pdfkit and wkhtmltopdf installed.', 501
+        html = '<h2>Cities List</h2>' + df.to_html(index=False, border=0)
+        pdf = pdfkit.from_string(html, False)
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=cities.pdf'
+        return response
+    else:
+        return 'Invalid export type', 400
+
+ 
+@admin.route('/amenities/export/<string:export_type>')
+def export_amenities(export_type):
+    amenities = Amenity.query.order_by(Amenity.name).all()
+    data = []
+    for a in amenities:
+        data.append({
+            'Amenity Name': a.name,
+            'Category': a.category,
+            'Description': a.description or '',
+            'Icon': a.icon_url or '',
+            'Status': 'Active' if a.is_active else 'Inactive',
+            'Created': a.created_at.strftime('%Y-%m-%d') if a.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'excel':
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name='amenities.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    elif export_type == 'csv':
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(io.BytesIO(output.getvalue().encode()), as_attachment=True, download_name='amenities.csv', mimetype='text/csv')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            return 'PDF export requires pdfkit and wkhtmltopdf installed.', 501
+        html = '<h2>Amenities List</h2>' + df.to_html(index=False, border=0)
+        pdf = pdfkit.from_string(html, False)
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=amenities.pdf'
+        return response
+    else:
+        return 'Invalid export type', 400
+
+ 
+@admin.route('/approvals/export/<export_type>')
+def export_approvals(export_type):
+    """Export approvals data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    approvals = Approval.query.all()
+    data = []
+    for approval in approvals:
+        data.append({
+            'ID': approval.approval_id,
+            'Project': approval.project.name if approval.project else '',
+            'Type': approval.approval_type or '',
+            'Title': approval.title or '',
+            'Description': approval.description or '',
+            'Status': approval.status or '',
+            'Issued By': approval.issued_by or '',
+            'Issued Date': approval.issued_date.strftime('%Y-%m-%d') if approval.issued_date else '',
+            'Expiry Date': approval.expiry_date.strftime('%Y-%m-%d') if approval.expiry_date else '',
+            'Active': 'Yes' if approval.is_active else 'No',
+            'Created': approval.created_at.strftime('%Y-%m-%d') if approval.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='approvals.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Approvals')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='approvals.xlsx')
+    elif export_type == 'pdf':
+        # Optional: implement PDF export if pdfkit is available
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.approvals'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='approvals.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.approvals'))
+
+ 
+@admin.route('/towers/export/<export_type>')
+def export_towers(export_type):
+    """Export towers data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    towers = Tower.query.all()
+    data = []
+    for tower in towers:
+        data.append({
+            'ID': tower.tower_id,
+            'Project': tower.project.name if tower.project else '',
+            'Name': tower.name or '',
+            'Floors': tower.floors or '',
+            'Units': tower.units or '',
+            'Has Power Backup': 'Yes' if tower.has_power_backup else 'No',
+            'Has Water Backup': 'Yes' if tower.has_water_backup else 'No',
+            'Has Fire Safety': 'Yes' if tower.has_fire_safety else 'No',
+            'Active': 'Yes' if tower.is_active else 'No',
+            'Created': tower.created_at.strftime('%Y-%m-%d') if tower.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='towers.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Towers')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='towers.xlsx')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.towers'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='towers.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.towers'))
+
+ 
+@admin.route('/users/export/<export_type>')
+def export_users(export_type):
+    """Export users data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    users = User.query.all()
+    data = []
+    for user in users:
+        data.append({
+            'ID': user.user_id,
+            'First Name': user.first_name or '',
+            'Last Name': user.last_name or '',
+            'Full Name': user.full_name,
+            'Email': user.email,
+            'Phone': user.phone or '',
+            'Role': 'Admin' if user.is_admin else 'User',
+            'Active': 'Yes' if user.is_active else 'No',
+            'Created': user.created_at.strftime('%Y-%m-%d') if user.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='users.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Users')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='users.xlsx')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.users'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='users.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.users'))
+
+ 
+@admin.route('/unit-types/export/<export_type>')
+def export_unit_types(export_type):
+    """Export unit types data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    unit_types = UnitType.query.all()
+    data = []
+    for unit_type in unit_types:
+        data.append({
+            'ID': unit_type.unit_type_id,
+            'Name': unit_type.name or '',
+            'Category': unit_type.category or '',
+            'Area (sqft)': unit_type.area_sqft or '',
+            'Beds': unit_type.beds or '',
+            'Baths': unit_type.baths or '',
+            'Active': 'Yes' if unit_type.is_active else 'No',
+            'Created': unit_type.created_at.strftime('%Y-%m-%d') if unit_type.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='unit_types.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='UnitTypes')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='unit_types.xlsx')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.unit_types'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='unit_types.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.unit_types'))
+
+ 
+@admin.route('/property-units/export/<export_type>')
+def export_property_units(export_type):
+    """Export property units data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    property_units = PropertyUnit.query.all()
+    data = []
+    for unit in property_units:
+        data.append({
+            'ID': unit.unit_id,
+            'Project': unit.project.name if unit.project else '',
+            'Tower': unit.tower.name if unit.tower else '',
+            'Unit Type': unit.unit_type.name if unit.unit_type else '',
+            'Unit Number': unit.unit_number or '',
+            'Floor': unit.floor or '',
+            'Area (sqft)': unit.area_sqft or '',
+            'Status': unit.status or '',
+            'Active': 'Yes' if unit.is_active else 'No',
+            'Created': unit.created_at.strftime('%Y-%m-%d') if unit.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='property_units.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='PropertyUnits')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='property_units.xlsx')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.property_units'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='property_units.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.property_units'))
+
+ 
+@admin.route('/notifications/export/<export_type>')
+def export_notifications(export_type):
+    """Export notifications data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    notifications = Notification.query.all()
+    data = []
+    for n in notifications:
+        data.append({
+            'ID': n.notification_id,
+            'User': n.user.full_name if n.user else '',
+            'Type': n.type or '',
+            'Title': n.title or '',
+            'Message': n.message or '',
+            'Project': n.related_project.name if n.related_project else '',
+            'Read': 'Yes' if n.is_read else 'No',
+            'Sent': 'Yes' if n.is_sent else 'No',
+            'Created': n.created_at.strftime('%Y-%m-%d') if n.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='notifications.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Notifications')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='notifications.xlsx')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.notifications'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='notifications.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.notifications'))
+
+ 
+@admin.route('/media/export/<export_type>')
+def export_media(export_type):
+    """Export media data as CSV, Excel, or PDF"""
+    import pandas as pd
+    from io import BytesIO, StringIO
+    media_items = ProjectMedia.query.all()
+    data = []
+    for m in media_items:
+        data.append({
+            'ID': m.media_id,
+            'Project': m.project.name if m.project else '',
+            'Type': m.media_type or '',
+            'Category': m.media_category or '',
+            'Title': m.title or '',
+            'Description': m.description or '',
+            'URL': m.media_url or '',
+            'Active': 'Yes' if m.is_active else 'No',
+            'Created': m.created_at.strftime('%Y-%m-%d') if m.created_at else '',
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='media.csv')
+    elif export_type == 'excel':
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Media')
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', as_attachment=True, download_name='media.xlsx')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            flash('PDF export is not available. Please install pdfkit.', 'danger')
+            return redirect(url_for('admin.media'))
+        html = df.to_html(index=False)
+        pdf = pdfkit.from_string(html, False)
+        return send_file(BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name='media.pdf')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.media'))
+
+ 

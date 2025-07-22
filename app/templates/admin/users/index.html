@@ -1,0 +1,160 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Users - Real Estate Admin Panel{% endblock %}
+{% block page_title %}Users Management{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="search-filter mb-3">
+    <form method="GET" action="{{ url_for('admin.users') }}">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Users</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by user name or email...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Users Table (refactored to match projects/towers page) -->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Users</h4>
+            <a href="{{ url_for('admin.new_user') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New User
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Active</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users.items %}
+                    <tr>
+                        <td>{{ user.user_id }}</td>
+                        <td>{{ user.full_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.phone or 'N/A' }}</td>
+                        <td>{{ 'Admin' if user.is_admin else 'User' }}</td>
+                        <td><span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">{{ 'Yes' if user.is_active else 'No' }}</span></td>
+                        <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_user', user_id=user.user_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('admin.edit_user', user_id=user.user_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.user_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?")" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination and Results Summary (unchanged) -->
+        {% if users.pages > 1 %}
+        <nav aria-label="Users pagination">
+            <ul class="pagination">
+                {% if users.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.users', page=users.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_num in users.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != users.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.users', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if users.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.users', page=users.next_num, search=search) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        <div class="text-muted mt-3">
+            Showing {{ users.items|length }} of {{ users.total }} users
+            {% if search %}(filtered results){% endif %}
+        </div>
+    </div>
+</div>
+<!-- Export Options (unchanged) -->
+{% if users.items %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-download"></i> Export Options</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_users', export_type='csv') }}'" download>
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-danger w-100" onclick="exportData('pdf', '{{ url_for('admin.users') }}')">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary w-100" onclick="exportData('excel', '{{ url_for('admin.users') }}')">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('[data-bs-toggle="tooltip"]').tooltip();
+    function filterUsersTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterUsersTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %} 

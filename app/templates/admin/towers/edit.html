@@ -1,0 +1,118 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Tower - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Edit Tower</h1>
+        <a href="{{ url_for('admin.towers') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Towers
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tower_name" class="form-label">Tower Name *</label>
+                            <input type="text" class="form-control" id="tower_name" name="tower_name" value="{{ tower.tower_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tower_number" class="form-label">Tower Number</label>
+                            <input type="text" class="form-control" id="tower_number" name="tower_number" value="{{ tower.tower_number or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="total_floors" class="form-label">Total Floors *</label>
+                            <input type="number" class="form-control" id="total_floors" name="total_floors" value="{{ tower.total_floors or '' }}" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="units_per_floor" class="form-label">Units Per Floor</label>
+                            <input type="number" class="form-control" id="units_per_floor" name="units_per_floor" value="{{ tower.units_per_floor or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="total_units" class="form-label">Total Units</label>
+                            <input type="number" class="form-control" id="total_units" name="total_units" value="{{ tower.total_units or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="tower_type" class="form-label">Tower Type</label>
+                            <select class="form-select" id="tower_type" name="tower_type">
+                                <option value="">Select Type</option>
+                                <option value="residential" {% if tower.tower_type == 'residential' %}selected{% endif %}>Residential</option>
+                                <option value="commercial" {% if tower.tower_type == 'commercial' %}selected{% endif %}>Commercial</option>
+                                <option value="mixed" {% if tower.tower_type == 'mixed' %}selected{% endif %}>Mixed</option>
+                                <option value="other" {% if tower.tower_type == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="construction_status" class="form-label">Construction Status</label>
+                            <select class="form-select" id="construction_status" name="construction_status">
+                                <option value="under_construction" {% if tower.construction_status == 'under_construction' %}selected{% endif %}>Under Construction</option>
+                                <option value="completed" {% if tower.construction_status == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="other" {% if tower.construction_status == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="possession_date" class="form-label">Possession Date</label>
+                            <input type="date" class="form-control" id="possession_date" name="possession_date" value="{{ tower.possession_date.strftime('%Y-%m-%d') if tower.possession_date else '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="height_meters" class="form-label">Height (meters)</label>
+                            <input type="number" step="0.01" class="form-control" id="height_meters" name="height_meters" value="{{ tower.height_meters or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="elevator_count" class="form-label">Elevator Count</label>
+                            <input type="number" class="form-control" id="elevator_count" name="elevator_count" value="{{ tower.elevator_count or '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="project_id" class="form-label">Project *</label>
+                            <select class="form-select" id="project_id" name="project_id" required>
+                                <option value="">Select Project</option>
+                                {% for project in projects %}
+                                <option value="{{ project.project_id }}" {% if tower.project_id == project.project_id %}selected{% endif %}>{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="latitude" class="form-label">Latitude</label>
+                            <input type="number" step="0.00000001" class="form-control" id="latitude" name="latitude" value="{{ tower.latitude or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="longitude" class="form-label">Longitude</label>
+                            <input type="number" step="0.00000001" class="form-control" id="longitude" name="longitude" value="{{ tower.longitude or '' }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="facing_direction" class="form-label">Facing Direction</label>
+                            <input type="text" class="form-control" id="facing_direction" name="facing_direction" value="{{ tower.facing_direction or '' }}">
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="has_power_backup" name="has_power_backup" {% if tower.has_power_backup %}checked{% endif %}>
+                            <label class="form-check-label" for="has_power_backup">Power Backup</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="has_water_backup" name="has_water_backup" {% if tower.has_water_backup %}checked{% endif %}>
+                            <label class="form-check-label" for="has_water_backup">Water Backup</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="has_fire_safety" name="has_fire_safety" {% if tower.has_fire_safety %}checked{% endif %}>
+                            <label class="form-check-label" for="has_fire_safety">Fire Safety</label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if tower.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">Active</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Update Tower</button>
+                    <a href="{{ url_for('admin.towers') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

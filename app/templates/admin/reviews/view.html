@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Review #{{ review.review_id }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Review #{{ review.review_id }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_review', review_id=review.review_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.reviews') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Reviews
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Review Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Review ID:</strong> {{ review.review_id }}</p>
+                    <p><strong>User:</strong> {{ review.user.full_name if review.user else 'N/A' }}</p>
+                    <p><strong>Project:</strong> {{ review.project.name if review.project else 'N/A' }}</p>
+                    <p><strong>Developer:</strong> {{ review.developer.name if review.developer else 'N/A' }}</p>
+                    <p><strong>Rating:</strong> <span class="badge bg-warning">{{ review.rating }}/5</span></p>
+                    <p><strong>Title:</strong> {{ review.title or 'N/A' }}</p>
+                    <p><strong>Review:</strong> {{ review.review_text or 'N/A' }}</p>
+                    <p><strong>Pros:</strong> {{ review.pros or 'N/A' }}</p>
+                    <p><strong>Cons:</strong> {{ review.cons or 'N/A' }}</p>
+                    <p><strong>Construction Quality:</strong> {{ review.construction_quality_rating or 'N/A' }}</p>
+                    <p><strong>Amenities:</strong> {{ review.amenities_rating or 'N/A' }}</p>
+                    <p><strong>Location:</strong> {{ review.location_rating or 'N/A' }}</p>
+                    <p><strong>Value for Money:</strong> {{ review.value_for_money_rating or 'N/A' }}</p>
+                    <p><strong>Verified:</strong> <span class="badge bg-{{ 'success' if review.is_verified else 'secondary' }}">{{ 'Yes' if review.is_verified else 'No' }}</span></p>
+                    <p><strong>Created:</strong> {{ review.created_at.strftime('%Y-%m-%d %H:%M') if review.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ approval.name }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ approval.name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_approval', approval_id=approval.approval_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.approvals') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Approvals
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Approval Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Approval ID:</strong> {{ approval.approval_id }}</p>
+                    <p><strong>Name:</strong> {{ approval.name }}</p>
+                    <p><strong>Category:</strong> {{ approval.category or 'N/A' }}</p>
+                    <p><strong>Description:</strong> {{ approval.description or 'N/A' }}</p>
+                    <p><strong>Is Mandatory:</strong> <span class="badge bg-{{ 'success' if approval.is_mandatory else 'secondary' }}">{{ 'Yes' if approval.is_mandatory else 'No' }}</span></p>
+                    <p><strong>Created:</strong> {{ approval.created_at.strftime('%Y-%m-%d %H:%M') if approval.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

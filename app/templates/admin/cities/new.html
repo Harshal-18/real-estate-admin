@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add New City - Real Estate Admin Panel{% endblock %}
+{% block page_title %}Add New City{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-plus"></i> Create New City</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="cityForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">City Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="state" class="form-label">State *</label>
+                        <input type="text" class="form-control" id="state" name="state" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="country" class="form-label">Country *</label>
+                        <input type="text" class="form-control" id="country" name="country" value="India" required>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="latitude" class="form-label">Latitude (-90 to 90)</label>
+                        <input type="number" step="0.00000001" min="-90" max="90" class="form-control" id="latitude" name="latitude" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="longitude" class="form-label">Longitude (-180 to 180)</label>
+                        <input type="number" step="0.00000001" min="-180" max="180" class="form-control" id="longitude" name="longitude" placeholder="Optional">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.cities') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Cities
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create City
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

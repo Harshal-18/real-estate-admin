@@ -1,0 +1,99 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ project.name }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ project.name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_project', project_id=project.project_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Projects
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Project Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Project ID:</strong> {{ project.project_id }}</p>
+                            <p><strong>Name:</strong> {{ project.name }}</p>
+                            <p><strong>Developer:</strong> {{ project.developer.name if project.developer else 'N/A' }}</p>
+                            <p><strong>Locality:</strong> {{ project.locality.name if project.locality else 'N/A' }}</p>
+                            <p><strong>Project Type:</strong> {{ project.project_type or 'N/A' }}</p>
+                            <p><strong>Property Type:</strong> {{ project.property_type or 'N/A' }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{{ 'success' if project.status == 'active' else 'warning' if project.status == 'pending' else 'secondary' }}">
+                                    {{ project.status or 'N/A' }}
+                                </span>
+                            </p>
+                            <p><strong>Description:</strong> {{ project.description or 'N/A' }}</p>
+                            <p><strong>Highlights:</strong> {{ project.highlights or 'N/A' }}</p>
+                            <p><strong>Address:</strong> {{ project.address or 'N/A' }}</p>
+                            <p><strong>Latitude:</strong> {{ project.latitude or 'N/A' }}</p>
+                            <p><strong>Longitude:</strong> {{ project.longitude or 'N/A' }}</p>
+                            <p><strong>Approach Road Width (m):</strong> {{ project.approach_road_width or 'N/A' }}</p>
+                            <p><strong>Nearest Metro Distance (km):</strong> {{ project.nearest_metro_distance or 'N/A' }}</p>
+                            <p><strong>Airport Distance (km):</strong> {{ project.airport_distance or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Total Land Area (acres):</strong> {{ project.total_land_area or 'N/A' }}</p>
+                            <p><strong>Total Units:</strong> {{ project.total_units or 'N/A' }}</p>
+                            <p><strong>Unit Density (per acre):</strong> {{ project.unit_density or 'N/A' }}</p>
+                            <p><strong>Open Area (%):</strong> {{ project.open_area_percentage or 'N/A' }}</p>
+                            <p><strong>Park Area (acres):</strong> {{ project.park_area or 'N/A' }}</p>
+                            <p><strong>Clubhouse Area (sq ft):</strong> {{ project.clubhouse_area or 'N/A' }}</p>
+                            <p><strong>Min Price:</strong> {{ project.min_price or 'N/A' }}</p>
+                            <p><strong>Max Price:</strong> {{ project.max_price or 'N/A' }}</p>
+                            <p><strong>Price per Sq Ft:</strong> {{ project.price_per_sqft or 'N/A' }}</p>
+                            <p><strong>Currency:</strong> {{ project.currency or 'N/A' }}</p>
+                            <p><strong>Launch Date:</strong> {{ project.launch_date.strftime('%Y-%m-%d') if project.launch_date else 'N/A' }}</p>
+                            <p><strong>Possession Date:</strong> {{ project.possession_date.strftime('%Y-%m-%d') if project.possession_date else 'N/A' }}</p>
+                            <p><strong>Completion Date:</strong> {{ project.completion_date.strftime('%Y-%m-%d') if project.completion_date else 'N/A' }}</p>
+                            <p><strong>RERA Number:</strong> {{ project.rera_number or 'N/A' }}</p>
+                            <p><strong>RERA Website:</strong> {% if project.rera_website %}<a href="{{ project.rera_website }}" target="_blank">{{ project.rera_website }}</a>{% else %}N/A{% endif %}</p>
+                            <p><strong>RERA Status:</strong> {{ project.rera_status or 'N/A' }}</p>
+                            <p><strong>Meta Title:</strong> {{ project.meta_title or 'N/A' }}</p>
+                            <p><strong>Meta Description:</strong> {{ project.meta_description or 'N/A' }}</p>
+                            <p><strong>Master Plan:</strong> {% if project.master_plan_url %}<a href="{{ url_for('static', filename='uploads/' ~ project.master_plan_url) }}" target="_blank">View</a>{% else %}N/A{% endif %}</p>
+                            <p><strong>Brochure:</strong> {% if project.brochure_url %}<a href="{{ url_for('static', filename='uploads/' ~ project.brochure_url) }}" target="_blank">View</a>{% else %}N/A{% endif %}</p>
+                            <p><strong>Created:</strong> {{ project.created_at.strftime('%Y-%m-%d %H:%M') if project.created_at else 'N/A' }}</p>
+                            <p><strong>Active:</strong> 
+                                <span class="badge bg-{{ 'success' if project.is_active else 'danger' }}">
+                                    {{ 'Yes' if project.is_active else 'No' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.new_tower') }}?project_id={{ project.project_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add Tower
+                        </a>
+                        <a href="{{ url_for('admin.new_property_unit') }}?project_id={{ project.project_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-home"></i> Add Property Unit
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

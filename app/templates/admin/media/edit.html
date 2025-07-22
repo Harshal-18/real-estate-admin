@@ -1,0 +1,83 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Media - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Edit Media</h1>
+        <a href="{{ url_for('admin.media') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Media
+        </a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="project_id" class="form-label">Project</label>
+                            <select class="form-select" id="project_id" name="project_id">
+                                <option value="">Select Project (Optional)</option>
+                                {% for project in projects %}
+                                <option value="{{ project.project_id }}" {% if media.project_id == project.project_id %}selected{% endif %}>{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="media_type" class="form-label">Media Type</label>
+                            <select class="form-select" id="media_type" name="media_type" required>
+                                <option value="image" {% if media.media_type == 'image' %}selected{% endif %}>Image</option>
+                                <option value="video" {% if media.media_type == 'video' %}selected{% endif %}>Video</option>
+                                <option value="document" {% if media.media_type == 'document' %}selected{% endif %}>Document</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="media_category" class="form-label">Media Category</label>
+                            <input type="text" class="form-control" id="media_category" name="media_category" value="{{ media.media_category or '' }}" placeholder="e.g. brochure, gallery, etc.">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="thumbnail_url" class="form-label">Thumbnail URL</label>
+                            <input type="text" class="form-control" id="thumbnail_url" name="thumbnail_url" value="{{ media.thumbnail_url or '' }}" placeholder="https://example.com/thumb.jpg">
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ media.title or '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="2">{{ media.description or '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="media_url" class="form-label">Media File</label>
+                    {% if media.media_url %}
+                        <div class="mb-2">
+                            <a href="{{ media.media_url }}" target="_blank">Current File</a>
+                        </div>
+                    {% endif %}
+                    <input type="file" class="form-control" id="media_url" name="media_url">
+                    <div class="form-text">Leave blank to keep the current file.</div>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if media.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Active</label>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Update Media</button>
+                    <a href="{{ url_for('admin.media') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

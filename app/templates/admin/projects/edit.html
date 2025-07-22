@@ -1,0 +1,228 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Project - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Edit Project</h1>
+        <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Projects
+        </a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">Project Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ project.name }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="developer_id" class="form-label">Developer</label>
+                        <select class="form-select" id="developer_id" name="developer_id" required>
+                            <option value="">Select Developer</option>
+                            {% for developer in developers %}
+                            <option value="{{ developer.developer_id }}" {{ 'selected' if project.developer_id == developer.developer_id }}>{{ developer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="locality_id" class="form-label">Locality</label>
+                        <select class="form-select" id="locality_id" name="locality_id" required>
+                            <option value="">Select Locality</option>
+                            {% for locality in localities %}
+                            <option value="{{ locality.locality_id }}" {{ 'selected' if project.locality_id == locality.locality_id }}>{{ locality.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="project_type" class="form-label">Project Type</label>
+                        <select class="form-select" id="project_type" name="project_type" required>
+                            <option value="residential" {{ 'selected' if project.project_type == 'residential' }}>Residential</option>
+                            <option value="commercial" {{ 'selected' if project.project_type == 'commercial' }}>Commercial</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="property_type" class="form-label">Property Type</label>
+                        <select class="form-select" id="property_type" name="property_type" required>
+                            <option value="apartment" {{ 'selected' if project.property_type == 'apartment' }}>Apartment</option>
+                            <option value="villa" {{ 'selected' if project.property_type == 'villa' }}>Villa</option>
+                            <option value="plot" {{ 'selected' if project.property_type == 'plot' }}>Plot</option>
+                            <option value="office" {{ 'selected' if project.property_type == 'office' }}>Office</option>
+                            <option value="retail" {{ 'selected' if project.property_type == 'retail' }}>Retail</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="upcoming" {{ 'selected' if project.status == 'upcoming' }}>Upcoming</option>
+                            <option value="under_construction" {{ 'selected' if project.status == 'under_construction' }}>Under Construction</option>
+                            <option value="ready_to_move" {{ 'selected' if project.status == 'ready_to_move' }}>Ready to Move</option>
+                            <option value="completed" {{ 'selected' if project.status == 'completed' }}>Completed</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="total_land_area" class="form-label">Total Land Area (acres)</label>
+                        <input type="number" step="0.01" class="form-control" id="total_land_area" name="total_land_area" value="{{ project.total_land_area or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="total_units" class="form-label">Total Units</label>
+                        <input type="number" class="form-control" id="total_units" name="total_units" value="{{ project.total_units or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="unit_density" class="form-label">Unit Density (units/acre)</label>
+                        <input type="number" step="0.01" class="form-control" id="unit_density" name="unit_density" value="{{ project.unit_density or '' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="open_area_percentage" class="form-label">Open Area (%)</label>
+                        <input type="number" step="0.01" class="form-control" id="open_area_percentage" name="open_area_percentage" value="{{ project.open_area_percentage or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="park_area" class="form-label">Park Area (acres)</label>
+                        <input type="number" step="0.01" class="form-control" id="park_area" name="park_area" value="{{ project.park_area or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="clubhouse_area" class="form-label">Clubhouse Area (sq ft)</label>
+                        <input type="number" step="0.01" class="form-control" id="clubhouse_area" name="clubhouse_area" value="{{ project.clubhouse_area or '' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="min_price" class="form-label">Min Price</label>
+                        <input type="number" step="0.01" class="form-control" id="min_price" name="min_price" value="{{ project.min_price or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="max_price" class="form-label">Max Price</label>
+                        <input type="number" step="0.01" class="form-control" id="max_price" name="max_price" value="{{ project.max_price or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="price_per_sqft" class="form-label">Price per Sqft</label>
+                        <input type="number" step="0.01" class="form-control" id="price_per_sqft" name="price_per_sqft" value="{{ project.price_per_sqft or '' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="currency" class="form-label">Currency</label>
+                        <select class="form-select" id="currency" name="currency">
+                            <option value="INR" {{ 'selected' if project.currency == 'INR' }}>INR</option>
+                            <option value="USD" {{ 'selected' if project.currency == 'USD' }}>USD</option>
+                            <option value="EUR" {{ 'selected' if project.currency == 'EUR' }}>EUR</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="launch_date" class="form-label">Launch Date</label>
+                        <input type="date" class="form-control" id="launch_date" name="launch_date" value="{{ project.launch_date.strftime('%Y-%m-%d') if project.launch_date else '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="possession_date" class="form-label">Possession Date</label>
+                        <input type="date" class="form-control" id="possession_date" name="possession_date" value="{{ project.possession_date.strftime('%Y-%m-%d') if project.possession_date else '' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="completion_date" class="form-label">Completion Date</label>
+                        <input type="date" class="form-control" id="completion_date" name="completion_date" value="{{ project.completion_date.strftime('%Y-%m-%d') if project.completion_date else '' }}">
+                    </div>
+                    <div class="col-md-8 mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="2">{{ project.address or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="latitude" class="form-label">Latitude</label>
+                        <input type="number" step="0.00000001" class="form-control" id="latitude" name="latitude" value="{{ project.latitude or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="longitude" class="form-label">Longitude</label>
+                        <input type="number" step="0.00000001" class="form-control" id="longitude" name="longitude" value="{{ project.longitude or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="approach_road_width" class="form-label">Approach Road Width (m)</label>
+                        <input type="number" step="0.01" class="form-control" id="approach_road_width" name="approach_road_width" value="{{ project.approach_road_width or '' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="nearest_metro_distance" class="form-label">Nearest Metro Distance (km)</label>
+                        <input type="number" step="0.01" class="form-control" id="nearest_metro_distance" name="nearest_metro_distance" value="{{ project.nearest_metro_distance or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="airport_distance" class="form-label">Airport Distance (km)</label>
+                        <input type="number" step="0.01" class="form-control" id="airport_distance" name="airport_distance" value="{{ project.airport_distance or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="rera_number" class="form-label">RERA Number</label>
+                        <input type="text" class="form-control" id="rera_number" name="rera_number" value="{{ project.rera_number or '' }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="rera_website" class="form-label">RERA Website</label>
+                        <input type="url" class="form-control" id="rera_website" name="rera_website" value="{{ project.rera_website or '' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="rera_status" class="form-label">RERA Status</label>
+                        <select class="form-select" id="rera_status" name="rera_status">
+                            <option value="approved" {{ 'selected' if project.rera_status == 'approved' }}>Approved</option>
+                            <option value="pending" {{ 'selected' if project.rera_status == 'pending' }}>Pending</option>
+                            <option value="na" {{ 'selected' if project.rera_status == 'na' }}>N/A</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ project.description or '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="highlights" class="form-label">Highlights</label>
+                    <textarea class="form-control" id="highlights" name="highlights" rows="2">{{ project.highlights or '' }}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="master_plan" class="form-label">Master Plan (Upload to replace)</label>
+                        <input type="file" class="form-control" id="master_plan" name="master_plan">
+                        {% if project.master_plan_url %}
+                        <small>Current: <a href="{{ url_for('static', filename='uploads/' ~ project.master_plan_url) }}" target="_blank">View</a></small>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="brochure" class="form-label">Brochure (Upload to replace)</label>
+                        <input type="file" class="form-control" id="brochure" name="brochure">
+                        {% if project.brochure_url %}
+                        <small>Current: <a href="{{ url_for('static', filename='uploads/' ~ project.brochure_url) }}" target="_blank">View</a></small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="meta_title" class="form-label">Meta Title</label>
+                        <input type="text" class="form-control" id="meta_title" name="meta_title" value="{{ project.meta_title or '' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="meta_description" class="form-label">Meta Description</label>
+                        <textarea class="form-control" id="meta_description" name="meta_description" rows="2">{{ project.meta_description or '' }}</textarea>
+                    </div>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {{ 'checked' if project.is_active }}>
+                    <label class="form-check-label" for="is_active">Active Project</label>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Update Project</button>
+                    <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

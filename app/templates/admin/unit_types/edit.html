@@ -1,0 +1,112 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Unit Type - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Edit Unit Type</h1>
+        <a href="{{ url_for('admin.unit_types') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Unit Types
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="type_name" class="form-label">Type Name</label>
+                            <input type="text" class="form-control" id="type_name" name="type_name" value="{{ unit_type.type_name }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="project_id" class="form-label">Project</label>
+                            <select class="form-select" id="project_id" name="project_id">
+                                <option value="">Select Project (Optional)</option>
+                                {% for project in projects %}
+                                <option value="{{ project.project_id }}" {% if unit_type.project_id == project.project_id %}selected{% endif %}>{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="mb-3"><label for="bedrooms" class="form-label">Bedrooms</label><input type="number" class="form-control" id="bedrooms" name="bedrooms" value="{{ unit_type.bedrooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="bathrooms" class="form-label">Bathrooms</label><input type="number" class="form-control" id="bathrooms" name="bathrooms" value="{{ unit_type.bathrooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="master_bedrooms" class="form-label">Master Bedrooms</label><input type="number" class="form-control" id="master_bedrooms" name="master_bedrooms" value="{{ unit_type.master_bedrooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="child_bedrooms" class="form-label">Child Bedrooms</label><input type="number" class="form-control" id="child_bedrooms" name="child_bedrooms" value="{{ unit_type.child_bedrooms or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="mb-3"><label for="guest_bedrooms" class="form-label">Guest Bedrooms</label><input type="number" class="form-control" id="guest_bedrooms" name="guest_bedrooms" value="{{ unit_type.guest_bedrooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="study_rooms" class="form-label">Study Rooms</label><input type="number" class="form-control" id="study_rooms" name="study_rooms" value="{{ unit_type.study_rooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="living_rooms" class="form-label">Living Rooms</label><input type="number" class="form-control" id="living_rooms" name="living_rooms" value="{{ unit_type.living_rooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="dining_rooms" class="form-label">Dining Rooms</label><input type="number" class="form-control" id="dining_rooms" name="dining_rooms" value="{{ unit_type.dining_rooms or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="mb-3"><label for="kitchens" class="form-label">Kitchens</label><input type="number" class="form-control" id="kitchens" name="kitchens" value="{{ unit_type.kitchens or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="utility_rooms" class="form-label">Utility Rooms</label><input type="number" class="form-control" id="utility_rooms" name="utility_rooms" value="{{ unit_type.utility_rooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="store_rooms" class="form-label">Store Rooms</label><input type="number" class="form-control" id="store_rooms" name="store_rooms" value="{{ unit_type.store_rooms or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="pooja_rooms" class="form-label">Pooja Rooms</label><input type="number" class="form-control" id="pooja_rooms" name="pooja_rooms" value="{{ unit_type.pooja_rooms or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_maid_room" name="has_maid_room" {% if unit_type.has_maid_room %}checked{% endif %}><label class="form-check-label" for="has_maid_room">Maid Room</label></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="maid_room_area" class="form-label">Maid Room Area</label><input type="number" step="0.01" class="form-control" id="maid_room_area" name="maid_room_area" value="{{ unit_type.maid_room_area or '' }}"></div></div>
+                    <div class="col-md-3"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_maid_bathroom" name="has_maid_bathroom" {% if unit_type.has_maid_bathroom %}checked{% endif %}><label class="form-check-label" for="has_maid_bathroom">Maid Bathroom</label></div></div>
+                    <div class="col-md-3"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_balcony" name="has_balcony" {% if unit_type.has_balcony %}checked{% endif %}><label class="form-check-label" for="has_balcony">Balcony</label></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="mb-3"><label for="balcony_count" class="form-label">Balcony Count</label><input type="number" class="form-control" id="balcony_count" name="balcony_count" value="{{ unit_type.balcony_count or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="total_balcony_area" class="form-label">Total Balcony Area</label><input type="number" step="0.01" class="form-control" id="total_balcony_area" name="total_balcony_area" value="{{ unit_type.total_balcony_area or '' }}"></div></div>
+                    <div class="col-md-3"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_terrace" name="has_terrace" {% if unit_type.has_terrace %}checked{% endif %}><label class="form-check-label" for="has_terrace">Terrace</label></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="terrace_area" class="form-label">Terrace Area</label><input type="number" step="0.01" class="form-control" id="terrace_area" name="terrace_area" value="{{ unit_type.terrace_area or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_private_garden" name="has_private_garden" {% if unit_type.has_private_garden %}checked{% endif %}><label class="form-check-label" for="has_private_garden">Private Garden</label></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="private_garden_area" class="form-label">Private Garden Area</label><input type="number" step="0.01" class="form-control" id="private_garden_area" name="private_garden_area" value="{{ unit_type.private_garden_area or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="carpet_area" class="form-label">Carpet Area</label><input type="number" step="0.01" class="form-control" id="carpet_area" name="carpet_area" value="{{ unit_type.carpet_area or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="built_up_area" class="form-label">Built Up Area</label><input type="number" step="0.01" class="form-control" id="built_up_area" name="built_up_area" value="{{ unit_type.built_up_area or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="mb-3"><label for="super_area" class="form-label">Super Area</label><input type="number" step="0.01" class="form-control" id="super_area" name="super_area" value="{{ unit_type.super_area or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="carpet_ratio" class="form-label">Carpet Ratio</label><input type="number" step="0.01" class="form-control" id="carpet_ratio" name="carpet_ratio" value="{{ unit_type.carpet_ratio or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="base_price" class="form-label">Base Price</label><input type="number" step="0.01" class="form-control" id="base_price" name="base_price" value="{{ unit_type.base_price or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="price_per_sqft" class="form-label">Price per Sqft</label><input type="number" step="0.01" class="form-control" id="price_per_sqft" name="price_per_sqft" value="{{ unit_type.price_per_sqft or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6"><div class="mb-3"><label for="floor_plan_url" class="form-label">Floor Plan URL</label><input type="text" class="form-control" id="floor_plan_url" name="floor_plan_url" value="{{ unit_type.floor_plan_url or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="floor_height" class="form-label">Floor Height</label><input type="number" step="0.01" class="form-control" id="floor_height" name="floor_height" value="{{ unit_type.floor_height or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="ceiling_height" class="form-label">Ceiling Height</label><input type="number" step="0.01" class="form-control" id="ceiling_height" name="ceiling_height" value="{{ unit_type.ceiling_height or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="mb-3"><label for="facing_direction" class="form-label">Facing Direction</label><input type="text" class="form-control" id="facing_direction" name="facing_direction" value="{{ unit_type.facing_direction or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="main_door_type" class="form-label">Main Door Type</label><input type="text" class="form-control" id="main_door_type" name="main_door_type" value="{{ unit_type.main_door_type or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="main_door_width" class="form-label">Main Door Width</label><input type="number" step="0.01" class="form-control" id="main_door_width" name="main_door_width" value="{{ unit_type.main_door_width or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="main_door_height" class="form-label">Main Door Height</label><input type="number" step="0.01" class="form-control" id="main_door_height" name="main_door_height" value="{{ unit_type.main_door_height or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3"><div class="mb-3"><label for="bedroom_door_type" class="form-label">Bedroom Door Type</label><input type="text" class="form-control" id="bedroom_door_type" name="bedroom_door_type" value="{{ unit_type.bedroom_door_type or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="bathroom_door_type" class="form-label">Bathroom Door Type</label><input type="text" class="form-control" id="bathroom_door_type" name="bathroom_door_type" value="{{ unit_type.bathroom_door_type or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="window_type" class="form-label">Window Type</label><input type="text" class="form-control" id="window_type" name="window_type" value="{{ unit_type.window_type or '' }}"></div></div>
+                    <div class="col-md-3"><div class="mb-3"><label for="window_material" class="form-label">Window Material</label><input type="text" class="form-control" id="window_material" name="window_material" value="{{ unit_type.window_material or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4"><div class="mb-3"><label for="total_units" class="form-label">Total Units</label><input type="number" class="form-control" id="total_units" name="total_units" value="{{ unit_type.total_units or '' }}"></div></div>
+                    <div class="col-md-4"><div class="mb-3"><label for="available_units" class="form-label">Available Units</label><input type="number" class="form-control" id="available_units" name="available_units" value="{{ unit_type.available_units or '' }}"></div></div>
+                    <div class="col-md-4"><div class="mb-3"><label for="sold_units" class="form-label">Sold Units</label><input type="number" class="form-control" id="sold_units" name="sold_units" value="{{ unit_type.sold_units or '' }}"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if unit_type.is_active %}checked{% endif %}><label class="form-check-label" for="is_active">Active</label></div></div>
+                    <div class="col-md-6"><div class="mb-3"><label for="created_at" class="form-label">Created At</label><input type="text" class="form-control" id="created_at" value="{{ unit_type.created_at.strftime('%d %b %Y %H:%M') if unit_type.created_at else '' }}" readonly></div></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Update Unit Type</button>
+                    <a href="{{ url_for('admin.unit_types') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

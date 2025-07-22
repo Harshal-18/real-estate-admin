@@ -1,0 +1,41 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Document #{{ document.document_id }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Document #{{ document.document_id }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_document', document_id=document.document_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.documents') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Documents
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Document Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Document ID:</strong> {{ document.document_id }}</p>
+                    <p><strong>Project:</strong> {{ document.project.name if document.project else 'N/A' }}</p>
+                    <p><strong>Type:</strong> {{ document.document_type or 'N/A' }}</p>
+                    <p><strong>Title:</strong> {{ document.title or 'N/A' }}</p>
+                    <p><strong>Description:</strong> {{ document.description or 'N/A' }}</p>
+                    <p><strong>File:</strong> {% if document.file_url %}<a href="{{ document.file_url }}" target="_blank">Download</a>{% else %}N/A{% endif %}</p>
+                    <p><strong>File Size:</strong> {{ document.file_size or 'N/A' }}</p>
+                    <p><strong>File Type:</strong> {{ document.file_type or 'N/A' }}</p>
+                    <p><strong>Public:</strong> <span class="badge bg-{{ 'success' if document.is_public else 'secondary' }}">{{ 'Yes' if document.is_public else 'No' }}</span></p>
+                    <p><strong>Downloads:</strong> {{ document.download_count or 0 }}</p>
+                    <p><strong>Created:</strong> {{ document.created_at.strftime('%Y-%m-%d %H:%M') if document.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

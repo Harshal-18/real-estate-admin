@@ -1,0 +1,167 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Documents - Admin Panel{% endblock %}
+
+{% block page_title %}Documents Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Documents</h1>
+        <a href="{{ url_for('admin.new_document') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Upload Document
+        </a>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter mb-3">
+        <form method="GET" action="{{ url_for('admin.documents') }}">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search Documents</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by title or type...">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Documents Table (refactored to match projects page) -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Documents</h4>
+                <a href="{{ url_for('admin.new_document') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Document
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Project</th>
+                            <th>Type</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>File URL</th>
+                            <th>File Size</th>
+                            <th>File Type</th>
+                            <th>Public</th>
+                            <th>Downloads</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for document in documents.items %}
+                        <tr>
+                            <td>{{ document.document_id }}</td>
+                            <td>{{ document.project.name if document.project else 'N/A' }}</td>
+                            <td>{{ document.document_type or 'N/A' }}</td>
+                            <td>{{ document.title or 'N/A' }}</td>
+                            <td>{{ document.description[:40] ~ ('...' if document.description and document.description|length > 40 else '') if document.description else 'N/A' }}</td>
+                            <td>{% if document.file_url %}<a href="{{ document.file_url }}" target="_blank">Download</a>{% else %}N/A{% endif %}</td>
+                            <td>{{ document.file_size or 'N/A' }}</td>
+                            <td>{{ document.file_type or 'N/A' }}</td>
+                            <td><span class="badge bg-{{ 'success' if document.is_public else 'danger' }}">{{ 'Yes' if document.is_public else 'No' }}</span></td>
+                            <td>{{ document.download_count or 0 }}</td>
+                            <td>{{ document.created_at.strftime('%Y-%m-%d') if document.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.view_document', document_id=document.document_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ url_for('admin.edit_document', document_id=document.document_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                                <form method="POST" action="{{ url_for('admin.delete_document', document_id=document.document_id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination and Results Summary (unchanged) -->
+            {% if documents.pages > 1 %}
+            <nav aria-label="Documents pagination">
+                <ul class="pagination">
+                    {% if documents.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.documents', page=documents.prev_num, search=search) }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% for page_num in documents.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != documents.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.documents', page=page_num, search=search) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if documents.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.documents', page=documents.next_num, search=search) }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            <div class="text-muted mt-3">
+                Showing {{ documents.items|length }} of {{ documents.total }} documents
+                {% if search %}(filtered results){% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Export Options (unchanged) -->
+    {% if documents.items %}
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5><i class="fas fa-download"></i> Export Options</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_documents', export_type='csv') }}'" download>
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-info w-100" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print List
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterDocumentsTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterDocumentsTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,75 @@
+{% extends "admin/base.html" %}
+
+{% block title %}New Review - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">New Review</h1>
+        <a href="{{ url_for('admin.reviews') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Reviews
+        </a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="project_id" class="form-label">Project</label>
+                            <select class="form-select" id="project_id" name="project_id" required>
+                                <option value="">Select Project</option>
+                                {% for project in projects %}
+                                <option value="{{ project.project_id }}">{{ project.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="developer_id" class="form-label">Developer</label>
+                            <select class="form-select" id="developer_id" name="developer_id" required>
+                                <option value="">Select Developer</option>
+                                {% for developer in developers %}
+                                <option value="{{ developer.developer_id }}">{{ developer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="user_id" class="form-label">User</label>
+                            <select class="form-select" id="user_id" name="user_id" required>
+                                <option value="">Select User</option>
+                                {% for user in users %}
+                                <option value="{{ user.user_id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2"><div class="mb-3"><label for="rating" class="form-label">Overall Rating</label><input type="number" class="form-control" id="rating" name="rating" min="1" max="5" required></div></div>
+                    <div class="col-md-2"><div class="mb-3"><label for="construction_quality_rating" class="form-label">Construction Quality</label><input type="number" class="form-control" id="construction_quality_rating" name="construction_quality_rating" min="1" max="5"></div></div>
+                    <div class="col-md-2"><div class="mb-3"><label for="amenities_rating" class="form-label">Amenities</label><input type="number" class="form-control" id="amenities_rating" name="amenities_rating" min="1" max="5"></div></div>
+                    <div class="col-md-2"><div class="mb-3"><label for="location_rating" class="form-label">Location</label><input type="number" class="form-control" id="location_rating" name="location_rating" min="1" max="5"></div></div>
+                    <div class="col-md-2"><div class="mb-3"><label for="value_for_money_rating" class="form-label">Value for Money</label><input type="number" class="form-control" id="value_for_money_rating" name="value_for_money_rating" min="1" max="5"></div></div>
+                    <div class="col-md-2"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="is_verified" name="is_verified"><label class="form-check-label" for="is_verified">Verified</label></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6"><div class="mb-3"><label for="title" class="form-label">Title</label><input type="text" class="form-control" id="title" name="title"></div></div>
+                    <div class="col-md-6"><div class="mb-3"><label for="review_text" class="form-label">Review</label><textarea class="form-control" id="review_text" name="review_text"></textarea></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6"><div class="mb-3"><label for="pros" class="form-label">Pros</label><textarea class="form-control" id="pros" name="pros"></textarea></div></div>
+                    <div class="col-md-6"><div class="mb-3"><label for="cons" class="form-label">Cons</label><textarea class="form-control" id="cons" name="cons"></textarea></div></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Create Review</button>
+                    <a href="{{ url_for('admin.reviews') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

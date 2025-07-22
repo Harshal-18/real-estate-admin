@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ amenity.name }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ amenity.name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_amenity', amenity_id=amenity.amenity_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.amenities') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Amenities
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Amenity Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Amenity ID:</strong> {{ amenity.amenity_id }}</p>
+                    <p><strong>Name:</strong> {{ amenity.name }}</p>
+                    <p><strong>Category:</strong> {{ amenity.category or 'N/A' }}</p>
+                    <p><strong>Description:</strong> {{ amenity.description or 'N/A' }}</p>
+                    <p><strong>Icon:</strong> {% if amenity.icon_url %}<img src="{{ amenity.icon_url }}" alt="Icon" style="width:32px;height:32px;object-fit:contain;">{% else %}N/A{% endif %}</p>
+                    <p><strong>Is Rare:</strong> <span class="badge bg-{{ 'warning' if amenity.is_rare else 'secondary' }}">{{ 'Yes' if amenity.is_rare else 'No' }}</span></p>
+                    <p><strong>Active:</strong> <span class="badge bg-{{ 'success' if amenity.is_active else 'danger' }}">{{ 'Yes' if amenity.is_active else 'No' }}</span></p>
+                    <p><strong>Created:</strong> {{ amenity.created_at.strftime('%Y-%m-%d %H:%M') if amenity.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,170 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Unit Types - Admin Panel{% endblock %}
+
+{% block page_title %}Unit Types Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Search and Filter Section -->
+    <div class="search-filter mb-3">
+        <form method="GET" action="{{ url_for('admin.unit_types') }}">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search Unit Types</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by unit type name...">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Unit Types Table (refactored to match projects page) -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Unit Types</h4>
+                <a href="{{ url_for('admin.new_unit_type') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Unit Type
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Project</th>
+                            <th>Type Name</th>
+                            <th>Bedrooms</th>
+                            <th>Bathrooms</th>
+                            <th>Living Rooms</th>
+                            <th>Kitchens</th>
+                            <th>Balcony Count</th>
+                            <th>Carpet Area</th>
+                            <th>Built Up Area</th>
+                            <th>Super Area</th>
+                            <th>Base Price</th>
+                            <th>Price/Sqft</th>
+                            <th>Facing</th>
+                            <th>Active</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for unit_type in unit_types.items %}
+                        <tr>
+                            <td>{{ unit_type.unit_type_id }}</td>
+                            <td>{{ unit_type.project.name if unit_type.project else 'N/A' }}</td>
+                            <td>{{ unit_type.type_name or 'N/A' }}</td>
+                            <td>{{ unit_type.bedrooms or 'N/A' }}</td>
+                            <td>{{ unit_type.bathrooms or 'N/A' }}</td>
+                            <td>{{ unit_type.living_rooms or 'N/A' }}</td>
+                            <td>{{ unit_type.kitchens or 'N/A' }}</td>
+                            <td>{{ unit_type.balcony_count or 'N/A' }}</td>
+                            <td>{{ unit_type.carpet_area or 'N/A' }}</td>
+                            <td>{{ unit_type.built_up_area or 'N/A' }}</td>
+                            <td>{{ unit_type.super_area or 'N/A' }}</td>
+                            <td>{{ unit_type.base_price or 'N/A' }}</td>
+                            <td>{{ unit_type.price_per_sqft or 'N/A' }}</td>
+                            <td>{{ unit_type.facing_direction or 'N/A' }}</td>
+                            <td><span class="badge bg-{{ 'success' if unit_type.is_active else 'danger' }}">{{ 'Yes' if unit_type.is_active else 'No' }}</span></td>
+                            <td>{{ unit_type.created_at.strftime('%Y-%m-%d') if unit_type.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.view_unit_type', unit_type_id=unit_type.unit_type_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ url_for('admin.edit_unit_type', unit_type_id=unit_type.unit_type_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                                <form method="POST" action="{{ url_for('admin.delete_unit_type', unit_type_id=unit_type.unit_type_id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination and Results Summary (unchanged) -->
+            {% if unit_types.pages > 1 %}
+            <nav aria-label="Unit Types pagination">
+                <ul class="pagination">
+                    {% if unit_types.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.unit_types', page=unit_types.prev_num, search=search) }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% for page_num in unit_types.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != unit_types.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.unit_types', page=page_num, search=search) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if unit_types.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.unit_types', page=unit_types.next_num, search=search) }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            <div class="text-muted mt-3">
+                Showing {{ unit_types.items|length }} of {{ unit_types.total }} unit types
+                {% if search %}(filtered results){% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Export Options (unchanged) -->
+    {% if unit_types.items %}
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5><i class="fas fa-download"></i> Export Options</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_unit_types', export_type='csv') }}'" download>
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-info w-100" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print List
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,182 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add New User - Real Estate Admin Panel{% endblock %}
+{% block page_title %}Add New User{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-plus"></i> Create New User</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" id="userForm">
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">First Name *</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name *</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-lock"></i> Password</h6>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password *</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password *</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Picture -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-image"></i> Profile Picture</h6>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="user_type" class="form-label">User Type</label>
+                        <select class="form-select" id="user_type" name="user_type">
+                            <option value="buyer">Buyer</option>
+                            <option value="seller">Seller</option>
+                            <option value="agent">Agent</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="profile_image_url" class="form-label">Profile Picture</label>
+                        <input type="file" class="form-control" id="profile_image_url" name="profile_image_url" accept="image/*">
+                        <div class="form-text">Upload profile picture (JPG, PNG, GIF - Max 2MB)</div>
+                        <div class="file-preview mt-2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Settings -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-cog"></i> User Settings</h6>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">Active User</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified">
+                        <label class="form-check-label" for="is_verified">Verified User</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Users
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create User
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // File upload preview
+    $('#profile_image_url').on('change', function() {
+        const file = this.files[0];
+        const preview = $(this).siblings('.file-preview');
+        
+        if (file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.html(`<img src="${e.target.result}" class="image-preview">`);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.html(`<div class="alert alert-warning">Please select an image file.</div>`);
+            }
+        } else {
+            preview.empty();
+        }
+    });
+
+    // Password confirmation validation
+    $('#confirm_password').on('input', function() {
+        const password = $('#password').val();
+        const confirmPassword = $(this).val();
+        
+        if (password !== confirmPassword) {
+            $(this).addClass('is-invalid');
+            if (!$(this).next('.invalid-feedback').length) {
+                $(this).after('<div class="invalid-feedback">Passwords do not match.</div>');
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).next('.invalid-feedback').remove();
+        }
+    });
+});
+</script>
+{% endblock %} 

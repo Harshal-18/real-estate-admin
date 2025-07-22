@@ -1,0 +1,155 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Approvals - Admin Panel{% endblock %}
+
+{% block page_title %}Approvals Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Search and Filter Section -->
+    <div class="search-filter mb-3">
+        <form method="GET" action="{{ url_for('admin.approvals') }}">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search Approvals</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by approval title...">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Approvals Table (refactored to match towers page) -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Approvals</h4>
+                <a href="{{ url_for('admin.new_approval') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Approval
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Is Mandatory</th>
+                            <th>Category</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approval in approvals.items %}
+                        <tr>
+                            <td>{{ approval.approval_id }}</td>
+                            <td>{{ approval.name }}</td>
+                            <td>{{ approval.description[:40] ~ ('...' if approval.description and approval.description|length > 40 else '') if approval.description else 'N/A' }}</td>
+                            <td><span class="badge bg-{{ 'success' if approval.is_mandatory else 'secondary' }}">{{ 'Yes' if approval.is_mandatory else 'No' }}</span></td>
+                            <td>{{ approval.category or 'N/A' }}</td>
+                            <td>{{ approval.created_at.strftime('%Y-%m-%d') if approval.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.view_approval', approval_id=approval.approval_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ url_for('admin.edit_approval', approval_id=approval.approval_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                                <form method="POST" action="{{ url_for('admin.delete_approval', approval_id=approval.approval_id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination and Results Summary (unchanged) -->
+            {% if approvals.pages > 1 %}
+            <nav aria-label="Approvals pagination">
+                <ul class="pagination">
+                    {% if approvals.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.approvals', page=approvals.prev_num, search=search) }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% for page_num in approvals.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != approvals.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.approvals', page=page_num, search=search) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if approvals.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.approvals', page=approvals.next_num, search=search) }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            <div class="text-muted mt-3">
+                Showing {{ approvals.items|length }} of {{ approvals.total }} approvals
+                {% if search %}(filtered results){% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Export Options (unchanged) -->
+    {% if approvals.items %}
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5><i class="fas fa-download"></i> Export Options</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_approvals', export_type='csv') }}'" download>
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-info w-100" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print List
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterApprovalsTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        var statusValue = $('#status').val().replace(/[_\s]+/g, '').toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var statusCell = $(this).find('td:nth-child(3) .badge');
+            var statusText = statusCell.text().replace(/[_\s]+/g, '').toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            var statusMatch = (statusValue === "") || (statusText === statusValue);
+            $(this).toggle(searchMatch && statusMatch);
+        });
+    }
+    $('#search').on('input', filterApprovalsTable);
+    $('#status').on('change', filterApprovalsTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %} 
