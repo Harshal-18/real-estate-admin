@@ -1,0 +1,155 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Project Approvals - Admin Panel{% endblock %}
+{% block page_title %}Project Approvals Management{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="search-filter mb-3">
+    <form method="GET" action="{{ url_for('admin.project_approvals') }}">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Project Approvals</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by project or approval name...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Project Approvals Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Project Approvals</h4>
+            <a href="{{ url_for('admin.new_project_approval') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Project Approval
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Project</th>
+                        <th>Approval</th>
+                        <th>Status</th>
+                        <th>Approval Number</th>
+                        <th>Approval Date</th>
+                        <th>Expiry Date</th>
+                        <th>Issuing Authority</th>
+                        <th>Document</th>
+                        <th>Notes</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pa in project_approvals.items %}
+                    <tr>
+                        <td>{{ pa.project.name if pa.project else 'N/A' }}</td>
+                        <td>{{ pa.approval.name if pa.approval else 'N/A' }}</td>
+                        <td>{{ pa.status or 'N/A' }}</td>
+                        <td>{{ pa.approval_number or 'N/A' }}</td>
+                        <td>{{ pa.approval_date.strftime('%Y-%m-%d') if pa.approval_date else 'N/A' }}</td>
+                        <td>{{ pa.expiry_date.strftime('%Y-%m-%d') if pa.expiry_date else 'N/A' }}</td>
+                        <td>{{ pa.issuing_authority or 'N/A' }}</td>
+                        <td>{% if pa.document_url %}<a href="{{ pa.document_url }}" target="_blank">View</a>{% else %}N/A{% endif %}</td>
+                        <td>{{ pa.notes[:40] ~ ('...' if pa.notes and pa.notes|length > 40 else '') if pa.notes else 'N/A' }}</td>
+                        <td>{{ pa.created_at.strftime('%Y-%m-%d') if pa.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_project_approval', project_id=pa.project_id, approval_id=pa.approval_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('admin.edit_project_approval', project_id=pa.project_id, approval_id=pa.approval_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('admin.delete_project_approval', project_id=pa.project_id, approval_id=pa.approval_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination and Results Summary (unchanged) -->
+        {% if project_approvals.pages > 1 %}
+        <nav aria-label="Project Approvals pagination">
+            <ul class="pagination">
+                {% if project_approvals.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.project_approvals', page=project_approvals.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_num in project_approvals.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != project_approvals.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.project_approvals', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if project_approvals.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.project_approvals', page=project_approvals.next_num, search=search) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        <div class="text-muted mt-3">
+            Showing {{ project_approvals.items|length }} of {{ project_approvals.total }} project approvals
+            {% if search %}(filtered results){% endif %}
+        </div>
+    </div>
+</div>
+<!-- Export Options (unchanged) -->
+{% if project_approvals.items %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-download"></i> Export Options</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_project_approvals', export_type='csv') }}'">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterProjectApprovalsTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterProjectApprovalsTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+
+{% block title %}View Project Approval - Admin Panel{% endblock %}
+{% block page_title %}Project Approval{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Project Approval</h3>
+            <dl class="row">
+                <dt class="col-sm-3">Project</dt>
+                <dd class="col-sm-9">{{ pa.project.name if pa.project else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Approval</dt>
+                <dd class="col-sm-9">{{ pa.approval.name if pa.approval else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">{{ pa.status or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Approval Number</dt>
+                <dd class="col-sm-9">{{ pa.approval_number or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Approval Date</dt>
+                <dd class="col-sm-9">{{ pa.approval_date.strftime('%Y-%m-%d') if pa.approval_date else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Expiry Date</dt>
+                <dd class="col-sm-9">{{ pa.expiry_date.strftime('%Y-%m-%d') if pa.expiry_date else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Issuing Authority</dt>
+                <dd class="col-sm-9">{{ pa.issuing_authority or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Document</dt>
+                <dd class="col-sm-9">{% if pa.document_url %}<a href="{{ pa.document_url }}" target="_blank">View Document</a>{% else %}N/A{% endif %}</dd>
+
+                <dt class="col-sm-3">Notes</dt>
+                <dd class="col-sm-9">{{ pa.notes or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ pa.created_at.strftime('%Y-%m-%d') if pa.created_at else 'N/A' }}</dd>
+            </dl>
+            <a href="{{ url_for('admin.edit_project_approval', project_id=pa.project_id, approval_id=pa.approval_id) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('admin.project_approvals') }}" class="btn btn-secondary ms-2">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Project Approval - Admin Panel{% endblock %}
+{% block page_title %}Edit Project Approval{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Edit Project Approval</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="project_id" class="form-label">Project</label>
+                    <select class="form-select" id="project_id" name="project_id" required disabled>
+                        <option value="">Select Project</option>
+                        {% for project in projects %}
+                        <option value="{{ project.project_id }}" {% if project.project_id == pa.project_id %}selected{% endif %}>{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="approval_id" class="form-label">Approval</label>
+                    <select class="form-select" id="approval_id" name="approval_id" required disabled>
+                        <option value="">Select Approval</option>
+                        {% for approval in approvals %}
+                        <option value="{{ approval.approval_id }}" {% if approval.approval_id == pa.approval_id %}selected{% endif %}>{{ approval.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <input type="text" class="form-control" id="status" name="status" value="{{ pa.status }}">
+                </div>
+                <div class="mb-3">
+                    <label for="approval_number" class="form-label">Approval Number</label>
+                    <input type="text" class="form-control" id="approval_number" name="approval_number" value="{{ pa.approval_number }}">
+                </div>
+                <div class="mb-3">
+                    <label for="approval_date" class="form-label">Approval Date</label>
+                    <input type="date" class="form-control" id="approval_date" name="approval_date" value="{{ pa.approval_date.strftime('%Y-%m-%d') if pa.approval_date else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="expiry_date" class="form-label">Expiry Date</label>
+                    <input type="date" class="form-control" id="expiry_date" name="expiry_date" value="{{ pa.expiry_date.strftime('%Y-%m-%d') if pa.expiry_date else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label for="issuing_authority" class="form-label">Issuing Authority</label>
+                    <input type="text" class="form-control" id="issuing_authority" name="issuing_authority" value="{{ pa.issuing_authority }}">
+                </div>
+                <div class="mb-3">
+                    <label for="document_url" class="form-label">Document URL</label>
+                    <input type="url" class="form-control" id="document_url" name="document_url" value="{{ pa.document_url }}">
+                </div>
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ pa.notes }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Project Approval</button>
+                <a href="{{ url_for('admin.project_approvals') }}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

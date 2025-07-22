@@ -2222,4 +2222,121 @@ def new_project_amenity():
         return redirect(url_for('admin.project_amenities'))
     return render_template('admin/project_amenities/new.html', projects=projects, amenities=amenities)
 
+@admin.route('/project-approvals')
+def project_approvals():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = ProjectApproval.query
+    if search:
+        query = query.join(Project).join(Approval).filter(
+            (Project.name.ilike(f'%{search}%')) |
+            (Approval.name.ilike(f'%{search}%')) |
+            (ProjectApproval.status.ilike(f'%{search}%'))
+        )
+    project_approvals = query.order_by(ProjectApproval.created_at.desc()).paginate(page=page, per_page=10, error_out=False)
+    return render_template('admin/project_approvals/index.html', project_approvals=project_approvals, search=search)
+
+@admin.route('/project-approvals/export/<export_type>')
+def export_project_approvals(export_type):
+    import pandas as pd
+    from io import BytesIO, StringIO
+    project_approvals = ProjectApproval.query.all()
+    data = []
+    for pa in project_approvals:
+        data.append({
+            'Project': pa.project.name if pa.project else '',
+            'Approval': pa.approval.name if pa.approval else '',
+            'Status': pa.status or '',
+            'Approval Number': pa.approval_number or '',
+            'Approval Date': pa.approval_date.strftime('%Y-%m-%d') if pa.approval_date else '',
+            'Expiry Date': pa.expiry_date.strftime('%Y-%m-%d') if pa.expiry_date else '',
+            'Issuing Authority': pa.issuing_authority or '',
+            'Document URL': pa.document_url or '',
+            'Notes': pa.notes or '',
+            'Created': pa.created_at.strftime('%Y-%m-%d') if pa.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='project_approvals.csv')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.project_approvals'))
+
+@admin.route('/project-approvals/new', methods=['GET', 'POST'])
+def new_project_approval():
+    projects = Project.query.all()
+    approvals = Approval.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
+        data['approval_id'] = int(data['approval_id']) if data.get('approval_id') else None
+        # Dates
+        from datetime import datetime
+        for field in ['approval_date', 'expiry_date']:
+            if data.get(field):
+                try:
+                    data[field] = datetime.strptime(data[field], '%Y-%m-%d').date()
+                except Exception:
+                    data[field] = None
+            else:
+                data[field] = None
+        pa = ProjectApproval(
+            project_id=data['project_id'],
+            approval_id=data['approval_id'],
+            status=data.get('status', ''),
+            approval_number=data.get('approval_number', ''),
+            approval_date=data.get('approval_date'),
+            expiry_date=data.get('expiry_date'),
+            issuing_authority=data.get('issuing_authority', ''),
+            document_url=data.get('document_url', ''),
+            notes=data.get('notes', '')
+        )
+        db.session.add(pa)
+        db.session.commit()
+        flash('Project approval added successfully!', 'success')
+        return redirect(url_for('admin.project_approvals'))
+    return render_template('admin/project_approvals/new.html', projects=projects, approvals=approvals)
+
+@admin.route('/project-approvals/<int:project_id>/<int:approval_id>')
+def view_project_approval(project_id, approval_id):
+    pa = ProjectApproval.query.filter_by(project_id=project_id, approval_id=approval_id).first_or_404()
+    return render_template('admin/project_approvals/view.html', pa=pa)
+
+@admin.route('/project-approvals/<int:project_id>/<int:approval_id>/edit', methods=['GET', 'POST'])
+def edit_project_approval(project_id, approval_id):
+    pa = ProjectApproval.query.filter_by(project_id=project_id, approval_id=approval_id).first_or_404()
+    projects = Project.query.all()
+    approvals = Approval.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        pa.status = data.get('status', '')
+        pa.approval_number = data.get('approval_number', '')
+        from datetime import datetime
+        for field in ['approval_date', 'expiry_date']:
+            if data.get(field):
+                try:
+                    setattr(pa, field, datetime.strptime(data[field], '%Y-%m-%d').date())
+                except Exception:
+                    setattr(pa, field, None)
+            else:
+                setattr(pa, field, None)
+        pa.issuing_authority = data.get('issuing_authority', '')
+        pa.document_url = data.get('document_url', '')
+        pa.notes = data.get('notes', '')
+        db.session.commit()
+        flash('Project approval updated successfully!', 'success')
+        return redirect(url_for('admin.project_approvals'))
+    return render_template('admin/project_approvals/edit.html', pa=pa, projects=projects, approvals=approvals)
+
+@admin.route('/project-approvals/<int:project_id>/<int:approval_id>/delete', methods=['POST'])
+def delete_project_approval(project_id, approval_id):
+    pa = ProjectApproval.query.filter_by(project_id=project_id, approval_id=approval_id).first_or_404()
+    db.session.delete(pa)
+    db.session.commit()
+    flash('Project approval deleted successfully!', 'success')
+    return redirect(url_for('admin.project_approvals'))
+
  
