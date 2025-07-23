@@ -274,7 +274,7 @@
         <div class="mt-5 mb-4">
           <div style="font-size:2.5rem; font-weight:700; color:#111; text-align:left;">Master Plan</div>
           <div style="color:#6c6c7e; font-size:1.3rem; margin-bottom:1.5rem;">{{ project.name }}</div>
-          {% set master_plan_media = project.media | selectattr('media_type', 'equalto', 'image') | selectattr('media_category', 'equalto', 'master_plan') | list %}
+          {% set master_plan_media = project.media | selectattr('media_type', 'equalto', 'image') | selectattr('media_category', 'lower') | selectattr('media_category', 'in', ['master_plan', 'master plan', 'Master plan']) | list %}
           {% if master_plan_media and master_plan_media[0].media_url %}
             {% set mp_url = master_plan_media[0].media_url %}
             {% if not mp_url.startswith('uploads/') and not mp_url.startswith('http') %}
