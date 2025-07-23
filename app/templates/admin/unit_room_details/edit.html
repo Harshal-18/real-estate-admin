@@ -1,0 +1,215 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Unit Room Detail - Admin Panel{% endblock %}
+{% block page_title %}Edit Unit Room Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Edit Unit Room Detail</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="unit_type_id" class="form-label">Unit Type</label>
+                    <select class="form-select" id="unit_type_id" name="unit_type_id" required>
+                        <option value="">Select Unit Type</option>
+                        {% for ut in unit_types %}
+                        <option value="{{ ut.unit_type_id }}" {% if ut.unit_type_id == rd.unit_type_id %}selected{% endif %}>{{ ut.type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="room_type" class="form-label">Room Type</label>
+                        <input type="text" class="form-control" id="room_type" name="room_type" value="{{ rd.room_type }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="room_name" class="form-label">Room Name</label>
+                        <input type="text" class="form-control" id="room_name" name="room_name" value="{{ rd.room_name }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="room_sequence" class="form-label">Sequence</label>
+                        <input type="number" class="form-control" id="room_sequence" name="room_sequence" value="{{ rd.room_sequence }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="room_length" class="form-label">Length</label>
+                        <input type="number" step="0.01" class="form-control" id="room_length" name="room_length" value="{{ rd.room_length }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="room_width" class="form-label">Width</label>
+                        <input type="number" step="0.01" class="form-control" id="room_width" name="room_width" value="{{ rd.room_width }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="room_area" class="form-label">Area</label>
+                        <input type="number" step="0.01" class="form-control" id="room_area" name="room_area" value="{{ rd.room_area }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="room_shape" class="form-label">Shape</label>
+                        <input type="text" class="form-control" id="room_shape" name="room_shape" value="{{ rd.room_shape }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="has_attached_bathroom" name="has_attached_bathroom" {% if rd.has_attached_bathroom %}checked{% endif %}>
+                            <label class="form-check-label" for="has_attached_bathroom">Attached Bath</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="has_balcony_access" name="has_balcony_access" {% if rd.has_balcony_access %}checked{% endif %}>
+                            <label class="form-check-label" for="has_balcony_access">Balcony Access</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="has_wardrobe" name="has_wardrobe" {% if rd.has_wardrobe %}checked{% endif %}>
+                            <label class="form-check-label" for="has_wardrobe">Wardrobe</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="wardrobe_type" class="form-label">Wardrobe Type</label>
+                        <input type="text" class="form-control" id="wardrobe_type" name="wardrobe_type" value="{{ rd.wardrobe_type }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="wardrobe_area" class="form-label">Wardrobe Area</label>
+                        <input type="number" step="0.01" class="form-control" id="wardrobe_area" name="wardrobe_area" value="{{ rd.wardrobe_area }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="has_window" name="has_window" {% if rd.has_window %}checked{% endif %}>
+                            <label class="form-check-label" for="has_window">Window</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="window_count" class="form-label">Window Count</label>
+                        <input type="number" class="form-control" id="window_count" name="window_count" value="{{ rd.window_count }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="window_total_area" class="form-label">Window Total Area</label>
+                        <input type="number" step="0.01" class="form-control" id="window_total_area" name="window_total_area" value="{{ rd.window_total_area }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="natural_light_rating" class="form-label">Natural Light</label>
+                        <input type="text" class="form-control" id="natural_light_rating" name="natural_light_rating" value="{{ rd.natural_light_rating }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="ventilation_rating" class="form-label">Ventilation</label>
+                        <input type="text" class="form-control" id="ventilation_rating" name="ventilation_rating" value="{{ rd.ventilation_rating }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label for="door_count" class="form-label">Door Count</label>
+                        <input type="number" class="form-control" id="door_count" name="door_count" value="{{ rd.door_count }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="door_type" class="form-label">Door Type</label>
+                        <input type="text" class="form-control" id="door_type" name="door_type" value="{{ rd.door_type }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="door_material" class="form-label">Door Material</label>
+                        <input type="text" class="form-control" id="door_material" name="door_material" value="{{ rd.door_material }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="door_width" class="form-label">Door Width</label>
+                        <input type="number" step="0.01" class="form-control" id="door_width" name="door_width" value="{{ rd.door_width }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="door_height" class="form-label">Door Height</label>
+                        <input type="number" step="0.01" class="form-control" id="door_height" name="door_height" value="{{ rd.door_height }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label for="window_type" class="form-label">Window Type</label>
+                        <input type="text" class="form-control" id="window_type" name="window_type" value="{{ rd.window_type }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="window_material" class="form-label">Window Material</label>
+                        <input type="text" class="form-control" id="window_material" name="window_material" value="{{ rd.window_material }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="window_width" class="form-label">Window Width</label>
+                        <input type="number" step="0.01" class="form-control" id="window_width" name="window_width" value="{{ rd.window_width }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="window_height" class="form-label">Window Height</label>
+                        <input type="number" step="0.01" class="form-control" id="window_height" name="window_height" value="{{ rd.window_height }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label for="electrical_points" class="form-label">Electrical Points</label>
+                        <input type="number" class="form-control" id="electrical_points" name="electrical_points" value="{{ rd.electrical_points }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="fan_points" class="form-label">Fan Points</label>
+                        <input type="number" class="form-control" id="fan_points" name="fan_points" value="{{ rd.fan_points }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="ac_points" class="form-label">AC Points</label>
+                        <input type="number" class="form-control" id="ac_points" name="ac_points" value="{{ rd.ac_points }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="light_points" class="form-label">Light Points</label>
+                        <input type="number" class="form-control" id="light_points" name="light_points" value="{{ rd.light_points }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label for="flooring_type" class="form-label">Flooring Type</label>
+                        <input type="text" class="form-control" id="flooring_type" name="flooring_type" value="{{ rd.flooring_type }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="flooring_brand" class="form-label">Flooring Brand</label>
+                        <input type="text" class="form-control" id="flooring_brand" name="flooring_brand" value="{{ rd.flooring_brand }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="ceiling_type" class="form-label">Ceiling Type</label>
+                        <input type="text" class="form-control" id="ceiling_type" name="ceiling_type" value="{{ rd.ceiling_type }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="ceiling_height" class="form-label">Ceiling Height</label>
+                        <input type="number" step="0.01" class="form-control" id="ceiling_height" name="ceiling_height" value="{{ rd.ceiling_height }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="has_geyser_provision" name="has_geyser_provision" {% if rd.has_geyser_provision %}checked{% endif %}>
+                            <label class="form-check-label" for="has_geyser_provision">Geyser Provision</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="has_exhaust_fan" name="has_exhaust_fan" {% if rd.has_exhaust_fan %}checked{% endif %}>
+                            <label class="form-check-label" for="has_exhaust_fan">Exhaust Fan</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="has_chimney_provision" name="has_chimney_provision" {% if rd.has_chimney_provision %}checked{% endif %}>
+                            <label class="form-check-label" for="has_chimney_provision">Chimney Provision</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="privacy_level" class="form-label">Privacy Level</label>
+                        <input type="text" class="form-control" id="privacy_level" name="privacy_level" value="{{ rd.privacy_level }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="position_in_unit" class="form-label">Position in Unit</label>
+                        <input type="text" class="form-control" id="position_in_unit" name="position_in_unit" value="{{ rd.position_in_unit }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Room Detail</button>
+                <a href="{{ url_for('admin.unit_room_details') }}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

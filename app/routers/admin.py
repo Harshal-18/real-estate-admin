@@ -4,7 +4,7 @@ from app.models import (
     Project, Developer, City, Locality, Amenity, Approval, ProjectApproval, Tower, 
     User, UnitType, PropertyUnit, Review, Notification, ProjectMedia,
     ProjectDocument, UserInterest, SearchLog, PropertyComparison, PriceHistory, BalconyDetail, DoorWindowSpec,
-    ProjectAmenity
+    ProjectAmenity, UnitRoomDetail
 )
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -2338,5 +2338,164 @@ def delete_project_approval(project_id, approval_id):
     db.session.commit()
     flash('Project approval deleted successfully!', 'success')
     return redirect(url_for('admin.project_approvals'))
+
+@admin.route('/unit-room-details', endpoint='unit_room_details')
+def unit_room_details():
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = UnitRoomDetail.query
+    if search:
+        query = query.join(UnitType).filter(
+            (UnitType.type_name.ilike(f'%{search}%')) |
+            (UnitRoomDetail.room_name.ilike(f'%{search}%'))
+        )
+    unit_room_details = query.order_by(UnitRoomDetail.created_at.desc()).paginate(page=page, per_page=10, error_out=False)
+    return render_template('admin/unit_room_details/index.html', unit_room_details=unit_room_details, search=search)
+
+@admin.route('/unit-room-details/export/<export_type>')
+def export_unit_room_details(export_type):
+    import pandas as pd
+    from io import BytesIO, StringIO
+    unit_room_details = UnitRoomDetail.query.all()
+    data = []
+    for rd in unit_room_details:
+        data.append({
+            'ID': rd.room_detail_id,
+            'Unit Type': rd.unit_type.type_name if rd.unit_type else '',
+            'Room Type': rd.room_type or '',
+            'Room Name': rd.room_name or '',
+            'Sequence': rd.room_sequence or '',
+            'Length': rd.room_length or '',
+            'Width': rd.room_width or '',
+            'Area': rd.room_area or '',
+            'Shape': rd.room_shape or '',
+            'Attached Bath': 'Yes' if rd.has_attached_bathroom else 'No',
+            'Balcony': 'Yes' if rd.has_balcony_access else 'No',
+            'Wardrobe': 'Yes' if rd.has_wardrobe else 'No',
+            'Window': 'Yes' if rd.has_window else 'No',
+            'Natural Light': rd.natural_light_rating or '',
+            'Ventilation': rd.ventilation_rating or '',
+            'Door Count': rd.door_count or '',
+            'Flooring': rd.flooring_type or '',
+            'Ceiling': rd.ceiling_type or '',
+            'Privacy': rd.privacy_level or '',
+            'Position': rd.position_in_unit or '',
+            'Created': rd.created_at.strftime('%Y-%m-%d') if rd.created_at else ''
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(BytesIO(output.getvalue().encode()), mimetype='text/csv', as_attachment=True, download_name='unit_room_details.csv')
+    else:
+        flash('Invalid export type.', 'danger')
+        return redirect(url_for('admin.unit_room_details'))
+
+@admin.route('/unit-room-details/new', methods=['GET', 'POST'])
+def new_unit_room_detail():
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        for field in ['room_sequence', 'window_count', 'door_count', 'electrical_points', 'fan_points', 'ac_points', 'light_points']:
+            data[field] = int(data[field]) if data.get(field) else None
+        for field in ['room_length', 'room_width', 'room_area', 'wardrobe_area', 'window_total_area', 'door_width', 'door_height', 'window_width', 'window_height', 'ceiling_height']:
+            data[field] = float(data[field]) if data.get(field) else None
+        for field in ['has_attached_bathroom', 'has_balcony_access', 'has_wardrobe', 'has_window', 'has_geyser_provision', 'has_exhaust_fan', 'has_chimney_provision']:
+            data[field] = field in request.form
+        rd = UnitRoomDetail(
+            unit_type_id=data['unit_type_id'],
+            room_type=data.get('room_type', ''),
+            room_name=data.get('room_name', ''),
+            room_sequence=data.get('room_sequence'),
+            room_length=data.get('room_length'),
+            room_width=data.get('room_width'),
+            room_area=data.get('room_area'),
+            room_shape=data.get('room_shape', ''),
+            has_attached_bathroom=data.get('has_attached_bathroom', False),
+            has_balcony_access=data.get('has_balcony_access', False),
+            has_wardrobe=data.get('has_wardrobe', False),
+            wardrobe_type=data.get('wardrobe_type', ''),
+            wardrobe_area=data.get('wardrobe_area'),
+            has_window=data.get('has_window', False),
+            window_count=data.get('window_count'),
+            window_total_area=data.get('window_total_area'),
+            natural_light_rating=data.get('natural_light_rating', ''),
+            ventilation_rating=data.get('ventilation_rating', ''),
+            door_count=data.get('door_count'),
+            door_type=data.get('door_type', ''),
+            door_material=data.get('door_material', ''),
+            door_width=data.get('door_width'),
+            door_height=data.get('door_height'),
+            window_type=data.get('window_type', ''),
+            window_material=data.get('window_material', ''),
+            window_width=data.get('window_width'),
+            window_height=data.get('window_height'),
+            electrical_points=data.get('electrical_points'),
+            fan_points=data.get('fan_points'),
+            ac_points=data.get('ac_points'),
+            light_points=data.get('light_points'),
+            flooring_type=data.get('flooring_type', ''),
+            flooring_brand=data.get('flooring_brand', ''),
+            ceiling_type=data.get('ceiling_type', ''),
+            ceiling_height=data.get('ceiling_height'),
+            has_geyser_provision=data.get('has_geyser_provision', False),
+            has_exhaust_fan=data.get('has_exhaust_fan', False),
+            has_chimney_provision=data.get('has_chimney_provision', False),
+            privacy_level=data.get('privacy_level', ''),
+            position_in_unit=data.get('position_in_unit', '')
+        )
+        db.session.add(rd)
+        db.session.commit()
+        flash('Unit room detail added successfully!', 'success')
+        return redirect(url_for('admin.unit_room_details'))
+    return render_template('admin/unit_room_details/new.html', unit_types=unit_types)
+
+@admin.route('/unit-room-details/<int:room_detail_id>')
+def view_unit_room_detail(room_detail_id):
+    rd = UnitRoomDetail.query.get_or_404(room_detail_id)
+    return render_template('admin/unit_room_details/view.html', rd=rd)
+
+@admin.route('/unit-room-details/<int:room_detail_id>/edit', methods=['GET', 'POST'], endpoint='edit_unit_room_detail')
+def edit_unit_room_detail(room_detail_id):
+    rd = UnitRoomDetail.query.get_or_404(room_detail_id)
+    unit_types = UnitType.query.all()
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        for field in ['room_sequence', 'window_count', 'door_count', 'electrical_points', 'fan_points', 'ac_points', 'light_points']:
+            setattr(rd, field, int(data[field]) if data.get(field) else None)
+        for field in ['room_length', 'room_width', 'room_area', 'wardrobe_area', 'window_total_area', 'door_width', 'door_height', 'window_width', 'window_height', 'ceiling_height']:
+            setattr(rd, field, float(data[field]) if data.get(field) else None)
+        for field in ['has_attached_bathroom', 'has_balcony_access', 'has_wardrobe', 'has_window', 'has_geyser_provision', 'has_exhaust_fan', 'has_chimney_provision']:
+            setattr(rd, field, field in request.form)
+        rd.unit_type_id = int(data['unit_type_id']) if data.get('unit_type_id') else None
+        rd.room_type = data.get('room_type', '')
+        rd.room_name = data.get('room_name', '')
+        rd.room_shape = data.get('room_shape', '')
+        rd.wardrobe_type = data.get('wardrobe_type', '')
+        rd.natural_light_rating = data.get('natural_light_rating', '')
+        rd.ventilation_rating = data.get('ventilation_rating', '')
+        rd.door_type = data.get('door_type', '')
+        rd.door_material = data.get('door_material', '')
+        rd.window_type = data.get('window_type', '')
+        rd.window_material = data.get('window_material', '')
+        rd.flooring_type = data.get('flooring_type', '')
+        rd.flooring_brand = data.get('flooring_brand', '')
+        rd.ceiling_type = data.get('ceiling_type', '')
+        rd.privacy_level = data.get('privacy_level', '')
+        rd.position_in_unit = data.get('position_in_unit', '')
+        db.session.commit()
+        flash('Unit room detail updated successfully!', 'success')
+        return redirect(url_for('admin.unit_room_details'))
+    return render_template('admin/unit_room_details/edit.html', rd=rd, unit_types=unit_types)
+
+@admin.route('/unit-room-details/<int:room_detail_id>/delete', methods=['POST'])
+def delete_unit_room_detail(room_detail_id):
+    rd = UnitRoomDetail.query.get_or_404(room_detail_id)
+    db.session.delete(rd)
+    db.session.commit()
+    flash('Unit room detail deleted successfully!', 'success')
+    return redirect(url_for('admin.unit_room_details'))
 
  

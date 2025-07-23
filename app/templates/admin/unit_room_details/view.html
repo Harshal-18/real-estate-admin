@@ -1,0 +1,140 @@
+{% extends "admin/base.html" %}
+
+{% block title %}View Unit Room Detail - Admin Panel{% endblock %}
+{% block page_title %}Unit Room Detail{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Unit Room Detail</h3>
+            <dl class="row">
+                <dt class="col-sm-3">Unit Type</dt>
+                <dd class="col-sm-9">{{ rd.unit_type.type_name if rd.unit_type else 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Room Type</dt>
+                <dd class="col-sm-9">{{ rd.room_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Room Name</dt>
+                <dd class="col-sm-9">{{ rd.room_name or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Sequence</dt>
+                <dd class="col-sm-9">{{ rd.room_sequence or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Length</dt>
+                <dd class="col-sm-9">{{ rd.room_length or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Width</dt>
+                <dd class="col-sm-9">{{ rd.room_width or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Area</dt>
+                <dd class="col-sm-9">{{ rd.room_area or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Shape</dt>
+                <dd class="col-sm-9">{{ rd.room_shape or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Attached Bath</dt>
+                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if rd.has_attached_bathroom else 'secondary' }}">{{ 'Yes' if rd.has_attached_bathroom else 'No' }}</span></dd>
+
+                <dt class="col-sm-3">Balcony Access</dt>
+                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if rd.has_balcony_access else 'secondary' }}">{{ 'Yes' if rd.has_balcony_access else 'No' }}</span></dd>
+
+                <dt class="col-sm-3">Wardrobe</dt>
+                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if rd.has_wardrobe else 'secondary' }}">{{ 'Yes' if rd.has_wardrobe else 'No' }}</span></dd>
+
+                <dt class="col-sm-3">Wardrobe Type</dt>
+                <dd class="col-sm-9">{{ rd.wardrobe_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Wardrobe Area</dt>
+                <dd class="col-sm-9">{{ rd.wardrobe_area or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Window</dt>
+                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if rd.has_window else 'secondary' }}">{{ 'Yes' if rd.has_window else 'No' }}</span></dd>
+
+                <dt class="col-sm-3">Window Count</dt>
+                <dd class="col-sm-9">{{ rd.window_count or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Window Total Area</dt>
+                <dd class="col-sm-9">{{ rd.window_total_area or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Natural Light</dt>
+                <dd class="col-sm-9">{{ rd.natural_light_rating or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Ventilation</dt>
+                <dd class="col-sm-9">{{ rd.ventilation_rating or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Door Count</dt>
+                <dd class="col-sm-9">{{ rd.door_count or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Door Type</dt>
+                <dd class="col-sm-9">{{ rd.door_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Door Material</dt>
+                <dd class="col-sm-9">{{ rd.door_material or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Door Width</dt>
+                <dd class="col-sm-9">{{ rd.door_width or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Door Height</dt>
+                <dd class="col-sm-9">{{ rd.door_height or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Window Type</dt>
+                <dd class="col-sm-9">{{ rd.window_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Window Material</dt>
+                <dd class="col-sm-9">{{ rd.window_material or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Window Width</dt>
+                <dd class="col-sm-9">{{ rd.window_width or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Window Height</dt>
+                <dd class="col-sm-9">{{ rd.window_height or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Electrical Points</dt>
+                <dd class="col-sm-9">{{ rd.electrical_points or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Fan Points</dt>
+                <dd class="col-sm-9">{{ rd.fan_points or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">AC Points</dt>
+                <dd class="col-sm-9">{{ rd.ac_points or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Light Points</dt>
+                <dd class="col-sm-9">{{ rd.light_points or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Flooring Type</dt>
+                <dd class="col-sm-9">{{ rd.flooring_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Flooring Brand</dt>
+                <dd class="col-sm-9">{{ rd.flooring_brand or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Ceiling Type</dt>
+                <dd class="col-sm-9">{{ rd.ceiling_type or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Ceiling Height</dt>
+                <dd class="col-sm-9">{{ rd.ceiling_height or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Geyser Provision</dt>
+                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if rd.has_geyser_provision else 'secondary' }}">{{ 'Yes' if rd.has_geyser_provision else 'No' }}</span></dd>
+
+                <dt class="col-sm-3">Exhaust Fan</dt>
+                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if rd.has_exhaust_fan else 'secondary' }}">{{ 'Yes' if rd.has_exhaust_fan else 'No' }}</span></dd>
+
+                <dt class="col-sm-3">Chimney Provision</dt>
+                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if rd.has_chimney_provision else 'secondary' }}">{{ 'Yes' if rd.has_chimney_provision else 'No' }}</span></dd>
+
+                <dt class="col-sm-3">Privacy Level</dt>
+                <dd class="col-sm-9">{{ rd.privacy_level or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Position in Unit</dt>
+                <dd class="col-sm-9">{{ rd.position_in_unit or 'N/A' }}</dd>
+
+                <dt class="col-sm-3">Created</dt>
+                <dd class="col-sm-9">{{ rd.created_at.strftime('%Y-%m-%d') if rd.created_at else 'N/A' }}</dd>
+            </dl>
+            <a href="{{ url_for('admin.edit_unit_room_detail', room_detail_id=rd.room_detail_id) }}" class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('admin.unit_room_details') }}" class="btn btn-secondary ms-2">Back to List</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

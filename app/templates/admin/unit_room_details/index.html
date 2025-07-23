@@ -1,0 +1,177 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Unit Room Details - Admin Panel{% endblock %}
+{% block page_title %}Unit Room Details Management{% endblock %}
+
+{% block content %}
+<!-- Search and Filter Section -->
+<div class="search-filter mb-3">
+    <form method="GET" action="{{ url_for('admin.unit_room_details') }}">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Search Unit Room Details</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by unit type or room name...">
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Unit Room Details Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Unit Room Details</h4>
+            <a href="{{ url_for('admin.new_unit_room_detail') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Room Detail
+            </a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Unit Type</th>
+                        <th>Room Type</th>
+                        <th>Room Name</th>
+                        <th>Seq</th>
+                        <th>Length</th>
+                        <th>Width</th>
+                        <th>Area</th>
+                        <th>Shape</th>
+                        <th>Attached Bath</th>
+                        <th>Balcony</th>
+                        <th>Wardrobe</th>
+                        <th>Window</th>
+                        <th>Light</th>
+                        <th>Ventilation</th>
+                        <th>Door</th>
+                        <th>Flooring</th>
+                        <th>Ceiling</th>
+                        <th>Privacy</th>
+                        <th>Position</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rd in unit_room_details.items %}
+                    <tr>
+                        <td>{{ rd.room_detail_id }}</td>
+                        <td>{{ rd.unit_type.type_name if rd.unit_type else 'N/A' }}</td>
+                        <td>{{ rd.room_type or 'N/A' }}</td>
+                        <td>{{ rd.room_name or 'N/A' }}</td>
+                        <td>{{ rd.room_sequence or 'N/A' }}</td>
+                        <td>{{ rd.room_length or 'N/A' }}</td>
+                        <td>{{ rd.room_width or 'N/A' }}</td>
+                        <td>{{ rd.room_area or 'N/A' }}</td>
+                        <td>{{ rd.room_shape or 'N/A' }}</td>
+                        <td><span class="badge bg-{{ 'success' if rd.has_attached_bathroom else 'secondary' }}">{{ 'Yes' if rd.has_attached_bathroom else 'No' }}</span></td>
+                        <td><span class="badge bg-{{ 'success' if rd.has_balcony_access else 'secondary' }}">{{ 'Yes' if rd.has_balcony_access else 'No' }}</span></td>
+                        <td><span class="badge bg-{{ 'success' if rd.has_wardrobe else 'secondary' }}">{{ 'Yes' if rd.has_wardrobe else 'No' }}</span></td>
+                        <td><span class="badge bg-{{ 'success' if rd.has_window else 'secondary' }}">{{ 'Yes' if rd.has_window else 'No' }}</span></td>
+                        <td>{{ rd.natural_light_rating or 'N/A' }}</td>
+                        <td>{{ rd.ventilation_rating or 'N/A' }}</td>
+                        <td>{{ rd.door_count or 'N/A' }}</td>
+                        <td>{{ rd.flooring_type or 'N/A' }}</td>
+                        <td>{{ rd.ceiling_type or 'N/A' }}</td>
+                        <td>{{ rd.privacy_level or 'N/A' }}</td>
+                        <td>{{ rd.position_in_unit or 'N/A' }}</td>
+                        <td>{{ rd.created_at.strftime('%Y-%m-%d') if rd.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_unit_room_detail', room_detail_id=rd.room_detail_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{{ url_for('admin.edit_unit_room_detail', room_detail_id=rd.room_detail_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                            <form method="POST" action="{{ url_for('admin.delete_unit_room_detail', room_detail_id=rd.room_detail_id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination and Results Summary (unchanged) -->
+        {% if unit_room_details.pages > 1 %}
+        <nav aria-label="Unit Room Details pagination">
+            <ul class="pagination">
+                {% if unit_room_details.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.unit_room_details', page=unit_room_details.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% endif %}
+                {% for page_num in unit_room_details.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != unit_room_details.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.unit_room_details', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if unit_room_details.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.unit_room_details', page=unit_room_details.next_num, search=search) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        <div class="text-muted mt-3">
+            Showing {{ unit_room_details.items|length }} of {{ unit_room_details.total }} room details
+            {% if search %}(filtered results){% endif %}
+        </div>
+    </div>
+</div>
+<!-- Export Options (unchanged) -->
+{% if unit_room_details.items %}
+<div class="card mt-3">
+    <div class="card-header">
+        <h5><i class="fas fa-download"></i> Export Options</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_unit_room_details', export_type='csv') }}'">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-info w-100" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterUnitRoomDetailsTable() {
+        var searchValue = $('#search').val().toLowerCase();
+        $("table.table tbody tr").filter(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterUnitRoomDetailsTable);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %}
