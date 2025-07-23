@@ -2621,4 +2621,27 @@ def home():
     projects = query.order_by(Project.created_at.desc()).paginate(page=page, per_page=9, error_out=False)
     return render_template('admin/home.html', projects=projects, search=search)
 
+@admin.route('/project/<int:project_id>')
+def view_page(project_id):
+    project = Project.query.get_or_404(project_id)
+    return render_template('admin/view_page.html', project=project)
+
+@admin.route('/project/<int:project_id>/insights')
+def project_insights(project_id):
+    from flask import render_template
+    from app.models.project import Project
+    from app.models.property_units import Tower
+    from sqlalchemy.orm import joinedload
+    project = Project.query.options(joinedload(Project.towers)).filter_by(project_id=project_id).first_or_404()
+    # Dummy/placeholder values for avg_unit
+    avg_unit = {
+        'master_bedroom_area': 159.5,
+        'efficiency': 63.49,
+        'balcony_area_ratio': 12.51,
+        'floor_height': 3.05,
+        'common_walls': '25% common walls',
+        'price_per_sqft': 20487.75
+    }
+    return render_template('admin/project_insights.html', project=project, avg_unit=avg_unit)
+
  

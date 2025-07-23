@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - Property Insights</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background: #f4f5fa; }
+        .insight-card {
+            background: #fff;
+            border-radius: 1.5rem;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 2.5rem 2.5rem 2rem 2.5rem;
+        }
+        .insight-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #22223b;
+        }
+        .insight-link {
+            color: #3b82f6;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .insight-label {
+            color: #6b7280;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .insight-value {
+            color: #22223b;
+            font-size: 1.15rem;
+            font-weight: 500;
+        }
+        .insight-divider {
+            border-top: 1px solid #e5e7eb;
+            margin: 2.2rem 0 2.2rem 0;
+        }
+        .insight-section {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #22223b;
+            margin-bottom: 0.2rem;
+        }
+        .insight-subtitle {
+            color: #6b7280;
+            font-size: 1rem;
+            margin-bottom: 2.2rem;
+        }
+        .insight-feature-label {
+            color: #3b82f6;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+        .insight-feature-value {
+            color: #22223b;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+        .insight-feature-desc {
+            color: #6b7280;
+            font-size: 0.98rem;
+        }
+        .insight-feature-icon {
+            color: #22c55e;
+            font-size: 1.3rem;
+            margin-bottom: 0.3rem;
+        }
+        @media (max-width: 767px) {
+            .insight-card { padding: 1.2rem 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="insight-card">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <div class="insight-title">Specifications</div>
+            <a href="{{ url_for('admin.view_page', project_id=project.project_id) }}" class="btn btn-sm btn-secondary">Back to Project</a>
+        </div>
+        <a href="#" class="insight-link mb-4 d-inline-block">{{ project.name }}</a>
+        <div class="row mb-2">
+            <div class="col-md-4 mb-3">
+                <div class="insight-label">Towers</div>
+                <div class="insight-value">{{ project.towers|length }} Towers</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="insight-label">Floors</div>
+                <div class="insight-value">{% if project.towers and project.towers|length > 0 %}{{ project.towers[0].total_floors }} Floors{% else %}-{% endif %}</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="insight-label">Achieved F.A.R.</div>
+                <div class="insight-value">{{ project.fsi or '-' }}</div>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-4 mb-3">
+                <div class="insight-label">Land Type</div>
+                <div class="insight-value">{{ project.property_type or '-' }}</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="insight-label">Water Source</div>
+                <div class="insight-value">Borewells<br>Local Authority</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="insight-label">Development Rights</div>
+                <div class="insight-value">Joint Development</div>
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-4 mb-3">
+                <div class="insight-label">Unit Count</div>
+                <div class="insight-value">{{ project.total_units or '-' }}</div>
+            </div>
+        </div>
+        <div class="insight-divider"></div>
+        <div class="insight-section">An average unit in project</div>
+        <div class="insight-subtitle">Based on the average of all {{ project.total_units or 'N/A' }} units in this project</div>
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="insight-feature-icon mb-1"><i class="fa-regular fa-face-smile"></i></div>
+                <div class="insight-feature-label">Master Bedroom Area</div>
+                <div class="insight-feature-value">{{ avg_unit.master_bedroom_area }} sqft</div>
+                <div class="insight-feature-desc">Most master bedrooms span {{ avg_unit.master_bedroom_area }} sqft here, while the average in Choodasandra is 145 sqft.</div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="insight-feature-icon mb-1"><i class="fa-regular fa-face-smile"></i></div>
+                <div class="insight-feature-label">Efficiency</div>
+                <div class="insight-feature-value">{{ avg_unit.efficiency }} %</div>
+                <div class="insight-feature-desc">Calculated as Carpet Area / Saleable Area, it measures the architectural efficiency of a floor plan. The average in Choodasandra is 65%.</div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="insight-feature-icon mb-1"><i class="fa-regular fa-face-smile"></i></div>
+                <div class="insight-feature-label">Balcony Area Ratio</div>
+                <div class="insight-feature-value">{{ avg_unit.balcony_area_ratio }} %</div>
+                <div class="insight-feature-desc">Calculated as Total Balcony Area / Carpet Area, it denotes the openness in a floor plan. The average in Choodasandra is 8%.</div>
+            </div>
+        </div>
+        <!-- Add the three insights cards here -->
+        <div class="row text-center mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="insight-feature-icon mb-1"><i class="fa-regular fa-face-smile"></i></div>
+                <div class="insight-feature-label">Floor Height</div>
+                <div class="insight-feature-value">{{ avg_unit.floor_height or (project.towers[0].floor_height if project.towers|length > 0) }} meters</div>
+                <div class="insight-feature-desc">The height from the floor to the ceiling here is {{ avg_unit.floor_height or (project.towers[0].floor_height if project.towers|length > 0) }} m, while the average in Choodasandra is 3 meters.</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="insight-feature-icon mb-1"><i class="fa-regular fa-face-smile"></i></div>
+                <div class="insight-feature-label">Common Walls</div>
+                <div class="insight-feature-value">{{ avg_unit.common_walls or '-' }}</div>
+                <div class="insight-feature-desc">This indicates how many walls are shared between two or more units. Most units in Choodasandra have 0% common walls.</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="insight-feature-icon mb-1"><i class="fa-regular fa-face-smile"></i></div>
+                <div class="insight-feature-label">Per sqft. of Carpet Area</div>
+                <div class="insight-feature-value">₹ {{ avg_unit.price_per_sqft or '-' }}</div>
+                <div class="insight-feature-desc">Calculated as Total Price / Carpet Area, it is the cost per sqft of livable area. The average in Choodasandra is ₹13472.</div>
+            </div>
+        </div>
+        <!-- Tower Insights Section (slider/details) -->
+        <div class="insight-divider"></div>
+        <div class="mb-4">
+            <h4 class="insight-section">Towers</h4>
+            <div class="text-muted mb-2">This configuration is in {{ project.towers|length }} towers</div>
+            <div id="tower-slider" class="d-flex align-items-center mb-3">
+                <button class="btn btn-outline-secondary me-2" id="towerPrevBtn"><i class="fa fa-arrow-left"></i></button>
+                <div class="flex-grow-1 text-center">
+                    <span class="fw-bold" id="towerName">Tower 1</span>
+                </div>
+                <button class="btn btn-outline-secondary ms-2" id="towerNextBtn"><i class="fa fa-arrow-right"></i></button>
+            </div>
+            <div id="towerDetails">
+                <!-- Tower details will be injected here by JS -->
+            </div>
+        </div>
+    </div>
+    <!-- End of insight-card -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Prepare tower data for JS
+    const towers = [{% for tower in project.towers %}{name: `{{ tower.tower_name }}`,
+floor_count: `{{ tower.total_floors }}`,
+unit_count: `{{ tower.total_units }}`,
+units_per_floor: `{{ tower.units_per_floor }}`,
+elevator_count: `{{ tower.elevator_count }}`,
+elevator_ratio: `{{ tower.total_units // (tower.elevator_count or 1) }}`,
+typologies: `{% set types = [] %}{% for ut in project.unit_types if ut.tower_id == tower.tower_id %}{% set _ = types.append(ut.type_name) %}{% endfor %}{{ types|join(', ') }}`,
+floor_height: `{{ avg_unit.floor_height }}`,
+common_walls: `{{ avg_unit.common_walls }}`,
+price_per_sqft: `{{ avg_unit.price_per_sqft }}`}{% if not loop.last %},{% endif %}{% endfor %}];
+    let currentTower = 0;
+    function renderTower(idx) {
+        const t = towers[idx];
+        document.getElementById('towerName').textContent = t.name;
+        document.getElementById('towerDetails').innerHTML = `
+        <div class="row mb-2">
+            <div class="col-md-4 mb-2"><div class="insight-label">Floor Count</div><div class="insight-value">${t.floor_count} floors</div></div>
+            <div class="col-md-4 mb-2"><div class="insight-label">Unit Count</div><div class="insight-value">${t.unit_count} units</div></div>
+            <div class="col-md-4 mb-2"><div class="insight-label">Units Per Floor</div><div class="insight-value">${t.units_per_floor} units per floor</div></div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-4 mb-2"><div class="insight-label">Elevator Count</div><div class="insight-value">${t.elevator_count} elevators</div></div>
+            <div class="col-md-4 mb-2"><div class="insight-label">Elevator Ratio</div><div class="insight-value">${t.elevator_ratio} units / elevator</div></div>
+            <div class="col-md-4 mb-2"><div class="insight-label">Typologies</div><div class="insight-value">${t.typologies}</div></div>
+        </div>
+        `;
+    }
+    document.getElementById('towerPrevBtn').onclick = function() {
+        currentTower = (currentTower - 1 + towers.length) % towers.length;
+        renderTower(currentTower);
+    };
+    document.getElementById('towerNextBtn').onclick = function() {
+        currentTower = (currentTower + 1) % towers.length;
+        renderTower(currentTower);
+    };
+    if (towers.length > 0) renderTower(0);
+    </script>
+</body>
+</html> 

@@ -167,7 +167,8 @@
         <div class="row g-4 justify-content-center">
             {% for project in projects.items %}
             <div class="col-12 col-md-6 d-flex justify-content-center">
-                <div class="card project-card shadow-sm border-0 rounded-4 overflow-hidden position-relative w-100" style="max-width: 650px;">
+                <a href="{{ url_for('admin.view_page', project_id=project.project_id) }}" class="text-decoration-none w-100" style="max-width: 650px;">
+                <div class="card project-card shadow-sm border-0 rounded-4 overflow-hidden position-relative w-100" style="max-width: 650px; cursor:pointer;">
                     <div class="project-image-wrap position-relative">
                         {% set cover_media = project.media | selectattr('media_type', 'equalto', 'image') | list %}
                         {% if cover_media and cover_media[0].media_url %}
@@ -231,6 +232,7 @@
                         </div>
                     </div>
                 </div>
+                </a>
             </div>
             {% endfor %}
         </div>

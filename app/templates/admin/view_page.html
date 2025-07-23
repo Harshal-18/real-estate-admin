@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - Project Details</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; }
+        .cover-img {
+            width: 100%;
+            max-height: 420px;
+            object-fit: cover;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+        }
+        .project-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        .price-range {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2563eb;
+        }
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        .info-icon {
+            color: #2563eb;
+            margin-right: 0.5rem;
+        }
+        .feature-box {
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .badge-status {
+            font-size: 1rem;
+            border-radius: 0.7rem;
+            padding: 0.4em 1em;
+        }
+        .review-stat-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            background: #fff;
+            border: none;
+            min-height: 180px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        .review-stat-card:hover {
+            transform: translateY(-6px) scale(1.04);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            background: #f8f9fa;
+        }
+        .review-stat-card:last-child {
+            min-height: 220px;
+            height: 220px;
+        }
+        .project-summary-card {
+            min-height: 90px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+    <!-- Leaflet CSS for OpenStreetMap -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('admin.home') }}">
+                <i class="fas fa-building me-2 text-primary"></i> Real Estate Admin
+            </a>
+        </div>
+    </nav>
+    <div class="container mb-5">
+        <!-- Cover Image -->
+        <div class="row mb-4">
+            <div class="col-12">
+                {% set cover_media = project.media | selectattr('media_type', 'equalto', 'image') | list %}
+                {% if cover_media and cover_media[0].media_url %}
+                    {% set img_url = cover_media[0].media_url %}
+                    {% set final_img_url = img_url if img_url.startswith('http') else url_for('static', filename=img_url) %}
+                    <img src="{{ final_img_url }}" class="cover-img mb-3" alt="{{ project.name }}">
+                {% else %}
+                    <img src="{{ url_for('static', filename='img/default_project.jpg') }}" class="cover-img mb-3" alt="{{ project.name }}">
+                {% endif %}
+            </div>
+        </div>
+        <!-- Project Title and Price -->
+        <div class="row align-items-center mb-3">
+            <div class="col-md-8">
+                <span class="project-title">{{ project.name }}</span>
+                {% if project.status %}
+                    <span class="badge badge-status bg-{{ 'success' if project.status == 'active' else 'secondary' }} ms-2">{{ project.status|capitalize }}</span>
+                {% endif %}
+            </div>
+            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                <span class="price-range">
+                    {% if project.min_price and project.max_price %}
+                        ₹{{ '%.2f' % (project.min_price/10000000) }} Cr - ₹{{ '%.2f' % (project.max_price/10000000) }} Cr
+                    {% elif project.min_price %}
+                        ₹{{ '{:,.2f}'.format(project.min_price) }}
+                    {% elif project.max_price %}
+                        ₹{{ '{:,.2f}'.format(project.max_price) }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <!-- Location, Possession, Area, Unit Types -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="bg-white rounded-4 shadow-sm px-2 project-summary-card">
+                    <i class="fa fa-map-marker-alt text-primary mb-2" style="font-size:1.5rem;"></i>
+                    <div>{{ project.locality.name if project.locality else '' }}, {{ project.city.name if project.city else '' }}</div>
+                    <div class="text-muted small">
+                        {% if project.address %}
+                            {{ project.address[:32] ~ ('...' if project.address|length > 32 else '') }}
+                        {% else %}
+                            No address available
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="bg-white rounded-4 shadow-sm px-2 project-summary-card">
+                    <i class="fa fa-calendar-alt text-primary mb-2" style="font-size:1.5rem;"></i>
+                    <div>{{ project.possession_date.strftime('%b %Y') if project.possession_date else 'N/A' }}</div>
+                    <div class="text-muted small">{{ project.status|capitalize if project.status else '' }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="bg-white rounded-4 shadow-sm px-2 project-summary-card">
+                    <i class="fa fa-home text-primary mb-2" style="font-size:1.5rem;"></i>
+                    <div>{{ unit_types_summary }}</div>
+                    <div class="text-muted small">
+                        {% for ut in project.unit_types %}{{ ut.type_name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="bg-white rounded-4 shadow-sm px-2 project-summary-card">
+                    <i class="fa fa-ruler-combined text-primary mb-2" style="font-size:1.5rem;"></i>
+                    <div>{{ area_range }}</div>
+                    <div class="text-muted small">sqft</div>
+                    <div class="text-muted small">
+                        {% set areas = project.unit_types | map(attribute='carpet_area') | select('number') | list %}
+                        {% set min_area = areas|min if areas else None %}
+                        {% set max_area = areas|max if areas else None %}
+                        {% if min_area and max_area %}
+                          {{ min_area|int }} - {{ max_area|int }} sqft
+                        {% else %}
+                          <span class="text-muted">Area not available</span>
+                        {% endif %}
+                      </div>
+                </div>
+            </div>
+        </div>
+        <!-- Overview Section (moved above Review) -->
+        {% if project.description or project.highlights %}
+        <div class="mt-5 mb-3">
+          <div style="font-size:2.5rem; font-weight:700; color:#111; text-align:left;">Overview</div>
+        </div>
+        <div class="row mb-4">
+          <div class="col-12">
+            {% if project.description %}
+              <div class="mb-3" style="font-size:1.1rem; color:#444;">{{ project.description }}</div>
+            {% endif %}
+            {% if project.highlights %}
+              <ul style="font-size:1.05rem; color:#333;">
+                {% for line in project.highlights.split('\n') if line.strip() %}
+                  <li>{{ line }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Review/Stats Section -->
+        <div class="mt-5 mb-3">
+            <div style="font-size:2.5rem; font-weight:700; color:#111; text-align:left;">Review</div>
+        </div>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 mb-4 text-center align-items-end">
+            {% set clubhouse_factor = (project.clubhouse_area / project.total_units)|round(0) if project.clubhouse_area and project.total_units else 'N/A' %}
+            {% set stats = [
+                {'icon': 'fa-arrow-down text-danger', 'value': project.total_land_area|string ~ ' Acres' if project.total_land_area else 'N/A', 'label': 'Land Area', 'avg': '16.84 acres'},
+                {'icon': 'fa-arrow-up text-success', 'value': project.clubhouse_area|string ~ ' sqft' if project.clubhouse_area else 'N/A', 'label': 'Clubhouse Area', 'avg': '21193 sqft'},
+                {'icon': 'fa-arrow-right text-warning', 'value': project.park_area|string ~ ' Acres' if project.park_area else 'N/A', 'label': 'Park Area', 'avg': '0.91 Acres'},
+                {'icon': 'fa-arrow-up text-success', 'value': project.open_area_percentage|string ~ '%' if project.open_area_percentage else 'N/A', 'label': 'Open Area', 'avg': '76%'},
+                {'icon': 'fa-arrow-right text-warning', 'value': project.total_units|string ~ ' units' if project.total_units else 'N/A', 'label': 'Units', 'avg': '824 units'},
+                {'icon': 'fa-arrow-down text-danger', 'value': '₹' ~ (project.price_per_sqft|int) if project.price_per_sqft else 'N/A', 'label': 'Price Per Sq.Ft.', 'avg': '₹8731'},
+                {'icon': 'fa-arrow-up text-success', 'value': clubhouse_factor|string ~ ' sqft / unit' if clubhouse_factor != 'N/A' else 'N/A', 'label': 'Clubhouse Factor', 'avg': '39 sqft / unit'},
+                {'icon': 'fa-arrow-right text-warning', 'value': project.nearest_metro_distance|string ~ ' kms' if project.nearest_metro_distance else 'N/A', 'label': 'Closest Metro', 'avg': '4.05 kms'},
+                {'icon': 'fa-arrow-right text-warning', 'value': project.approach_road_width|string ~ ' meters' if project.approach_road_width else 'N/A', 'label': 'Approach Road', 'avg': '22 meters'},
+                {'icon': 'fa-arrow-up text-success', 'value': project.unit_density|string ~ ' units/acre' if project.unit_density else 'N/A', 'label': 'Unit Density', 'avg': '66 units/acre'},
+            ] %}
+            {% for stat in stats %}
+            <div class="col d-flex">
+                <div class="review-stat-card w-100 flex-fill py-3 px-2">
+                    <i class="fa-solid {{ stat.icon }}" style="font-size:2.2rem;"></i>
+                    <div style="font-size:2rem; font-weight:700; margin-top:0.5rem;">{{ stat.value }} <span style="font-size:1.1rem; font-weight:400;">{{ stat.unit }}</span></div>
+                    <div class="text-secondary" style="font-size:1.1rem; margin-top:0.2rem;">{{ stat.label }}</div>
+                    <div class="text-secondary small">Avg is: {{ stat.avg }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Location Section Title -->
+        <div class="mt-5 mb-3">
+          <a href="{{ url_for('admin.project_insights', project_id=project.project_id) }}" class="btn btn-dark btn-lg fw-semibold px-4 py-2 mb-2" style="border-radius:0.6rem;">See Property Insights</a>
+          <div style="font-size:2.5rem; font-weight:700; color:#111; text-align:left;">Location</div>
+        </div>
+        <!-- Nearby Map Section -->
+        <div class="mt-5 mb-4">
+          <div class="bg-white rounded-4 shadow-sm p-3">
+            <!-- Tab Bar -->
+            <div class="d-flex flex-wrap align-items-center mb-3" style="gap:1.2rem;">
+              <button class="btn btn-light border-0 px-4 py-2 map-tab-btn active" style="font-weight:500;" data-type="Transit"><i class="fa fa-train me-2"></i>Transit</button>
+              <button class="btn btn-light border-0 px-4 py-2 map-tab-btn" data-type="Schools"><i class="fa fa-school me-2"></i>Schools</button>
+              <button class="btn btn-light border-0 px-4 py-2 map-tab-btn" data-type="Hospitals"><i class="fa fa-hospital me-2"></i>Hospitals</button>
+              <button class="btn btn-light border-0 px-4 py-2 map-tab-btn" data-type="Offices"><i class="fa fa-building me-2"></i>Offices</button>
+              <button class="btn btn-light border-0 px-4 py-2 map-tab-btn" data-type="Malls"><i class="fa fa-shopping-bag me-2"></i>Malls</button>
+            </div>
+            <div class="row g-0" style="min-height:400px;">
+              <div class="col-12 col-lg-8" style="height:400px;">
+                <div id="project-map" style="width:100%; height:100%; border-radius:1rem;"></div>
+              </div>
+              <div class="col-12 col-lg-4 ps-lg-4 mt-3 mt-lg-0 d-flex flex-column gap-3" style="max-height:400px; overflow-y:auto;">
+                <!-- Placeholder for nearby places -->
+                <div class="bg-white rounded-3 shadow-sm p-3 mb-2">
+                  <div style="font-weight:600;">Hosa Road Metro Station</div>
+                  <div class="text-muted">4.17 Km <span class="mx-2">|</span> 11 mins</div>
+                </div>
+                <div class="bg-white rounded-3 shadow-sm p-3 mb-2">
+                  <div style="font-weight:600;">Doddakanalli gate Metro</div>
+                  <div class="text-muted">4.96 Km <span class="mx-2">|</span> 14 mins</div>
+                </div>
+                <div class="bg-white rounded-3 shadow-sm p-3 mb-2">
+                  <div style="font-weight:600;">Singasandra Metro Station</div>
+                  <div class="text-muted">5.33 Km <span class="mx-2">|</span> 14 mins</div>
+                </div>
+                <div class="bg-white rounded-3 shadow-sm p-3 mb-2">
+                  <div style="font-weight:600;">Electronic City Metro Station</div>
+                  <div class="text-muted">5.8 Km <span class="mx-2">|</span> 14 mins</div>
+                </div>
+                <div class="bg-white rounded-3 shadow-sm p-3 mb-2">
+                  <div style="font-weight:600;">Carmelaram Metro Station</div>
+                  <div class="text-muted">6.27 Km <span class="mx-2">|</span> 18 mins</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Plan Section -->
+        <div class="mt-5 mb-4">
+          <div style="font-size:2.5rem; font-weight:700; color:#111; text-align:left;">Master Plan</div>
+          <div style="color:#6c6c7e; font-size:1.3rem; margin-bottom:1.5rem;">{{ project.name }}</div>
+          {% set master_plan_media = project.media | selectattr('media_type', 'equalto', 'image') | selectattr('media_category', 'equalto', 'master_plan') | list %}
+          {% if master_plan_media and master_plan_media[0].media_url %}
+            {% set mp_url = master_plan_media[0].media_url %}
+            {% if not mp_url.startswith('uploads/') and not mp_url.startswith('http') %}
+              {% set mp_url = 'uploads/' + mp_url %}
+            {% endif %}
+            {% set final_mp_url = mp_url if mp_url.startswith('http') else url_for('static', filename=mp_url) %}
+            <div class="text-center">
+              <img src="{{ final_mp_url }}" alt="Master Plan" style="max-width:100%; height:auto; border-radius:1.2rem; box-shadow:0 2px 16px rgba(0,0,0,0.08);">
+            </div>
+          {% elif project.master_plan_url %}
+            {% set mp_url = project.master_plan_url %}
+            {% if not mp_url.startswith('uploads/') and not mp_url.startswith('http') %}
+              {% set mp_url = 'uploads/' + mp_url %}
+            {% endif %}
+            {% set final_mp_url = mp_url if mp_url.startswith('http') else url_for('static', filename=mp_url) %}
+            <div class="text-center">
+              <img src="{{ final_mp_url }}" alt="Master Plan" style="max-width:100%; height:auto; border-radius:1.2rem; box-shadow:0 2px 16px rgba(0,0,0,0.08);">
+            </div>
+          {% else %}
+            <div class="text-center text-muted">No master plan image available.</div>
+          {% endif %}
+        </div>
+
+        <!-- Leaflet JS for OpenStreetMap -->
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            var lat = parseFloat('{{ project.latitude or 12.9352 }}');
+            var lng = parseFloat('{{ project.longitude or 77.6245 }}');
+            var map = L.map('project-map').setView([lat, lng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              maxZoom: 19,
+              attribution: '© OpenStreetMap'
+            }).addTo(map);
+            // Main project marker
+            var projectMarker = L.marker([lat, lng]).addTo(map)
+              .bindPopup('{{ project.name }}');
+
+            // Grouped locations by type
+            var groupedLocations = {
+              'Transit': [
+                {name: 'Hosa Road Metro Station', lat: 12.8722, lng: 77.6716},
+                {name: 'Doddakanalli gate Metro', lat: 12.9000, lng: 77.6870},
+                {name: 'Singasandra Metro Station', lat: 12.8727, lng: 77.6476},
+                {name: 'Electronic City Metro Station', lat: 12.8452, lng: 77.6604},
+                {name: 'Carmelaram Metro Station', lat: 12.8992, lng: 77.7276}
+              ],
+              'Schools': [
+                {name: 'Delhi Public School', lat: 12.9100, lng: 77.6500},
+                {name: 'National Public School', lat: 12.9300, lng: 77.6700}
+              ],
+              'Hospitals': [
+                {name: 'Apollo Hospital', lat: 12.9200, lng: 77.6600},
+                {name: 'Fortis Hospital', lat: 12.9400, lng: 77.6800}
+              ],
+              'Offices': [
+                {name: 'Infosys', lat: 12.9500, lng: 77.6900},
+                {name: 'Wipro', lat: 12.9600, lng: 77.7000}
+              ],
+              'Malls': [
+                {name: 'Forum Mall', lat: 12.9700, lng: 77.7100},
+                {name: 'Phoenix Marketcity', lat: 12.9800, lng: 77.7200}
+              ]
+            };
+
+            var markerGroup = L.layerGroup().addTo(map);
+            var currentTab = null;
+
+            function showProjectMarkerOnly() {
+              markerGroup.clearLayers();
+              projectMarker.addTo(map);
+            }
+
+            function showMarkers(type) {
+              markerGroup.clearLayers();
+              if (groupedLocations[type]) {
+                groupedLocations[type].forEach(function(loc) {
+                  L.marker([loc.lat, loc.lng]).addTo(markerGroup)
+                    .bindPopup(loc.name);
+                });
+              }
+            }
+
+            // Tab click logic
+            var tabButtons = document.querySelectorAll('.map-tab-btn');
+            tabButtons.forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                var type = btn.getAttribute('data-type');
+                if (currentTab === type) {
+                  // Toggle off: show only project marker
+                  tabButtons.forEach(function(b) { b.classList.remove('active'); });
+                  currentTab = null;
+                  showProjectMarkerOnly();
+                } else {
+                  tabButtons.forEach(function(b) { b.classList.remove('active'); });
+                  btn.classList.add('active');
+                  currentTab = type;
+                  showMarkers(type);
+                }
+              });
+            });
+
+            // By default, show only the project marker
+            showProjectMarkerOnly();
+          });
+        </script>
+        <!-- Amenities Section -->
+        <div class="section-title">Amenities</div>
+        <div class="mb-4">
+          {% if project.amenities %}
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+              {% set amenity_emojis = {
+                'swimmingpool': '🏊',
+                'gymnasium': '🏋️',
+                'clubhouse': '🏢',
+                'childrensplayarea': '🧒',
+                'landscapedgardens': '🌳',
+                '247security': '🛡️',
+                'default': '✨'
+              } %}
+              {% for amenity in project.amenities %}
+                {% set key = amenity.name|lower|replace(' ', '')|replace("'", '')|replace('/', '') %}
+                {% set emoji = amenity_emojis.get(key, '✨') %}
+                <div class="col">
+                  <div class="d-flex flex-column align-items-center justify-content-center bg-white rounded-4 shadow-sm p-3 h-100 amenity-card" style="transition:box-shadow 0.2s, transform 0.2s; min-height:110px;">
+                    <div class="mb-2" style="font-size:2rem;">{{ emoji }}</div>
+                    <div class="text-center" style="font-size:1.08rem; font-weight:500; color:#222;">{{ amenity.name }}</div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            <style>
+              .amenity-card:hover {
+                box-shadow: 0 8px 24px rgba(37,99,235,0.13), 0 2px 8px rgba(0,0,0,0.06);
+                transform: translateY(-4px) scale(1.04);
+                background: #f0f6ff;
+              }
+            </style>
+          {% else %}
+            <span class="text-muted">No amenities listed.</span>
+          {% endif %}
+        </div>
+        <!-- Floor Plans Section (if media with media_type == 'floor_plan') -->
+        <div class="section-title">Floor Plans</div>
+        <div class="mb-4">
+            {% set floor_plans = project.media | selectattr('media_type', 'equalto', 'floor_plan') | list %}
+            {% if floor_plans %}
+                <div class="row">
+                {% for plan in floor_plans %}
+                    <div class="col-md-4 mb-3">
+                        <img src="{{ plan.media_url if plan.media_url.startswith('http') else url_for('static', filename=plan.media_url) }}" class="img-fluid rounded shadow-sm" alt="Floor Plan">
+                        <div class="mt-2 text-center small">{{ plan.title or 'Floor Plan' }}</div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+                <span class="text-muted">No floor plans available.</span>
+            {% endif %}
+        </div>
+        <!-- Documents Section (if any) -->
+        <div class="section-title">Documents</div>
+        <div class="mb-4">
+            {% if project.documents %}
+                <ul>
+                {% for doc in project.documents %}
+                    <li><a href="{{ doc.file_url if doc.file_url.startswith('http') else url_for('static', filename=doc.file_url) }}" target="_blank">{{ doc.title or 'Document' }}</a></li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <span class="text-muted">No documents available.</span>
+            {% endif %}
+        </div>
+    </div>
+    <footer class="footer bg-white border-top mt-5">
+        <div class="container">
+            &copy; {{ 2024 }} Real Estate Admin. All rights reserved.
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
