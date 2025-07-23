@@ -1,0 +1,180 @@
+{% extends "admin/base.html" %}
+
+{% block title %}User Interests - Admin Panel{% endblock %}
+
+{% block page_title %}User Interests Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Search and Filter Section -->
+    <div class="search-filter mb-3">
+        <form method="GET" action="{{ url_for('admin.user_interests') }}">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search User Interests</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by user, project, or status...">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- User Interests Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">User Interests</h4>
+                <a href="{{ url_for('admin.new_user_interest') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New User Interest
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="user-interests-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>Project</th>
+                            <th>Unit Type</th>
+                            <th>Interest Type</th>
+                            <th>Contact Method</th>
+                            <th>Contact Time</th>
+                            <th>Budget Min</th>
+                            <th>Budget Max</th>
+                            <th>Preferred Floors</th>
+                            <th>Specific Requirements</th>
+                            <th>Status</th>
+                            <th>Assigned To</th>
+                            <th>Notes</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for interest in user_interests.items %}
+                        <tr>
+                            <td>{{ interest.interest_id }}</td>
+                            <td>
+                                {% if interest.user %}
+                                    {{ interest.user.full_name if interest.user.full_name else (interest.user.first_name ~ ' ' ~ interest.user.last_name) }}
+                                {% else %}
+                                    {{ interest.user_id }}
+                                {% endif %}
+                            </td>
+                            <td>{{ interest.project.name if interest.project else interest.project_id }}</td>
+                            <td>
+                                {% if interest.unit_type and interest.unit_type.type_name %}
+                                    {{ interest.unit_type.type_name }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </td>
+                            <td>{{ interest.interest_type or 'N/A' }}</td>
+                            <td>{{ interest.preferred_contact_method or 'N/A' }}</td>
+                            <td>{{ interest.preferred_contact_time or 'N/A' }}</td>
+                            <td>{{ interest.budget_min or 'N/A' }}</td>
+                            <td>{{ interest.budget_max or 'N/A' }}</td>
+                            <td>{{ interest.preferred_floors or 'N/A' }}</td>
+                            <td>{% if interest.specific_requirements %}{{ interest.specific_requirements[:40] ~ ('...' if interest.specific_requirements|length > 40 else '') }}{% else %}N/A{% endif %}</td>
+                            <td>{{ interest.status or 'N/A' }}</td>
+                            <td>{{ interest.assigned_to if interest.assigned_to else 'N/A' }}</td>
+                            <td>{% if interest.notes %}{{ interest.notes[:40] ~ ('...' if interest.notes|length > 40 else '') }}{% else %}N/A{% endif %}</td>
+                            <td>{{ interest.created_at.strftime('%Y-%m-%d') if interest.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.view_user_interest', interest_id=interest.interest_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
+                                <a href="{{ url_for('admin.edit_user_interest', interest_id=interest.interest_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
+                                <form method="POST" action="{{ url_for('admin.delete_user_interest', interest_id=interest.interest_id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination and Results Summary -->
+            {% if user_interests.pages > 1 %}
+            <nav aria-label="User Interests pagination">
+                <ul class="pagination">
+                    {% if user_interests.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.user_interests', page=user_interests.prev_num, search=search) }}">
+                                <i class="fas fa-chevron-left"></i> Previous
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% for page_num in user_interests.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != user_interests.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.user_interests', page=page_num, search=search) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if user_interests.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.user_interests', page=user_interests.next_num, search=search) }}">
+                                Next <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            <div class="text-muted mt-3">
+                Showing {{ user_interests.items|length }} of {{ user_interests.total }} user interests
+                {% if search %}(filtered results){% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Export Options -->
+    {% if user_interests.items %}
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5><i class="fas fa-download"></i> Export Options</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-outline-success w-100" onclick="window.location='{{ url_for('admin.export_user_interests', export_type='csv') }}'" download>
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-outline-info w-100" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print List
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function filterUserInterestRows() {
+        var searchValue = $('#search').val().toLowerCase();
+        $('#user-interests-table tbody tr').each(function() {
+            var rowText = $(this).text().toLowerCase();
+            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
+            $(this).toggle(searchMatch);
+        });
+    }
+    $('#search').on('input', filterUserInterestRows);
+    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+});
+</script>
+{% endblock %}

@@ -2498,4 +2498,105 @@ def delete_unit_room_detail(room_detail_id):
     flash('Unit room detail deleted successfully!', 'success')
     return redirect(url_for('admin.unit_room_details'))
 
+# User Interests Routes
+@admin.route('/user-interests')
+def user_interests():
+    """List all user interests"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    query = UserInterest.query
+    if search:
+        query = query.filter(
+            (UserInterest.interest_type.ilike(f'%{search}%')) |
+            (UserInterest.status.ilike(f'%{search}%'))
+        )
+    user_interests = query.order_by(UserInterest.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    return render_template('admin/user_interests/index.html', user_interests=user_interests, search=search)
+
+@admin.route('/user-interests/new', methods=['GET', 'POST'])
+def new_user_interest():
+    """Create new user interest"""
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        # Convert empty strings to None for numeric fields
+        for field in ['budget_min', 'budget_max', 'assigned_to', 'user_id', 'project_id', 'unit_type_id']:
+            if data.get(field) == '':
+                data[field] = None
+        interest = UserInterest(
+            user_id=data.get('user_id'),
+            project_id=data.get('project_id'),
+            unit_type_id=data.get('unit_type_id'),
+            interest_type=data.get('interest_type'),
+            preferred_contact_method=data.get('preferred_contact_method'),
+            preferred_contact_time=data.get('preferred_contact_time'),
+            budget_min=data.get('budget_min'),
+            budget_max=data.get('budget_max'),
+            preferred_floors=data.get('preferred_floors'),
+            specific_requirements=data.get('specific_requirements'),
+            status=data.get('status'),
+            assigned_to=data.get('assigned_to'),
+            notes=data.get('notes'),
+            created_at=datetime.utcnow()
+        )
+        db.session.add(interest)
+        db.session.commit()
+        flash('User interest created successfully!', 'success')
+        return redirect(url_for('admin.user_interests'))
+    users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
+    projects = Project.query.order_by(Project.name).all()
+    unit_types = UnitType.query.filter_by(is_active=True).order_by(UnitType.type_name).all()
+    return render_template('admin/user_interests/new.html', users=users, projects=projects, unit_types=unit_types)
+
+@admin.route('/user-interests/<int:interest_id>')
+def view_user_interest(interest_id):
+    interest = UserInterest.query.get_or_404(interest_id)
+    return render_template('admin/user_interests/view.html', interest=interest)
+
+@admin.route('/user-interests/<int:interest_id>/edit', methods=['GET', 'POST'])
+def edit_user_interest(interest_id):
+    interest = UserInterest.query.get_or_404(interest_id)
+    if request.method == 'POST':
+        data = request.form.to_dict()
+        for key, value in data.items():
+            if hasattr(interest, key):
+                setattr(interest, key, value)
+        db.session.commit()
+        flash('User interest updated successfully!', 'success')
+        return redirect(url_for('admin.user_interests'))
+    users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
+    projects = Project.query.order_by(Project.name).all()
+    unit_types = UnitType.query.filter_by(is_active=True).order_by(UnitType.type_name).all()
+    return render_template('admin/user_interests/edit.html', interest=interest, users=users, projects=projects, unit_types=unit_types)
+
+@admin.route('/user-interests/<int:interest_id>/delete', methods=['POST'])
+def delete_user_interest(interest_id):
+    interest = UserInterest.query.get_or_404(interest_id)
+    db.session.delete(interest)
+    db.session.commit()
+    flash('User interest deleted successfully!', 'success')
+    return redirect(url_for('admin.user_interests'))
+
+@admin.route('/user-interests/export/<export_type>')
+def export_user_interests(export_type):
+    """Export user interests as CSV"""
+    interests = UserInterest.query.all()
+    if export_type == 'csv':
+        import csv
+        from io import StringIO
+        si = StringIO()
+        cw = csv.writer(si)
+        cw.writerow(['interest_id', 'user_id', 'project_id', 'unit_type_id', 'interest_type', 'preferred_contact_method', 'preferred_contact_time', 'budget_min', 'budget_max', 'preferred_floors', 'specific_requirements', 'status', 'assigned_to', 'notes', 'created_at'])
+        for i in interests:
+            cw.writerow([
+                i.interest_id, i.user_id, i.project_id, i.unit_type_id, i.interest_type, i.preferred_contact_method, i.preferred_contact_time, i.budget_min, i.budget_max, i.preferred_floors, i.specific_requirements, i.status, i.assigned_to, i.notes, i.created_at
+            ])
+        output = make_response(si.getvalue())
+        output.headers["Content-Disposition"] = "attachment; filename=user_interests.csv"
+        output.headers["Content-type"] = "text/csv"
+        return output
+    flash('Unsupported export type', 'danger')
+    return redirect(url_for('admin.user_interests'))
+
  

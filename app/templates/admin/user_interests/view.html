@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+
+{% block title %}User Interest #{{ interest.interest_id }} - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">User Interest #{{ interest.interest_id }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_user_interest', interest_id=interest.interest_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.user_interests') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to User Interests
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">User Interest Details</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Interest ID:</strong> {{ interest.interest_id }}</p>
+                    <p><strong>User:</strong> {% if interest.user %}{{ interest.user.full_name if interest.user.full_name else (interest.user.first_name ~ ' ' ~ interest.user.last_name) }}{% else %}{{ interest.user_id }}{% endif %}</p>
+                    <p><strong>Project:</strong> {{ interest.project.name if interest.project else interest.project_id }}</p>
+                    <p><strong>Unit Type:</strong> {{ interest.unit_type.type_name if interest.unit_type else interest.unit_type_id }}</p>
+                    <p><strong>Interest Type:</strong> {{ interest.interest_type or 'N/A' }}</p>
+                    <p><strong>Preferred Contact Method:</strong> {{ interest.preferred_contact_method or 'N/A' }}</p>
+                    <p><strong>Preferred Contact Time:</strong> {{ interest.preferred_contact_time or 'N/A' }}</p>
+                    <p><strong>Budget Min:</strong> {{ interest.budget_min or 'N/A' }}</p>
+                    <p><strong>Budget Max:</strong> {{ interest.budget_max or 'N/A' }}</p>
+                    <p><strong>Preferred Floors:</strong> {{ interest.preferred_floors or 'N/A' }}</p>
+                    <p><strong>Specific Requirements:</strong> {{ interest.specific_requirements or 'N/A' }}</p>
+                    <p><strong>Status:</strong> {{ interest.status or 'N/A' }}</p>
+                    <p><strong>Assigned To:</strong> {{ interest.assigned_to if interest.assigned_to else 'N/A' }}</p>
+                    <p><strong>Notes:</strong> {{ interest.notes or 'N/A' }}</p>
+                    <p><strong>Created:</strong> {{ interest.created_at.strftime('%Y-%m-%d %H:%M') if interest.created_at else 'N/A' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

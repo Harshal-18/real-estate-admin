@@ -28,6 +28,9 @@ class UserInterest(BaseModel):
     assigned_to = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     notes = db.Column(db.Text)
 
+    # Add relationship to UnitType
+    unit_type = db.relationship('UnitType', backref='user_interests', lazy=True)
+
     def __repr__(self):
         return f'<UserInterest {self.interest_type} by {self.user.full_name}>'
 
