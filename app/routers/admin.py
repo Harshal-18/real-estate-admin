@@ -20,6 +20,7 @@ except ImportError:
 from flask import session, redirect, url_for, render_template, request, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import User
+from sqlalchemy.orm import joinedload
 
 admin = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -2598,5 +2599,26 @@ def export_user_interests(export_type):
         return output
     flash('Unsupported export type', 'danger')
     return redirect(url_for('admin.user_interests'))
+
+@admin.route('/home')
+def home():
+    """Admin Home Page - Project Card Grid"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    min_budget = request.args.get('min_budget', type=float)
+    max_budget = request.args.get('max_budget', type=float)
+    status = request.args.get('status', '')
+    query = Project.query
+    if search:
+        query = query.filter(Project.name.ilike(f'%{search}%'))
+    if min_budget is not None:
+        query = query.filter(Project.min_price >= min_budget)
+    if max_budget is not None:
+        query = query.filter(Project.max_price <= max_budget)
+    if status:
+        query = query.filter(Project.status == status)
+    query = query.options(joinedload(Project.media))
+    projects = query.order_by(Project.created_at.desc()).paginate(page=page, per_page=9, error_out=False)
+    return render_template('admin/home.html', projects=projects, search=search)
 
  

@@ -136,16 +136,21 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    function filterAmenitiesTable() {
-        var searchValue = $('#search').val().toLowerCase();
-        $("table.table tbody tr").filter(function() {
-            var rowText = $(this).text().toLowerCase();
-            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
-            $(this).toggle(searchMatch);
-        });
-    }
-    $('#search').on('input', filterAmenitiesTable);
-    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+    let debounceTimer;
+    $('#search').on('input', function() {
+        clearTimeout(debounceTimer);
+        var searchVal = $(this).val();
+        var form = $(this).closest('form');
+        var url = form.attr('action');
+        var data = form.serialize();
+        debounceTimer = setTimeout(function() {
+            $.get(url, data, function(response) {
+                // Replace the table body only
+                var newBody = $(response).find('table tbody').html();
+                $('table tbody').html(newBody);
+            });
+        }, 350);
+    });
 });
 </script>
 {% endblock %} 

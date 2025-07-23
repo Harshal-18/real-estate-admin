@@ -135,21 +135,21 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    function filterApprovalsTable() {
-        var searchValue = $('#search').val().toLowerCase();
-        var statusValue = $('#status').val().replace(/[_\s]+/g, '').toLowerCase();
-        $("table.table tbody tr").filter(function() {
-            var rowText = $(this).text().toLowerCase();
-            var statusCell = $(this).find('td:nth-child(3) .badge');
-            var statusText = statusCell.text().replace(/[_\s]+/g, '').toLowerCase();
-            var searchMatch = (searchValue === "") || (rowText.indexOf(searchValue) > -1);
-            var statusMatch = (statusValue === "") || (statusText === statusValue);
-            $(this).toggle(searchMatch && statusMatch);
-        });
-    }
-    $('#search').on('input', filterApprovalsTable);
-    $('#status').on('change', filterApprovalsTable);
-    $('#search').closest('form').on('submit', function(e) { e.preventDefault(); });
+    let debounceTimer;
+    $('#search').on('input', function() {
+        clearTimeout(debounceTimer);
+        var searchVal = $(this).val();
+        var form = $(this).closest('form');
+        var url = form.attr('action');
+        var data = form.serialize();
+        debounceTimer = setTimeout(function() {
+            $.get(url, data, function(response) {
+                // Replace the table body only
+                var newBody = $(response).find('table tbody').html();
+                $('table tbody').html(newBody);
+            });
+        }, 350);
+    });
 });
 </script>
 {% endblock %} 
