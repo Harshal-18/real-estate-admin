@@ -40,6 +40,6 @@ def create_app(config_class=Config):
     # Root route
     @app.route('/')
     def index():
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('admin.home'))
 
     return app 

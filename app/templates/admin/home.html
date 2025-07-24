@@ -167,7 +167,7 @@
         <div class="row g-4 justify-content-center">
             {% for project in projects.items %}
             <div class="col-12 col-md-6 d-flex justify-content-center">
-                <div class="card project-card shadow-sm border-0 rounded-4 overflow-hidden position-relative w-100" style="max-width: 650px; cursor:pointer;">
+                <div class="card project-card shadow-sm border-0 rounded-4 overflow-hidden position-relative w-100 project-card-clickable" style="max-width: 650px; cursor:pointer;" data-href="{{ url_for('admin.view_page', project_id=project.project_id) }}">
                     <div class="project-image-wrap position-relative">
                         {% set photo_media = project.media | selectattr('media_type', 'equalto', 'image') | selectattr('media_category', 'equalto', 'photo') | list %}
                         {% if photo_media and photo_media[0].media_url %}
@@ -264,48 +264,68 @@
             {% endif %}
         </div>
     </div>
-    <footer class="footer" style="background:rgba(0,0,0,0.85); color:#fff; border:0; margin-top:3rem; padding:2.5rem 0 1.5rem 0;">
-        <div class="container text-center">
-            <div class="mb-3" style="font-size:1.3rem; font-weight:700; letter-spacing:1px;">
-                <i class="fas fa-building me-2"></i> Real Estate Admin Panel
+    <!-- Replace old footer with new modern footer -->
+    <footer style="background:#18181b; color:#e4e4e7; margin-top:4rem; padding:0; font-family:inherit;">
+      <div class="container py-5">
+        <div class="row justify-content-center mb-5">
+          <div class="col-12 col-md-8 text-center">
+            <div style="font-size:2rem; font-weight:700; color:#fff; margin-bottom:0.5rem;">Discover and Manage Real Estate Projects Easily</div>
+            <div style="color:#b3b3b3; font-size:1.1rem; margin-bottom:2rem;">Join thousands of users streamlining their property management with Harshal Realty.</div>
+            <div class="d-flex justify-content-center gap-3 mb-2">
+              <a href="{{ url_for('auth.login') }}" class="btn" style="background:#ede9fe; color:#6d28d9; font-weight:600; border-radius:0.6rem; min-width:120px; font-size:1.1rem;">LOGIN</a>
+              <a href="{{ url_for('auth.signup') }}" class="btn" style="background:#7c3aed; color:#fff; font-weight:700; border-radius:0.6rem; min-width:120px; font-size:1.1rem;">SIGN UP</a>
             </div>
-            <div class="mb-3">
-                <span class="d-block mb-1"><i class="fas fa-map-marker-alt"></i> 123 Main Street, Bangalore, India</span>
-                <span class="d-block mb-1"><i class="fas fa-envelope"></i> <a href="mailto:support@realestate.com" class="text-white text-decoration-underline">support@realestate.com</a></span>
-                <span class="d-block mb-1"><i class="fas fa-phone"></i> +91-9876543210</span>
-            </div>
-            <div class="mb-3">
-                <div class="d-flex flex-column align-items-center gap-2">
-                    <a href="{{ url_for('admin.dashboard') }}" class="text-white text-decoration-none">Dashboard</a>
-                    <a href="{{ url_for('admin.projects') }}" class="text-white text-decoration-none">Projects</a>
-                    <a href="{{ url_for('admin.developers') }}" class="text-white text-decoration-none">Developers</a>
-                    <a href="{{ url_for('admin.cities') }}" class="text-white text-decoration-none">Cities</a>
-                    <a href="{{ url_for('admin.localities') }}" class="text-white text-decoration-none">Localities</a>
-                    <a href="{{ url_for('admin.amenities') }}" class="text-white text-decoration-none">Amenities</a>
-                    <a href="{{ url_for('admin.project_amenities') }}" class="text-white text-decoration-none">Project Amenities</a>
-                    <a href="{{ url_for('admin.project_approvals') }}" class="text-white text-decoration-none">Project Approvals</a>
-                    <a href="{{ url_for('admin.documents') }}" class="text-white text-decoration-none">Documents</a>
-                    <a href="{{ url_for('admin.media') }}" class="text-white text-decoration-none">Media</a>
-                    <a href="{{ url_for('admin.reviews') }}" class="text-white text-decoration-none">Reviews</a>
-                    <a href="{{ url_for('admin.price_history') }}" class="text-white text-decoration-none">Price History</a>
-                    <a href="{{ url_for('admin.property_units') }}" class="text-white text-decoration-none">Property Units</a>
-                    <a href="{{ url_for('admin.unit_types') }}" class="text-white text-decoration-none">Unit Types</a>
-                    <a href="{{ url_for('admin.towers') }}" class="text-white text-decoration-none">Towers</a>
-                    <a href="{{ url_for('admin.user_interests') }}" class="text-white text-decoration-none">User Interests</a>
-                    <a href="{{ url_for('admin.notifications') }}" class="text-white text-decoration-none">Notifications</a>
-                    <a href="#" class="text-white text-decoration-none">Help</a>
-                    <a href="#" class="text-white text-decoration-none">Privacy Policy</a>
-                </div>
-            </div>
-            <div class="mb-3">
-                <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
-                <a href="#" class="text-white me-2"><i class="fab fa-twitter"></i></a>
-                <a href="#" class="text-white me-2"><i class="fab fa-linkedin-in"></i></a>
-                <a href="#" class="text-white"><i class="fab fa-github"></i></a>
-            </div>
-            <div class="small text-secondary mt-2">Powered by Flask &amp; Bootstrap | Version 1.0.0</div>
-            <div class="small text-secondary">&copy; {{ 2024 }} Real Estate Admin Panel. All rights reserved.</div>
+          </div>
         </div>
+        <div class="row text-start text-md-center mb-4" style="font-size:1rem;">
+          <div class="col-6 col-md-3 mb-3">
+            <div class="fw-bold mb-2">Core Data</div>
+            <div><a href="{{ url_for('admin.projects') }}" class="text-decoration-none text-secondary">Projects</a></div>
+            <div><a href="{{ url_for('admin.media') }}" class="text-decoration-none text-secondary">Media</a></div>
+            <div><a href="{{ url_for('admin.developers') }}" class="text-decoration-none text-secondary">Developers</a></div>
+            <div><a href="{{ url_for('admin.amenities') }}" class="text-decoration-none text-secondary">Amenities</a></div>
+            <div><a href="{{ url_for('admin.approvals') }}" class="text-decoration-none text-secondary">Approvals</a></div>
+            <div><a href="{{ url_for('admin.cities') }}" class="text-decoration-none text-secondary">Cities</a></div>
+            <div><a href="{{ url_for('admin.localities') }}" class="text-decoration-none text-secondary">Localities</a></div>
+          </div>
+          <div class="col-6 col-md-3 mb-3">
+            <div class="fw-bold mb-2">Operations</div>
+            <div><a href="{{ url_for('admin.notifications') }}" class="text-decoration-none text-secondary">Notifications</a></div>
+            <div><a href="{{ url_for('admin.price_history') }}" class="text-decoration-none text-secondary">Price History</a></div>
+            <div><a href="{{ url_for('admin.property_units') }}" class="text-decoration-none text-secondary">Property Units</a></div>
+            <div><a href="{{ url_for('admin.reviews') }}" class="text-decoration-none text-secondary">Reviews</a></div>
+            <div><a href="{{ url_for('admin.users') }}" class="text-decoration-none text-secondary">Users</a></div>
+            <div><a href="{{ url_for('admin.unit_types') }}" class="text-decoration-none text-secondary">Unit Types</a></div>
+            <div><a href="{{ url_for('admin.towers') }}" class="text-decoration-none text-secondary">Towers</a></div>
+          </div>
+          <div class="col-6 col-md-3 mb-3">
+            <div class="fw-bold mb-2">Documents & Specs</div>
+            <div><a href="{{ url_for('admin.documents') }}" class="text-decoration-none text-secondary">Documents</a></div>
+            <div><a href="{{ url_for('admin.door_window_specs') }}" class="text-decoration-none text-secondary">Door/Window Specs</a></div>
+            <div><a href="{{ url_for('admin.balcony_details') }}" class="text-decoration-none text-secondary">Balcony Details</a></div>
+            <div><a href="{{ url_for('admin.unit_room_details') }}" class="text-decoration-none text-secondary">Unit Room Details</a></div>
+          </div>
+          <div class="col-6 col-md-3 mb-3">
+            <div class="fw-bold mb-2">More</div>
+            <div><a href="{{ url_for('admin.home') }}" class="text-decoration-none text-secondary">Home</a></div>
+            <div><a href="{{ url_for('admin.dashboard') }}" class="text-decoration-none text-secondary">Dashboard</a></div>
+            <div><a href="{{ url_for('admin.comparison') }}" class="text-decoration-none text-secondary">Comparison</a></div>
+          </div>
+        </div>
+        <hr style="border-color:#27272a; margin:2.5rem 0 1.5rem 0;">
+        <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 pb-3">
+          <div class="d-flex align-items-center gap-2">
+            <span style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:1.5rem; color:#fff; letter-spacing:-1px;">City Space Realty</span>
+            <span class="ms-3 small text-secondary">City Space Realty © 2024. All rights reserved.</span>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <a href="#" class="text-secondary fs-4"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="text-secondary fs-4"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="text-secondary fs-4"><i class="fab fa-facebook"></i></a>
+            <a href="#" class="text-secondary fs-4"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+      </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -385,6 +405,18 @@
     // Prevent card click when clicking the compare button
     $(document).on('click', '.compare-btn', function(e) {
         e.stopPropagation();
+    });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.project-card-clickable').forEach(function(card) {
+            card.addEventListener('click', function(e) {
+                // Prevent navigation if the click is on the compare button or its children
+                if (e.target.closest('.compare-btn')) return;
+                const href = card.getAttribute('data-href');
+                if (href) window.location.href = href;
+            });
+        });
     });
     </script>
 </body>
