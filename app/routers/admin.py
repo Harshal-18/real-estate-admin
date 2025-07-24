@@ -2644,4 +2644,27 @@ def project_insights(project_id):
     }
     return render_template('admin/project_insights.html', project=project, avg_unit=avg_unit)
 
- 
+@admin.route('/comparison')
+def comparison():
+    """Comparison page for multiple projects"""
+    ids = request.args.get('ids', '')
+    id_list = [int(i) for i in ids.split(',') if i.isdigit()]
+    from sqlalchemy.orm import joinedload
+    projects = []
+    if id_list:
+        projects = Project.query.options(
+            joinedload(Project.developer),
+            joinedload(Project.locality),
+            joinedload(Project.city),
+            joinedload(Project.amenities),
+            joinedload(Project.media),
+            joinedload(Project.documents),
+            joinedload(Project.approvals),
+            joinedload(Project.towers),
+            joinedload(Project.unit_types),
+            joinedload(Project.property_units),
+            joinedload(Project.reviews),
+            joinedload(Project.price_history),
+        ).filter(Project.project_id.in_(id_list)).all()
+    return render_template('admin/comparison.html', projects=projects)
+

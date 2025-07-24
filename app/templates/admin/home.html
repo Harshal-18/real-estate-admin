@@ -167,23 +167,27 @@
         <div class="row g-4 justify-content-center">
             {% for project in projects.items %}
             <div class="col-12 col-md-6 d-flex justify-content-center">
-                <a href="{{ url_for('admin.view_page', project_id=project.project_id) }}" class="text-decoration-none w-100" style="max-width: 650px;">
                 <div class="card project-card shadow-sm border-0 rounded-4 overflow-hidden position-relative w-100" style="max-width: 650px; cursor:pointer;">
                     <div class="project-image-wrap position-relative">
-                        {% set cover_media = project.media | selectattr('media_type', 'equalto', 'image') | list %}
-                        {% if cover_media and cover_media[0].media_url %}
-                          {% set img_url = cover_media[0].media_url %}
-                          {% set final_img_url = img_url if img_url.startswith('http') else url_for('static', filename=img_url) %}
-                          <img src="{{ final_img_url }}" class="w-100 d-block project-img" alt="{{ project.name }}">
+                        {% set photo_media = project.media | selectattr('media_type', 'equalto', 'image') | selectattr('media_category', 'equalto', 'photo') | list %}
+                        {% if photo_media and photo_media[0].media_url %}
+                          {% set img_url = photo_media[0].media_url %}
                         {% else %}
-                          <img src="{{ url_for('static', filename='img/default_project.jpg') }}" class="w-100 d-block project-img" alt="{{ project.name }}">
+                          {% set fallback_media = project.media | selectattr('media_type', 'equalto', 'image') | list %}
+                          {% if fallback_media and fallback_media[0].media_url %}
+                            {% set img_url = fallback_media[0].media_url %}
+                          {% else %}
+                            {% set img_url = None %}
+                          {% endif %}
                         {% endif %}
-                        <!-- Compare/Share/Fav buttons -->
+                        {% set final_img_url = img_url if img_url and img_url.startswith('http') else (url_for('static', filename=img_url) if img_url else url_for('static', filename='img/default_project.jpg')) %}
+                        <img src="{{ final_img_url }}" class="w-100 d-block project-img" alt="{{ project.name }}">
+                        <!-- Compare Button (separate from card click) -->
                         <div class="position-absolute top-0 end-0 m-3 z-2">
-                            <button class="btn btn-primary shadow-lg px-4 py-2 d-flex align-items-center gap-2 compare-btn" style="font-size:1.1rem; border-radius:2rem; font-weight:500; box-shadow:0 2px 12px rgba(0,0,0,0.10); color:#fff;">
+                            <a href="{{ url_for('admin.comparison') }}" class="btn btn-primary shadow-lg px-4 py-2 d-flex align-items-center gap-2 compare-btn" style="font-size:1.1rem; border-radius:2rem; font-weight:500; box-shadow:0 2px 12px rgba(0,0,0,0.10); color:#fff;" onclick="event.stopPropagation();">
                                 <i class="fa-solid fa-code-compare text-white"></i>
                                 Click To Compare
-                            </button>
+                            </a>
                         </div>
                         <!-- Overlay: Name and Price -->
                         <div class="project-overlay position-absolute bottom-0 start-0 w-100 d-flex justify-content-between align-items-end p-3" style="background: linear-gradient(0deg, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.1) 100%);">
@@ -201,7 +205,7 @@
                             </span>
                         </div>
                     </div>
-                    <div class="card-body bg-white p-3">
+                    <div class="card-body bg-white p-3 project-card-body" data-href="{{ url_for('admin.view_page', project_id=project.project_id) }}" style="cursor:pointer;">
                         <div class="row g-2 align-items-center mb-2">
                             <div class="col-12 col-md-7 d-flex align-items-center gap-2">
                                 <i class="fa-solid fa-location-dot text-primary"></i>
@@ -232,7 +236,6 @@
                         </div>
                     </div>
                 </div>
-                </a>
             </div>
             {% endfor %}
         </div>
@@ -261,9 +264,47 @@
             {% endif %}
         </div>
     </div>
-    <footer class="footer bg-white border-top mt-5">
-        <div class="container">
-            &copy; {{ 2024 }} Real Estate Admin. All rights reserved.
+    <footer class="footer" style="background:rgba(0,0,0,0.85); color:#fff; border:0; margin-top:3rem; padding:2.5rem 0 1.5rem 0;">
+        <div class="container text-center">
+            <div class="mb-3" style="font-size:1.3rem; font-weight:700; letter-spacing:1px;">
+                <i class="fas fa-building me-2"></i> Real Estate Admin Panel
+            </div>
+            <div class="mb-3">
+                <span class="d-block mb-1"><i class="fas fa-map-marker-alt"></i> 123 Main Street, Bangalore, India</span>
+                <span class="d-block mb-1"><i class="fas fa-envelope"></i> <a href="mailto:support@realestate.com" class="text-white text-decoration-underline">support@realestate.com</a></span>
+                <span class="d-block mb-1"><i class="fas fa-phone"></i> +91-9876543210</span>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex flex-column align-items-center gap-2">
+                    <a href="{{ url_for('admin.dashboard') }}" class="text-white text-decoration-none">Dashboard</a>
+                    <a href="{{ url_for('admin.projects') }}" class="text-white text-decoration-none">Projects</a>
+                    <a href="{{ url_for('admin.developers') }}" class="text-white text-decoration-none">Developers</a>
+                    <a href="{{ url_for('admin.cities') }}" class="text-white text-decoration-none">Cities</a>
+                    <a href="{{ url_for('admin.localities') }}" class="text-white text-decoration-none">Localities</a>
+                    <a href="{{ url_for('admin.amenities') }}" class="text-white text-decoration-none">Amenities</a>
+                    <a href="{{ url_for('admin.project_amenities') }}" class="text-white text-decoration-none">Project Amenities</a>
+                    <a href="{{ url_for('admin.project_approvals') }}" class="text-white text-decoration-none">Project Approvals</a>
+                    <a href="{{ url_for('admin.documents') }}" class="text-white text-decoration-none">Documents</a>
+                    <a href="{{ url_for('admin.media') }}" class="text-white text-decoration-none">Media</a>
+                    <a href="{{ url_for('admin.reviews') }}" class="text-white text-decoration-none">Reviews</a>
+                    <a href="{{ url_for('admin.price_history') }}" class="text-white text-decoration-none">Price History</a>
+                    <a href="{{ url_for('admin.property_units') }}" class="text-white text-decoration-none">Property Units</a>
+                    <a href="{{ url_for('admin.unit_types') }}" class="text-white text-decoration-none">Unit Types</a>
+                    <a href="{{ url_for('admin.towers') }}" class="text-white text-decoration-none">Towers</a>
+                    <a href="{{ url_for('admin.user_interests') }}" class="text-white text-decoration-none">User Interests</a>
+                    <a href="{{ url_for('admin.notifications') }}" class="text-white text-decoration-none">Notifications</a>
+                    <a href="#" class="text-white text-decoration-none">Help</a>
+                    <a href="#" class="text-white text-decoration-none">Privacy Policy</a>
+                </div>
+            </div>
+            <div class="mb-3">
+                <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-white me-2"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-white me-2"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#" class="text-white"><i class="fab fa-github"></i></a>
+            </div>
+            <div class="small text-secondary mt-2">Powered by Flask &amp; Bootstrap | Version 1.0.0</div>
+            <div class="small text-secondary">&copy; {{ 2024 }} Real Estate Admin Panel. All rights reserved.</div>
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -334,6 +375,16 @@
         $(this).closest('.dropdown-menu').removeClass('show');
         $('#budgetDropdown').dropdown('toggle');
       });
+    });
+    </script>
+    <script>
+    // Make only the card body clickable for project details
+    $(document).on('click', '.project-card-body', function(e) {
+        window.location = $(this).data('href');
+    });
+    // Prevent card click when clicking the compare button
+    $(document).on('click', '.compare-btn', function(e) {
+        e.stopPropagation();
     });
     </script>
 </body>
