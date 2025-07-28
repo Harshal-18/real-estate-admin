@@ -184,7 +184,7 @@
                         <img src="{{ final_img_url }}" class="w-100 d-block project-img" alt="{{ project.name }}">
                         <!-- Compare Button (separate from card click) -->
                         <div class="position-absolute top-0 end-0 m-3 z-2">
-                            <a href="{{ url_for('admin.comparison') }}" class="btn btn-primary shadow-lg px-4 py-2 d-flex align-items-center gap-2 compare-btn" style="font-size:1.1rem; border-radius:2rem; font-weight:500; box-shadow:0 2px 12px rgba(0,0,0,0.10); color:#fff;" onclick="event.stopPropagation();">
+                            <a href="{{ url_for('admin.comparison', ids=project.project_id) }}" class="btn btn-primary shadow-lg px-4 py-2 d-flex align-items-center gap-2 compare-btn" style="font-size:1.1rem; border-radius:2rem; font-weight:500; box-shadow:0 2px 12px rgba(0,0,0,0.10); color:#fff;" onclick="event.stopPropagation();">
                                 <i class="fa-solid fa-code-compare text-white"></i>
                                 Click To Compare
                             </a>

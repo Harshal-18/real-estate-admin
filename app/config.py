@@ -9,11 +9,17 @@ class Config:
     # Database configuration
     MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
     MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-    MYSQL_PASSWORD = urllib.parse.quote_plus(os.getenv('MYSQL_PASSWORD', ''))  # URL encode the password
+    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
     MYSQL_DB = os.getenv('MYSQL_DB', 'real_estate')
     
-    # SQLAlchemy configuration
-    SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}/{MYSQL_DB}'
+    # URL encode the password for special characters
+    MYSQL_PASSWORD_ENCODED = urllib.parse.quote_plus(MYSQL_PASSWORD)
+    
+    # Use DATABASE_URL if set, otherwise build from individual vars
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        'DATABASE_URL',
+        f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD_ENCODED}@{MYSQL_HOST}/{MYSQL_DB}'
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Secret key for session management

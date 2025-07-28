@@ -1,0 +1,42 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=${FLASK_ENV}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=mysql+pymysql://root:Harshal%4018@db:3306/${MYSQL_DB}
+      - MYSQL_HOST=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DB=${MYSQL_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - uploads_data:/app/app/static/uploads
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./Database:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysql", "-u", "root", "-p${MYSQL_PASSWORD}", "-e", "SELECT 1;"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+
+volumes:
+  db_data:
+  uploads_data: 

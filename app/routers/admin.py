@@ -2654,8 +2654,7 @@ def comparison():
     if id_list:
         projects = Project.query.options(
             joinedload(Project.developer),
-            joinedload(Project.locality),
-            joinedload(Project.city),
+            joinedload(Project.locality).joinedload(Locality.city),
             joinedload(Project.amenities),
             joinedload(Project.media),
             joinedload(Project.documents),
@@ -2668,3 +2667,4 @@ def comparison():
         ).filter(Project.project_id.in_(id_list)).all()
     return render_template('admin/comparison.html', projects=projects)
 
+ 
