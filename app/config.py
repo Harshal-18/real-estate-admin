@@ -1,23 +1,25 @@
 import os
-import os
 from dotenv import load_dotenv
 import urllib.parse
 
 # Load environment variables from .env file
-load_dotenv()
+load_dotenv(override=True)
 
 class Config:
     # Database configuration
     DATABASE_URL = os.getenv('DATABASE_URL')
+    print(f"Database URL from environment: {DATABASE_URL}")  # Debug print
     
     if DATABASE_URL:
         # Render provides DATABASE_URL for PostgreSQL
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
+        print(f"Using database URI: {SQLALCHEMY_DATABASE_URI}")  # Debug print
     else:
         # Fallback for local development
         SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost/real_estate'
+        print("Warning: Using local database fallback")
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
