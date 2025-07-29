@@ -16,17 +16,26 @@ class Config:
     MYSQL_PASSWORD_ENCODED = urllib.parse.quote_plus(MYSQL_PASSWORD)
     
     # Use DATABASE_URL if set, otherwise build from individual vars
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL',
-        f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD_ENCODED}@{MYSQL_HOST}/{MYSQL_DB}'
-    )
+    # Support both MySQL and PostgreSQL
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    
+    if DATABASE_URL:
+        # Render provides DATABASE_URL for PostgreSQL
+        if DATABASE_URL.startswith('postgres://'):
+            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    else:
+        # Fallback to MySQL
+        SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD_ENCODED}@{MYSQL_HOST}/{MYSQL_DB}'
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Secret key for session management
-    SECRET_KEY = os.getenv('SECRET_KEY', os.urandom(24))
+    # Flask configuration
+    SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here')
+    FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     
-    # Upload settings
-    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static/uploads')
+    # Upload configuration
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     
     # Mail settings

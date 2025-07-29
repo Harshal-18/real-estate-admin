@@ -2,7 +2,7 @@ services:
   - type: web
     name: real-estate-app
     env: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     envVars:
@@ -35,4 +35,4 @@ databases:
   - name: real-estate-db
     databaseName: real_estate_db
     user: real_estate_user
-    plan: starter 
+    plan: free 
