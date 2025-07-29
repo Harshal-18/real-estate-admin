@@ -250,6 +250,16 @@ def seed_data():
                     'is_verified': False,
                     'is_active': True,
                     'is_admin': True
+                },
+                {
+                    'email': 'admin@test.com',
+                    'password_hash': 'admin123',
+                    'first_name': 'Test',
+                    'last_name': 'Admin',
+                    'user_type': 'admin',
+                    'is_verified': True,
+                    'is_active': True,
+                    'is_admin': True
                 }
             ]
             
