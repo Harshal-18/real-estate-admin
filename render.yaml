@@ -19,7 +19,6 @@ databases:
   - name: real-estate-db
     plan: free
     type: postgres
-  - name: real-estate-db
-    databaseName: real_estate_db
-    user: real_estate_user
-    plan: free 
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all
