@@ -7,16 +7,6 @@ load_dotenv()
 
 class Config:
     # Database configuration
-    MYSQL_HOST = os.getenv('MYSQL_HOST', 'localhost')
-    MYSQL_USER = os.getenv('MYSQL_USER', 'root')
-    MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
-    MYSQL_DB = os.getenv('MYSQL_DB', 'real_estate')
-    
-    # URL encode the password for special characters
-    MYSQL_PASSWORD_ENCODED = urllib.parse.quote_plus(MYSQL_PASSWORD)
-    
-    # Use DATABASE_URL if set, otherwise build from individual vars
-    # Support both MySQL and PostgreSQL
     DATABASE_URL = os.getenv('DATABASE_URL')
     
     if DATABASE_URL:
@@ -25,8 +15,8 @@ class Config:
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
     else:
-        # Fallback to MySQL
-        SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD_ENCODED}@{MYSQL_HOST}/{MYSQL_DB}'
+        # Fallback for local development
+        SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost/real_estate'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     

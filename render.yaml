@@ -14,20 +14,6 @@ services:
         fromDatabase:
           name: real-estate-db
           property: connectionString
-      - key: MYSQL_HOST
-        fromDatabase:
-          name: real-estate-db
-          property: host
-      - key: MYSQL_USER
-        fromDatabase:
-          name: real-estate-db
-          property: user
-      - key: MYSQL_PASSWORD
-        fromDatabase:
-          name: real-estate-db
-          property: password
-      - key: MYSQL_DB
-        fromDatabase:
           name: real-estate-db
           property: database
 
