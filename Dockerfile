@@ -12,6 +12,7 @@ WORKDIR /app
 # Copy requirements first for better caching
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn
 
 # Copy application code
 COPY . .
@@ -25,5 +26,5 @@ RUN chmod +x /app/start.sh
 
 EXPOSE 5000
 
-# Use the startup script
-CMD ["python", "run.py"] 
+# Use gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "run:app"] 

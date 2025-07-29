@@ -27,17 +27,28 @@ def wait_for_db():
     print("❌ Database connection failed after maximum attempts")
     return False
 
+def init_db():
+    """Initialize database tables"""
+    with app.app_context():
+        try:
+            db.create_all()
+            print("✅ Database tables created successfully!")
+        except Exception as e:
+            print(f"❌ Error creating tables: {e}")
+
 if __name__ == '__main__':
     # Wait for database to be ready
     if wait_for_db():
-        with app.app_context():
-            # Create all database tables
-            db.create_all()
-            print("✅ Database tables created successfully!")
+        init_db()
         
         # Start the Flask app
         print("🚀 Starting Flask application...")
-        app.run(host="0.0.0.0", debug=True, port=5000)
+        app.run(host="0.0.0.0", debug=False, port=5000)
     else:
         print("❌ Failed to connect to database. Exiting.")
-        exit(1) 
+        exit(1)
+
+# For gunicorn
+if __name__ != '__main__':
+    # Initialize database when app starts
+    init_db() 
