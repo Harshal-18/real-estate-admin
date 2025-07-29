@@ -39,7 +39,7 @@ class ProjectMedia(BaseModel):
     @property
     def image_path(self):
         from flask import url_for
-        return url_for('static', filename='uploads/' + self.media_url)
+        return url_for('static', filename=self.media_url)
 
     def update_status(self, status: bool):
         """Update the active status of the media"""
