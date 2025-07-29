@@ -14,10 +14,11 @@ services:
         fromDatabase:
           name: real-estate-db
           property: connectionString
-          name: real-estate-db
-          property: database
 
 databases:
+  - name: real-estate-db
+    plan: free
+    type: postgres
   - name: real-estate-db
     databaseName: real_estate_db
     user: real_estate_user
