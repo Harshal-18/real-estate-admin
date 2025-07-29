@@ -31,7 +31,7 @@ def init_db():
     """Initialize database tables"""
     with app.app_context():
         try:
-        db.create_all()
+            db.create_all()
             print("✅ Database tables created successfully!")
         except Exception as e:
             print(f"❌ Error creating tables: {e}")
@@ -62,4 +62,4 @@ if __name__ == '__main__':
 if __name__ != '__main__':
     # Initialize database when app starts
     init_db()
-    seed_db() 
+    seed_db()
