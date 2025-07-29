@@ -11,14 +11,6 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: real-estate-db
-          property: connectionString
-
-databases:
-  - name: real-estate-db
-    plan: free
-    type: postgres
-    ipAllowList:
-      - source: 0.0.0.0/0
-        description: Allow all
+        value: postgresql://real_estate_user:6ImpADxTrdHtuNwnX9L6TF5Yx208WwK2@dpg-d246p1p5pdvs73fvn1h0-a.singapore-postgres.render.com/real_estate_db_qygu
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app

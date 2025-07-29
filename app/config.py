@@ -7,19 +7,14 @@ load_dotenv(override=True)
 
 class Config:
     # Database configuration
-    DATABASE_URL = os.getenv('DATABASE_URL')
-    print(f"Database URL from environment: {DATABASE_URL}")  # Debug print
+    DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://real_estate_user:6ImpADxTrdHtuNwnX9L6TF5Yx208WwK2@dpg-d246p1p5pdvs73fvn1h0-a.singapore-postgres.render.com/real_estate_db_qygu')
     
-    if DATABASE_URL:
-        # Render provides DATABASE_URL for PostgreSQL
-        if DATABASE_URL.startswith('postgres://'):
-            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
-        print(f"Using database URI: {SQLALCHEMY_DATABASE_URI}")  # Debug print
-    else:
-        # Fallback for local development
-        SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost/real_estate'
-        print("Warning: Using local database fallback")
+    # Convert postgres:// to postgresql:// in database URL
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    print(f"Using database URI: {SQLALCHEMY_DATABASE_URI}")  # Debug print
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
