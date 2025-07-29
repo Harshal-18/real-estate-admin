@@ -1018,7 +1018,7 @@ def new_media():
             if file and file.filename:
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['media_url'] = filename
+                data['media_url'] = 'uploads/' + filename
             else:
                 data['media_url'] = None
         media = ProjectMedia(**data)
@@ -1051,7 +1051,7 @@ def edit_media(media_id):
             if file and file.filename:
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['media_url'] = filename
+                data['media_url'] = 'uploads/' + filename
             else:
                 data['media_url'] = media.media_url  # keep current file if blank
         else:
