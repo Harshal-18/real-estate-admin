@@ -15,41 +15,44 @@ def init_database():
     with app.app_context():
         try:
             # Check if database is empty
-            result = db.session.execute(text("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'real_estate_db'"))
+            result = db.session.execute(text("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'"))
             table_count = result.scalar()
             
             if table_count == 0:
                 print("🔄 Database is empty, importing backup data...")
                 
                 # Import backup data
-                backup_file = "Database/backup.sql"
+                backup_file = "Database/backup_postgresql.sql"
                 if os.path.exists(backup_file):
                     # Get database connection details from environment
                     db_url = os.getenv('DATABASE_URL')
                     if db_url:
-                        # Extract MySQL connection details
-                        # DATABASE_URL format: mysql+pymysql://user:pass@host:port/db
-                        parts = db_url.replace('mysql+pymysql://', '').split('@')
+                        # Extract PostgreSQL connection details
+                        # DATABASE_URL format: postgresql://user:pass@host:port/db
+                        parts = db_url.replace('postgresql://', '').split('@')
                         user_pass = parts[0].split(':')
                         host_db = parts[1].split('/')
                         
-                        mysql_host = host_db[0].split(':')[0]
-                        mysql_user = user_pass[0]
-                        mysql_password = user_pass[1]
-                        mysql_db = host_db[1]
+                        pg_host = host_db[0].split(':')[0]
+                        pg_user = user_pass[0]
+                        pg_password = user_pass[1]
+                        pg_db = host_db[1]
                         
-                        # Import backup using mysql command
+                        # Import backup using psql command
                         cmd = [
-                            'mysql',
-                            '-h', mysql_host,
-                            '-u', mysql_user,
-                            f'-p{mysql_password}',
-                            mysql_db,
-                            '<', backup_file
+                            'psql',
+                            '-h', pg_host,
+                            '-U', pg_user,
+                            '-d', pg_db,
+                            '-f', backup_file
                         ]
                         
+                        # Set password environment variable
+                        env = os.environ.copy()
+                        env['PGPASSWORD'] = pg_password
+                        
                         try:
-                            subprocess.run(cmd, shell=True, check=True)
+                            subprocess.run(cmd, env=env, check=True)
                             print("✅ Backup data imported successfully!")
                         except subprocess.CalledProcessError as e:
                             print(f"⚠️ Could not import backup: {e}")
