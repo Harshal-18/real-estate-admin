@@ -36,10 +36,20 @@ def init_db():
         except Exception as e:
             print(f"❌ Error creating tables: {e}")
 
+def seed_db():
+    """Seed database with initial data"""
+    try:
+        from Database.seed_data import seed_data
+        with app.app_context():
+            seed_data()
+    except Exception as e:
+        print(f"❌ Error seeding database: {e}")
+
 if __name__ == '__main__':
     # Wait for database to be ready
     if wait_for_db():
         init_db()
+        seed_db()
         
         # Start the Flask app
         print("🚀 Starting Flask application...")
@@ -51,4 +61,5 @@ if __name__ == '__main__':
 # For gunicorn
 if __name__ != '__main__':
     # Initialize database when app starts
-    init_db() 
+    init_db()
+    seed_db() 
