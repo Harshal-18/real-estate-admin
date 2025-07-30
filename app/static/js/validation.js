@@ -13,53 +13,44 @@ function validatePassword(password) {
     };
 }
 
-function createValidationPopup(inputId) {
-    const popup = document.createElement('div');
-    popup.className = 'validation-popup';
-    popup.innerHTML = `
-        <ul>
-            <li data-rule="minLength">At least 8 characters</li>
-            <li data-rule="hasUpperCase">One uppercase letter</li>
-            <li data-rule="hasLowerCase">One lowercase letter</li>
-            <li data-rule="hasNumber">One number</li>
-            <li data-rule="hasSpecialChar">One special character</li>
-        </ul>
-    `;
-    document.getElementById(inputId).parentElement.appendChild(popup);
-    return popup;
-}
-
 function showPasswordFeedback(inputId, feedbackId) {
     const passwordInput = document.getElementById(inputId);
-    const popup = createValidationPopup(inputId);
+    const feedbackElement = document.getElementById(feedbackId);
+    feedbackElement.className = 'validation-feedback';
+    
+    // Create rules list
+    const rulesList = document.createElement('ul');
+    rulesList.style.display = 'none';
+    rulesList.innerHTML = `
+        <li data-rule="minLength">At least 8 characters long</li>
+        <li data-rule="hasUpperCase">One uppercase letter</li>
+        <li data-rule="hasLowerCase">One lowercase letter</li>
+        <li data-rule="hasNumber">One number</li>
+        <li data-rule="hasSpecialChar">One special character</li>
+    `;
+    feedbackElement.appendChild(rulesList);
     
     function updateValidation() {
         const result = validatePassword(passwordInput.value);
         
-        popup.querySelectorAll('li').forEach(li => {
-            const rule = li.dataset.rule;
-            li.className = result[rule] ? 'valid' : '';
-        });
-
         if (passwordInput.value.length > 0) {
-            if (!result.isValid) {
-                popup.classList.add('show');
-            } else {
-                popup.classList.remove('show');
-            }
+            rulesList.style.display = 'block';
+            rulesList.querySelectorAll('li').forEach(li => {
+                const rule = li.dataset.rule;
+                li.className = result[rule] ? 'valid' : '';
+            });
         } else {
-            popup.classList.remove('show');
+            rulesList.style.display = 'none';
         }
     }
 
-    passwordInput.addEventListener('focus', () => {
-        if (!validatePassword(passwordInput.value).isValid) {
-            popup.classList.add('show');
-        }
-    });
-
+    // Show validation on blur if password is invalid
     passwordInput.addEventListener('blur', () => {
-        setTimeout(() => popup.classList.remove('show'), 200);
+        const result = validatePassword(passwordInput.value);
+        if (passwordInput.value.length > 0 && !result.isValid) {
+            rulesList.style.display = 'block';
+            updateValidation();
+        }
     });
 
     passwordInput.addEventListener('input', updateValidation);
@@ -72,57 +63,67 @@ function validateEmail(email) {
         'guerrillamail.com', 'mailinator.com', 'yopmail.com'
     ];
 
-    const domain = email.split('@')[1]?.toLowerCase();
-    
+    if (!email.includes('@')) {
+        return {
+            error: 'Email must contain @ symbol',
+            isValid: false
+        };
+    }
+
+    if (!email.includes('.')) {
+        return {
+            error: 'Email must contain a domain (e.g., .com, .org)',
+            isValid: false
+        };
+    }
+
+    if (!emailRegex.test(email)) {
+        return {
+            error: 'Please enter a valid email format (example@domain.com)',
+            isValid: false
+        };
+    }
+
+    const domain = email.split('@')[1].toLowerCase();
+    if (disposableEmailDomains.includes(domain)) {
+        return {
+            error: 'Please use a valid non-disposable email address',
+            isValid: false
+        };
+    }
+
     return {
-        format: emailRegex.test(email),
-        validDomain: domain && !disposableEmailDomains.includes(domain),
-        isValid: emailRegex.test(email) && domain && !disposableEmailDomains.includes(domain)
+        isValid: true
     };
 }
 
 function showEmailFeedback(inputId, feedbackId) {
     const emailInput = document.getElementById(inputId);
-    const popup = document.createElement('div');
-    popup.className = 'validation-popup';
-    popup.innerHTML = `
-        <ul>
-            <li data-rule="format">Valid email format (example@domain.com)</li>
-            <li data-rule="validDomain">Non-disposable email domain</li>
-        </ul>
-    `;
-    emailInput.parentElement.appendChild(popup);
+    const feedbackElement = document.getElementById(feedbackId);
+    feedbackElement.className = 'validation-feedback';
 
     function updateValidation() {
         const result = validateEmail(emailInput.value);
         
-        popup.querySelectorAll('li').forEach(li => {
-            const rule = li.dataset.rule;
-            li.className = result[rule] ? 'valid' : '';
-        });
-
         if (emailInput.value.length > 0) {
             if (!result.isValid) {
-                popup.classList.add('show');
-                emailInput.setCustomValidity('Please enter a valid email address');
+                feedbackElement.innerHTML = `<div class="error-message">${result.error}</div>`;
+                emailInput.setCustomValidity(result.error);
             } else {
-                popup.classList.remove('show');
+                feedbackElement.innerHTML = '<div class="success-message">Valid email address</div>';
                 emailInput.setCustomValidity('');
             }
         } else {
-            popup.classList.remove('show');
+            feedbackElement.innerHTML = '';
             emailInput.setCustomValidity('');
         }
     }
 
-    emailInput.addEventListener('focus', () => {
-        if (!validateEmail(emailInput.value).isValid) {
-            popup.classList.add('show');
-        }
-    });
-
+    // Show validation on blur
     emailInput.addEventListener('blur', () => {
-        setTimeout(() => popup.classList.remove('show'), 200);
+        if (emailInput.value.length > 0) {
+            updateValidation();
+        }
     });
 
     emailInput.addEventListener('input', updateValidation);
@@ -131,7 +132,7 @@ function showEmailFeedback(inputId, feedbackId) {
         const result = validateEmail(emailInput.value);
         if (!result.isValid) {
             e.preventDefault();
-            popup.classList.add('show');
+            updateValidation();
             emailInput.focus();
         }
     });
