@@ -1,4 +1,5 @@
-.password-feedback {
+.password-feedback,
+.email-feedback {
     font-size: 0.875rem;
     margin-top: 0.5rem;
 }
