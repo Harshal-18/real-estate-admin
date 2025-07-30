@@ -1,5 +1,9 @@
 {% extends "admin/base.html" %}
 {% block title %}Sign Up - Admin Panel{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/validation.css') }}">
+<script src="{{ url_for('static', filename='js/validation.js') }}"></script>
+{% endblock %}
 {% block content %}
 <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
     <div class="card shadow" style="width: 400px;">
@@ -31,10 +35,21 @@
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
                     <input type="password" class="form-control" id="password" name="password" required>
+                    <div id="passwordFeedback" class="password-feedback"></div>
+                    <small class="form-text text-muted">
+                        Password must be at least 8 characters long and contain:
+                        <ul>
+                            <li>One uppercase letter</li>
+                            <li>One lowercase letter</li>
+                            <li>One number</li>
+                            <li>One special character</li>
+                        </ul>
+                    </small>
                 </div>
                 <div class="mb-3">
                     <label for="confirm_password" class="form-label">Confirm Password</label>
                     <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    <div id="confirmPasswordFeedback" class="password-feedback"></div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Sign Up</button>
             </form>
@@ -45,3 +60,12 @@
     </div>
 </div>
 {% endblock %} 
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        showPasswordFeedback('password', 'passwordFeedback');
+        validatePasswordMatch('password', 'confirm_password', 'confirmPasswordFeedback');
+    });
+</script>
+{% endblock %}

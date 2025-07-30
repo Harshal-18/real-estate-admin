@@ -1,5 +1,9 @@
 {% extends "admin/base.html" %}
 {% block title %}Login - Admin Panel{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/validation.css') }}">
+<script src="{{ url_for('static', filename='js/validation.js') }}"></script>
+{% endblock %}
 {% block content %}
 <div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
     <div class="card shadow" style="width: 350px;">
@@ -23,6 +27,7 @@
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
                     <input type="password" class="form-control" id="password" name="password" required>
+                    <div id="passwordFeedback" class="password-feedback"></div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Login</button>
             </form>
@@ -33,3 +38,11 @@
     </div>
 </div>
 {% endblock %} 
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        showPasswordFeedback('password', 'passwordFeedback');
+    });
+</script>
+{% endblock %}

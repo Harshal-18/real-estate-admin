@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import User
 from app import db
+from app.utils.validators import validate_password
 
 auth = Blueprint('auth', __name__)
 
@@ -10,6 +11,14 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        
+        # Validate password format
+        password_errors = validate_password(password)
+        if password_errors:
+            for error in password_errors:
+                flash(error, 'danger')
+            return render_template('login.html')
+        
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash, password):
             if user.is_admin:
@@ -31,6 +40,14 @@ def signup():
         email = request.form['email']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
+        
+        # Validate password
+        password_errors = validate_password(password)
+        if password_errors:
+            for error in password_errors:
+                flash(error, 'danger')
+            return render_template('signup.html')
+            
         if password != confirm_password:
             flash('Passwords do not match.', 'danger')
             return render_template('signup.html')
