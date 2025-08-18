@@ -283,22 +283,41 @@ def developers():
 def new_developer():
     """Create new developer"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        
-        # Handle logo upload
-        if 'logo' in request.files:
-            file = request.files['logo']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['logo_url'] = filename
-        
-        developer = Developer(**data)
-        db.session.add(developer)
-        db.session.commit()
-        
-        flash('Developer created successfully!', 'success')
-        return redirect(url_for('admin.developers'))
+        try:
+            data = request.form.to_dict()
+            
+            # Handle logo upload
+            if 'logo' in request.files:
+                file = request.files['logo']
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'app/static/uploads')
+                    os.makedirs(upload_folder, exist_ok=True)
+                    file.save(os.path.join(upload_folder, filename))
+                    data['logo_url'] = filename
+            
+            # Convert numeric fields
+            if 'established_year' in data and data['established_year']:
+                data['established_year'] = int(data['established_year'])
+            if 'total_projects' in data and data['total_projects']:
+                data['total_projects'] = int(data['total_projects'])
+            if 'completed_projects' in data and data['completed_projects']:
+                data['completed_projects'] = int(data['completed_projects'])
+            if 'ongoing_projects' in data and data['ongoing_projects']:
+                data['ongoing_projects'] = int(data['ongoing_projects'])
+            if 'rating' in data and data['rating']:
+                data['rating'] = float(data['rating'])
+            
+            developer = Developer(**data)
+            db.session.add(developer)
+            db.session.commit()
+            
+            flash('Developer created successfully!', 'success')
+            return redirect(url_for('admin.developers'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating developer: {str(e)}', 'error')
+            return render_template('admin/developers/new.html')
     
     return render_template('admin/developers/new.html')
 
@@ -558,17 +577,65 @@ def towers():
 def new_tower():
     """Create new tower"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        # Convert project_id to int
-        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
-        # Convert booleans
-        for field in ['has_power_backup', 'has_water_backup', 'has_fire_safety', 'is_active']:
-            data[field] = field in request.form
-        tower = Tower(**data)
-        db.session.add(tower)
-        db.session.commit()
-        flash('Tower created successfully!', 'success')
-        return redirect(url_for('admin.towers'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/towers/new.html', projects=projects)
+            else:
+                data['project_id'] = None
+            
+            # Convert numeric fields
+            numeric_fields = ['total_floors', 'units_per_floor', 'total_units', 'elevator_count']
+            for field in numeric_fields:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert decimal fields
+            decimal_fields = ['height_meters', 'latitude', 'longitude']
+            for field in decimal_fields:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert date fields
+            if data.get('possession_date'):
+                try:
+                    from datetime import datetime
+                    data['possession_date'] = datetime.strptime(data['possession_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    data['possession_date'] = None
+            else:
+                data['possession_date'] = None
+            
+            # Convert booleans
+            for field in ['has_power_backup', 'has_water_backup', 'has_fire_safety', 'is_active']:
+                data[field] = field in request.form
+            
+            tower = Tower(**data)
+            db.session.add(tower)
+            db.session.commit()
+            flash('Tower created successfully!', 'success')
+            return redirect(url_for('admin.towers'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating tower: {str(e)}', 'error')
     
     projects = Project.query.all()
     return render_template('admin/towers/new.html', projects=projects)
@@ -579,18 +646,68 @@ def edit_tower(tower_id):
     tower = Tower.query.get_or_404(tower_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        # Convert project_id to int
-        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
-        # Convert booleans
-        for field in ['has_power_backup', 'has_water_backup', 'has_fire_safety', 'is_active']:
-            data[field] = field in request.form
-        for key, value in data.items():
-            if hasattr(tower, key):
-                setattr(tower, key, value)
-        db.session.commit()
-        flash('Tower updated successfully!', 'success')
-        return redirect(url_for('admin.towers'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/towers/edit.html', tower=tower, projects=projects)
+            else:
+                data['project_id'] = None
+            
+            # Convert numeric fields
+            numeric_fields = ['total_floors', 'units_per_floor', 'total_units', 'elevator_count']
+            for field in numeric_fields:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert decimal fields
+            decimal_fields = ['height_meters', 'latitude', 'longitude']
+            for field in decimal_fields:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert date fields
+            if data.get('possession_date'):
+                try:
+                    from datetime import datetime
+                    data['possession_date'] = datetime.strptime(data['possession_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    data['possession_date'] = None
+            else:
+                data['possession_date'] = None
+            
+            # Convert booleans
+            for field in ['has_power_backup', 'has_water_backup', 'has_fire_safety', 'is_active']:
+                data[field] = field in request.form
+            
+            # Update tower fields
+            for key, value in data.items():
+                if hasattr(tower, key):
+                    setattr(tower, key, value)
+                    
+            db.session.commit()
+            flash('Tower updated successfully!', 'success')
+            return redirect(url_for('admin.towers'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating tower: {str(e)}', 'error')
     
     projects = Project.query.all()
     return render_template('admin/towers/edit.html', tower=tower, projects=projects)
@@ -631,12 +748,40 @@ def users():
 def new_user():
     """Create new user"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        user = User(**data)
-        db.session.add(user)
-        db.session.commit()
-        flash('User created successfully!', 'success')
-        return redirect(url_for('admin.users'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert boolean fields
+            boolean_fields = ['is_verified', 'is_active', 'is_admin']
+            for field in boolean_fields:
+                data[field] = field in request.form
+            
+            # Handle password hashing if password provided
+            if data.get('password'):
+                user = User(
+                    email=data.get('email'),
+                    phone=data.get('phone'),
+                    first_name=data.get('first_name'),
+                    last_name=data.get('last_name'),
+                    user_type=data.get('user_type', 'buyer'),
+                    is_verified=data.get('is_verified', False),
+                    profile_image_url=data.get('profile_image_url'),
+                    is_active=data.get('is_active', True),
+                    is_admin=data.get('is_admin', False)
+                )
+                user.set_password(data['password'])
+            else:
+                flash('Password is required for new user.', 'error')
+                return render_template('admin/users/new.html')
+            
+            db.session.add(user)
+            db.session.commit()
+            flash('User created successfully!', 'success')
+            return redirect(url_for('admin.users'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating user: {str(e)}', 'error')
     
     return render_template('admin/users/new.html')
 
@@ -646,14 +791,34 @@ def edit_user(user_id):
     user = User.query.get_or_404(user_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        for key, value in data.items():
-            if hasattr(user, key):
-                setattr(user, key, value)
-        
-        db.session.commit()
-        flash('User updated successfully!', 'success')
-        return redirect(url_for('admin.users'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert boolean fields
+            boolean_fields = ['is_verified', 'is_active', 'is_admin']
+            for field in boolean_fields:
+                data[field] = field in request.form
+            
+            # Handle password update (only if provided)
+            password = data.pop('password', None)
+            if password:
+                user.set_password(password)
+            
+            # Update other fields
+            updatable_fields = ['email', 'phone', 'first_name', 'last_name', 'user_type', 
+                              'is_verified', 'profile_image_url', 'is_active', 'is_admin']
+            
+            for key, value in data.items():
+                if key in updatable_fields and hasattr(user, key):
+                    setattr(user, key, value)
+            
+            db.session.commit()
+            flash('User updated successfully!', 'success')
+            return redirect(url_for('admin.users'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating user: {str(e)}', 'error')
     
     return render_template('admin/users/edit.html', user=user)
 
@@ -693,12 +858,62 @@ def unit_types():
 def new_unit_type():
     """Create new unit type"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        unit_type = UnitType(**data)
-        db.session.add(unit_type)
-        db.session.commit()
-        flash('Unit type created successfully!', 'success')
-        return redirect(url_for('admin.unit_types'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/unit_types/new.html', projects=projects)
+            else:
+                data['project_id'] = None
+            
+            # Convert integer fields
+            integer_fields = ['bedrooms', 'bathrooms', 'master_bedrooms', 'child_bedrooms', 
+                            'guest_bedrooms', 'study_rooms', 'living_rooms', 'dining_rooms', 
+                            'kitchens', 'utility_rooms', 'store_rooms', 'pooja_rooms', 'balcony_count']
+            for field in integer_fields:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert decimal fields
+            decimal_fields = ['maid_room_area', 'total_balcony_area', 'terrace_area', 
+                            'private_garden_area', 'carpet_area', 'built_up_area', 'super_area', 
+                            'carpet_ratio', 'base_price', 'price_per_sqft', 'floor_height', 
+                            'ceiling_height', 'main_door_width', 'main_door_height']
+            for field in decimal_fields:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert boolean fields
+            boolean_fields = ['has_maid_room', 'has_maid_bathroom', 'has_balcony', 
+                            'has_terrace', 'has_private_garden']
+            for field in boolean_fields:
+                data[field] = field in request.form
+            
+            unit_type = UnitType(**data)
+            db.session.add(unit_type)
+            db.session.commit()
+            flash('Unit type created successfully!', 'success')
+            return redirect(url_for('admin.unit_types'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating unit type: {str(e)}', 'error')
     
     projects = Project.query.all()
     return render_template('admin/unit_types/new.html', projects=projects)
@@ -709,14 +924,65 @@ def edit_unit_type(unit_type_id):
     unit_type = UnitType.query.get_or_404(unit_type_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        for key, value in data.items():
-            if hasattr(unit_type, key):
-                setattr(unit_type, key, value)
-        
-        db.session.commit()
-        flash('Unit type updated successfully!', 'success')
-        return redirect(url_for('admin.unit_types'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/unit_types/edit.html', unit_type=unit_type, projects=projects)
+            else:
+                data['project_id'] = None
+            
+            # Convert integer fields
+            integer_fields = ['bedrooms', 'bathrooms', 'master_bedrooms', 'child_bedrooms', 
+                            'guest_bedrooms', 'study_rooms', 'living_rooms', 'dining_rooms', 
+                            'kitchens', 'utility_rooms', 'store_rooms', 'pooja_rooms', 'balcony_count']
+            for field in integer_fields:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert decimal fields
+            decimal_fields = ['maid_room_area', 'total_balcony_area', 'terrace_area', 
+                            'private_garden_area', 'carpet_area', 'built_up_area', 'super_area', 
+                            'carpet_ratio', 'base_price', 'price_per_sqft', 'floor_height', 
+                            'ceiling_height', 'main_door_width', 'main_door_height']
+            for field in decimal_fields:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert boolean fields
+            boolean_fields = ['has_maid_room', 'has_maid_bathroom', 'has_balcony', 
+                            'has_terrace', 'has_private_garden']
+            for field in boolean_fields:
+                data[field] = field in request.form
+            
+            # Update unit type fields
+            for key, value in data.items():
+                if hasattr(unit_type, key):
+                    setattr(unit_type, key, value)
+            
+            db.session.commit()
+            flash('Unit type updated successfully!', 'success')
+            return redirect(url_for('admin.unit_types'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating unit type: {str(e)}', 'error')
     
     projects = Project.query.all()
     return render_template('admin/unit_types/edit.html', unit_type=unit_type, projects=projects)
@@ -1001,31 +1267,61 @@ def media():
 def new_media():
     """Upload new media"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        # Convert is_active checkbox to boolean
-        data['is_active'] = 'is_active' in request.form
-        # Convert project_id to int if present
-        if data.get('project_id'):
-            try:
-                data['project_id'] = int(data['project_id'])
-            except Exception:
+        try:
+            data = request.form.to_dict()
+            
+            # Convert is_active checkbox to boolean
+            data['is_active'] = 'is_active' in request.form
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/media/new.html', projects=projects)
+            else:
                 data['project_id'] = None
-        else:
-            data['project_id'] = None
-        # Handle file upload for media_url
-        if 'media_url' in request.files:
-            file = request.files['media_url']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['media_url'] = 'uploads/' + filename
+            
+            # Handle file upload for media_url
+            if 'media_url' in request.files:
+                file = request.files['media_url']
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    upload_folder = current_app.config['UPLOAD_FOLDER']
+                    
+                    # Ensure upload directory exists safely
+                    try:
+                        os.makedirs(upload_folder, exist_ok=True)
+                    except OSError as e:
+                        flash(f'Error creating upload directory: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/media/new.html', projects=projects)
+                    
+                    try:
+                        file_path = os.path.join(upload_folder, filename)
+                        file.save(file_path)
+                        data['media_url'] = 'uploads/' + filename
+                    except Exception as e:
+                        flash(f'Error saving file: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/media/new.html', projects=projects)
+                else:
+                    data['media_url'] = None
             else:
                 data['media_url'] = None
-        media = ProjectMedia(**data)
-        db.session.add(media)
-        db.session.commit()
-        flash('Media uploaded successfully!', 'success')
-        return redirect(url_for('admin.media'))
+                
+            media = ProjectMedia(**data)
+            db.session.add(media)
+            db.session.commit()
+            flash('Media uploaded successfully!', 'success')
+            return redirect(url_for('admin.media'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error uploading media: {str(e)}', 'error')
+            
     projects = Project.query.all()
     return render_template('admin/media/new.html', projects=projects)
 
@@ -1034,35 +1330,64 @@ def edit_media(media_id):
     """Edit media"""
     media = ProjectMedia.query.get_or_404(media_id)
     if request.method == 'POST':
-        data = request.form.to_dict()
-        # Convert is_active checkbox to boolean
-        data['is_active'] = 'is_active' in request.form
-        # Convert project_id to int if present
-        if data.get('project_id'):
-            try:
-                data['project_id'] = int(data['project_id'])
-            except Exception:
-                data['project_id'] = None
-        else:
-            data['project_id'] = None
-        # Handle file upload for media_url (optional)
-        if 'media_url' in request.files:
-            file = request.files['media_url']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['media_url'] = 'uploads/' + filename
+        try:
+            data = request.form.to_dict()
+            
+            # Convert is_active checkbox to boolean
+            data['is_active'] = 'is_active' in request.form
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/media/edit.html', media=media, projects=projects)
             else:
-                data['media_url'] = media.media_url  # keep current file if blank
-        else:
-            data['media_url'] = media.media_url
-        # Update all fields
-        for key, value in data.items():
-            if hasattr(media, key):
-                setattr(media, key, value)
-        db.session.commit()
-        flash('Media updated successfully!', 'success')
-        return redirect(url_for('admin.media'))
+                data['project_id'] = None
+            
+            # Handle file upload for media_url (optional)
+            if 'media_url' in request.files:
+                file = request.files['media_url']
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    upload_folder = current_app.config['UPLOAD_FOLDER']
+                    
+                    # Ensure upload directory exists safely
+                    try:
+                        os.makedirs(upload_folder, exist_ok=True)
+                    except OSError as e:
+                        flash(f'Error creating upload directory: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/media/edit.html', media=media, projects=projects)
+                    
+                    try:
+                        file_path = os.path.join(upload_folder, filename)
+                        file.save(file_path)
+                        data['media_url'] = 'uploads/' + filename
+                    except Exception as e:
+                        flash(f'Error saving file: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/media/edit.html', media=media, projects=projects)
+                else:
+                    data['media_url'] = media.media_url  # keep current file if blank
+            else:
+                data['media_url'] = media.media_url
+            
+            # Update all fields
+            for key, value in data.items():
+                if hasattr(media, key):
+                    setattr(media, key, value)
+                    
+            db.session.commit()
+            flash('Media updated successfully!', 'success')
+            return redirect(url_for('admin.media'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating media: {str(e)}', 'error')
+            
     projects = Project.query.all()
     return render_template('admin/media/edit.html', media=media, projects=projects)
 
@@ -1102,55 +1427,85 @@ def documents():
 def new_document():
     """Upload new document"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        # Convert is_public checkbox to boolean
-        data['is_public'] = 'is_public' in request.form
-        # Convert project_id to int if present
-        if data.get('project_id'):
-            try:
-                data['project_id'] = int(data['project_id'])
-            except Exception:
+        try:
+            data = request.form.to_dict()
+            
+            # Convert is_public checkbox to boolean
+            data['is_public'] = 'is_public' in request.form
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/documents/new.html', projects=projects)
+            else:
                 data['project_id'] = None
-        else:
-            data['project_id'] = None
-        # Handle file upload for file_url, file_size, file_type
-        if 'file_url' in request.files:
-            file = request.files['file_url']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['file_url'] = filename
-                data['file_size'] = file.content_length or os.path.getsize(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['file_type'] = file.mimetype
+                
+            # Handle file upload for file_url, file_size, file_type
+            if 'file_url' in request.files:
+                file = request.files['file_url']
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    upload_folder = current_app.config['UPLOAD_FOLDER']
+                    
+                    # Ensure upload directory exists safely
+                    try:
+                        os.makedirs(upload_folder, exist_ok=True)
+                    except OSError as e:
+                        flash(f'Error creating upload directory: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/documents/new.html', projects=projects)
+                    
+                    try:
+                        file_path = os.path.join(upload_folder, filename)
+                        file.save(file_path)
+                        data['file_url'] = filename
+                        data['file_size'] = file.content_length or os.path.getsize(file_path)
+                        data['file_type'] = file.mimetype
+                    except Exception as e:
+                        flash(f'Error saving file: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/documents/new.html', projects=projects)
+                else:
+                    data['file_url'] = None
+                    data['file_size'] = None
+                    data['file_type'] = None
             else:
                 data['file_url'] = None
                 data['file_size'] = None
                 data['file_type'] = None
-        else:
-            data['file_url'] = None
-            data['file_size'] = None
-            data['file_type'] = None
-        # Ensure file_size is int or None
-        try:
-            if data.get('file_size') in [None, '', 'None']:
+                
+            # Ensure file_size is int or None with proper error handling
+            if data.get('file_size') is not None and data['file_size'] not in ['', 'None']:
+                try:
+                    data['file_size'] = int(data['file_size'])
+                except (ValueError, TypeError):
+                    data['file_size'] = None
+            else:
                 data['file_size'] = None
+                
+            # Ensure download_count is int or 0 with proper error handling
+            if data.get('download_count') is not None and data['download_count'] not in ['', 'None']:
+                try:
+                    data['download_count'] = int(data['download_count'])
+                except (ValueError, TypeError):
+                    data['download_count'] = 0
             else:
-                data['file_size'] = int(data['file_size'])
-        except Exception:
-            data['file_size'] = None
-        # Ensure download_count is int or 0
-        try:
-            if data.get('download_count') in [None, '', 'None']:
                 data['download_count'] = 0
-            else:
-                data['download_count'] = int(data['download_count'])
-        except Exception:
-            data['download_count'] = 0
-        document = ProjectDocument(**data)
-        db.session.add(document)
-        db.session.commit()
-        flash('Document uploaded successfully!', 'success')
-        return redirect(url_for('admin.documents'))
+                
+            document = ProjectDocument(**data)
+            db.session.add(document)
+            db.session.commit()
+            flash('Document uploaded successfully!', 'success')
+            return redirect(url_for('admin.documents'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error uploading document: {str(e)}', 'error')
+            
     projects = Project.query.all()
     return render_template('admin/documents/new.html', projects=projects)
 
@@ -1159,57 +1514,88 @@ def edit_document(document_id):
     """Edit document"""
     document = ProjectDocument.query.get_or_404(document_id)
     if request.method == 'POST':
-        data = request.form.to_dict()
-        # Convert is_public checkbox to boolean
-        data['is_public'] = 'is_public' in request.form
-        # Convert project_id to int if present
-        if data.get('project_id'):
-            try:
-                data['project_id'] = int(data['project_id'])
-            except Exception:
+        try:
+            data = request.form.to_dict()
+            
+            # Convert is_public checkbox to boolean
+            data['is_public'] = 'is_public' in request.form
+            
+            # Convert project_id to int with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    projects = Project.query.all()
+                    return render_template('admin/documents/edit.html', document=document, projects=projects)
+            else:
                 data['project_id'] = None
-        else:
-            data['project_id'] = None
-        # Handle file upload for file_url, file_size, file_type (optional)
-        if 'file_url' in request.files:
-            file = request.files['file_url']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['file_url'] = filename
-                data['file_size'] = file.content_length or os.path.getsize(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['file_type'] = file.mimetype
+                
+            # Handle file upload for file_url, file_size, file_type (optional)
+            if 'file_url' in request.files:
+                file = request.files['file_url']
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    upload_folder = current_app.config['UPLOAD_FOLDER']
+                    
+                    # Ensure upload directory exists safely
+                    try:
+                        os.makedirs(upload_folder, exist_ok=True)
+                    except OSError as e:
+                        flash(f'Error creating upload directory: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/documents/edit.html', document=document, projects=projects)
+                    
+                    try:
+                        file_path = os.path.join(upload_folder, filename)
+                        file.save(file_path)
+                        data['file_url'] = filename
+                        data['file_size'] = file.content_length or os.path.getsize(file_path)
+                        data['file_type'] = file.mimetype
+                    except Exception as e:
+                        flash(f'Error saving file: {str(e)}', 'error')
+                        projects = Project.query.all()
+                        return render_template('admin/documents/edit.html', document=document, projects=projects)
+                else:
+                    data['file_url'] = document.file_url
+                    data['file_size'] = document.file_size
+                    data['file_type'] = document.file_type
             else:
                 data['file_url'] = document.file_url
                 data['file_size'] = document.file_size
                 data['file_type'] = document.file_type
-        else:
-            data['file_url'] = document.file_url
-            data['file_size'] = document.file_size
-            data['file_type'] = document.file_type
-        # Ensure file_size is int or None
-        try:
-            if data.get('file_size') in [None, '', 'None']:
+                
+            # Ensure file_size is int or None with proper error handling
+            if data.get('file_size') is not None and data['file_size'] not in ['', 'None']:
+                try:
+                    data['file_size'] = int(data['file_size'])
+                except (ValueError, TypeError):
+                    data['file_size'] = None
+            else:
                 data['file_size'] = None
+                
+            # Ensure download_count is int or 0 with proper error handling
+            if data.get('download_count') is not None and data['download_count'] not in ['', 'None']:
+                try:
+                    data['download_count'] = int(data['download_count'])
+                except (ValueError, TypeError):
+                    data['download_count'] = 0
             else:
-                data['file_size'] = int(data['file_size'])
-        except Exception:
-            data['file_size'] = None
-        # Ensure download_count is int or 0
-        try:
-            if data.get('download_count') in [None, '', 'None']:
                 data['download_count'] = 0
-            else:
-                data['download_count'] = int(data['download_count'])
-        except Exception:
-            data['download_count'] = 0
-        # Update all fields
-        for key, value in data.items():
-            if hasattr(document, key):
-                setattr(document, key, value)
-        db.session.commit()
-        flash('Document updated successfully!', 'success')
-        return redirect(url_for('admin.documents'))
+                
+            # Update all fields
+            for key, value in data.items():
+                if hasattr(document, key):
+                    setattr(document, key, value)
+                    
+            db.session.commit()
+            flash('Document updated successfully!', 'success')
+            return redirect(url_for('admin.documents'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating document: {str(e)}', 'error')
+            
     projects = Project.query.all()
     return render_template('admin/documents/edit.html', document=document, projects=projects)
 
@@ -1837,19 +2223,53 @@ def new_balcony_detail():
     from app.models import UnitType
     unit_types = UnitType.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
-        for field in ['balcony_length', 'balcony_width', 'balcony_area']:
-            data[field] = float(data[field]) if data.get(field) else None
-        for field in ['balcony_sequence']:
-            data[field] = int(data[field]) if data.get(field) else None
-        for field in ['has_provision_for_washing_machine', 'has_provision_for_drying', 'has_safety_grill']:
-            data[field] = field in request.form
-        balcony = BalconyDetail(**data)
-        db.session.add(balcony)
-        db.session.commit()
-        flash('Balcony detail created successfully!', 'success')
-        return redirect(url_for('admin.balcony_details'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert unit_type_id with validation
+            if data.get('unit_type_id'):
+                try:
+                    data['unit_type_id'] = int(data['unit_type_id'])
+                except ValueError:
+                    flash('Invalid unit type ID provided.', 'error')
+                    return render_template('admin/balcony_details/new.html', unit_types=unit_types)
+            else:
+                data['unit_type_id'] = None
+            
+            # Convert float fields with error handling
+            for field in ['balcony_length', 'balcony_width', 'balcony_area']:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert int fields with error handling
+            for field in ['balcony_sequence']:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert boolean fields
+            for field in ['has_provision_for_washing_machine', 'has_provision_for_drying', 'has_safety_grill']:
+                data[field] = field in request.form
+                
+            balcony = BalconyDetail(**data)
+            db.session.add(balcony)
+            db.session.commit()
+            flash('Balcony detail created successfully!', 'success')
+            return redirect(url_for('admin.balcony_details'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating balcony detail: {str(e)}', 'error')
+            
     return render_template('admin/balcony_details/new.html', unit_types=unit_types)
 
 @admin.route('/balcony-details/<int:balcony_id>/edit', methods=['GET', 'POST'])
@@ -1858,20 +2278,56 @@ def edit_balcony_detail(balcony_id):
     balcony = BalconyDetail.query.get_or_404(balcony_id)
     unit_types = UnitType.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
-        for field in ['balcony_length', 'balcony_width', 'balcony_area']:
-            data[field] = float(data[field]) if data.get(field) else None
-        for field in ['balcony_sequence']:
-            data[field] = int(data[field]) if data.get(field) else None
-        for field in ['has_provision_for_washing_machine', 'has_provision_for_drying', 'has_safety_grill']:
-            data[field] = field in request.form
-        for key, value in data.items():
-            if hasattr(balcony, key):
-                setattr(balcony, key, value)
-        db.session.commit()
-        flash('Balcony detail updated successfully!', 'success')
-        return redirect(url_for('admin.balcony_details'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert unit_type_id with validation
+            if data.get('unit_type_id'):
+                try:
+                    data['unit_type_id'] = int(data['unit_type_id'])
+                except ValueError:
+                    flash('Invalid unit type ID provided.', 'error')
+                    return render_template('admin/balcony_details/edit.html', balcony=balcony, unit_types=unit_types)
+            else:
+                data['unit_type_id'] = None
+            
+            # Convert float fields with error handling
+            for field in ['balcony_length', 'balcony_width', 'balcony_area']:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert int fields with error handling
+            for field in ['balcony_sequence']:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert boolean fields
+            for field in ['has_provision_for_washing_machine', 'has_provision_for_drying', 'has_safety_grill']:
+                data[field] = field in request.form
+            
+            # Update fields
+            for key, value in data.items():
+                if hasattr(balcony, key):
+                    setattr(balcony, key, value)
+                    
+            db.session.commit()
+            flash('Balcony detail updated successfully!', 'success')
+            return redirect(url_for('admin.balcony_details'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating balcony detail: {str(e)}', 'error')
+            
     return render_template('admin/balcony_details/edit.html', balcony=balcony, unit_types=unit_types)
 
 @admin.route('/balcony-details/<int:balcony_id>')
@@ -2041,22 +2497,60 @@ def new_price_history():
     projects = Project.query.all()
     unit_types = UnitType.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
-        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
-        for field in ['old_price', 'new_price', 'old_price_per_sqft', 'new_price_per_sqft', 'change_percentage']:
-            data[field] = float(data[field]) if data.get(field) else None
-        for field in ['effective_date']:
-            if data.get(field):
-                from datetime import datetime
-                data[field] = datetime.strptime(data[field], '%Y-%m-%d').date()
+        try:
+            data = request.form.to_dict()
+            
+            # Convert project_id and unit_type_id with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    return render_template('admin/price_history/new.html', projects=projects, unit_types=unit_types)
             else:
-                data[field] = None
-        ph = PriceHistory(**data)
-        db.session.add(ph)
-        db.session.commit()
-        flash('Price history record created successfully!', 'success')
-        return redirect(url_for('admin.price_history'))
+                data['project_id'] = None
+                
+            if data.get('unit_type_id'):
+                try:
+                    data['unit_type_id'] = int(data['unit_type_id'])
+                except ValueError:
+                    flash('Invalid unit type ID provided.', 'error')
+                    return render_template('admin/price_history/new.html', projects=projects, unit_types=unit_types)
+            else:
+                data['unit_type_id'] = None
+            
+            # Convert price fields with error handling
+            price_fields = ['old_price', 'new_price', 'old_price_per_sqft', 'new_price_per_sqft', 'change_percentage']
+            for field in price_fields:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert date fields with error handling
+            if data.get('effective_date'):
+                try:
+                    from datetime import datetime
+                    data['effective_date'] = datetime.strptime(data['effective_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    flash('Invalid date format for effective date.', 'error')
+                    return render_template('admin/price_history/new.html', projects=projects, unit_types=unit_types)
+            else:
+                data['effective_date'] = None
+                
+            ph = PriceHistory(**data)
+            db.session.add(ph)
+            db.session.commit()
+            flash('Price history record created successfully!', 'success')
+            return redirect(url_for('admin.price_history'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating price history record: {str(e)}', 'error')
+            
     return render_template('admin/price_history/new.html', projects=projects, unit_types=unit_types)
 
 @admin.route('/price-history/<int:price_history_id>/edit', methods=['GET', 'POST'])
@@ -2066,23 +2560,63 @@ def edit_price_history(price_history_id):
     projects = Project.query.all()
     unit_types = UnitType.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
-        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
-        for field in ['old_price', 'new_price', 'old_price_per_sqft', 'new_price_per_sqft', 'change_percentage']:
-            data[field] = float(data[field]) if data.get(field) else None
-        for field in ['effective_date']:
-            if data.get(field):
-                from datetime import datetime
-                data[field] = datetime.strptime(data[field], '%Y-%m-%d').date()
+        try:
+            data = request.form.to_dict()
+            
+            # Convert project_id and unit_type_id with validation
+            if data.get('project_id'):
+                try:
+                    data['project_id'] = int(data['project_id'])
+                except ValueError:
+                    flash('Invalid project ID provided.', 'error')
+                    return render_template('admin/price_history/edit.html', ph=ph, projects=projects, unit_types=unit_types)
             else:
-                data[field] = None
-        for key, value in data.items():
-            if hasattr(ph, key):
-                setattr(ph, key, value)
-        db.session.commit()
-        flash('Price history record updated successfully!', 'success')
-        return redirect(url_for('admin.price_history'))
+                data['project_id'] = None
+                
+            if data.get('unit_type_id'):
+                try:
+                    data['unit_type_id'] = int(data['unit_type_id'])
+                except ValueError:
+                    flash('Invalid unit type ID provided.', 'error')
+                    return render_template('admin/price_history/edit.html', ph=ph, projects=projects, unit_types=unit_types)
+            else:
+                data['unit_type_id'] = None
+            
+            # Convert price fields with error handling
+            price_fields = ['old_price', 'new_price', 'old_price_per_sqft', 'new_price_per_sqft', 'change_percentage']
+            for field in price_fields:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert date fields with error handling
+            if data.get('effective_date'):
+                try:
+                    from datetime import datetime
+                    data['effective_date'] = datetime.strptime(data['effective_date'], '%Y-%m-%d').date()
+                except ValueError:
+                    flash('Invalid date format for effective date.', 'error')
+                    return render_template('admin/price_history/edit.html', ph=ph, projects=projects, unit_types=unit_types)
+            else:
+                data['effective_date'] = None
+            
+            # Update fields
+            for key, value in data.items():
+                if hasattr(ph, key):
+                    setattr(ph, key, value)
+                    
+            db.session.commit()
+            flash('Price history record updated successfully!', 'success')
+            return redirect(url_for('admin.price_history'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating price history record: {str(e)}', 'error')
+            
     return render_template('admin/price_history/edit.html', ph=ph, projects=projects, unit_types=unit_types)
 
 @admin.route('/price-history/<int:price_history_id>')
@@ -2397,60 +2931,97 @@ def export_unit_room_details(export_type):
 def new_unit_room_detail():
     unit_types = UnitType.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['unit_type_id'] = int(data['unit_type_id']) if data.get('unit_type_id') else None
-        for field in ['room_sequence', 'window_count', 'door_count', 'electrical_points', 'fan_points', 'ac_points', 'light_points']:
-            data[field] = int(data[field]) if data.get(field) else None
-        for field in ['room_length', 'room_width', 'room_area', 'wardrobe_area', 'window_total_area', 'door_width', 'door_height', 'window_width', 'window_height', 'ceiling_height']:
-            data[field] = float(data[field]) if data.get(field) else None
-        for field in ['has_attached_bathroom', 'has_balcony_access', 'has_wardrobe', 'has_window', 'has_geyser_provision', 'has_exhaust_fan', 'has_chimney_provision']:
-            data[field] = field in request.form
-        rd = UnitRoomDetail(
-            unit_type_id=data['unit_type_id'],
-            room_type=data.get('room_type', ''),
-            room_name=data.get('room_name', ''),
-            room_sequence=data.get('room_sequence'),
-            room_length=data.get('room_length'),
-            room_width=data.get('room_width'),
-            room_area=data.get('room_area'),
-            room_shape=data.get('room_shape', ''),
-            has_attached_bathroom=data.get('has_attached_bathroom', False),
-            has_balcony_access=data.get('has_balcony_access', False),
-            has_wardrobe=data.get('has_wardrobe', False),
-            wardrobe_type=data.get('wardrobe_type', ''),
-            wardrobe_area=data.get('wardrobe_area'),
-            has_window=data.get('has_window', False),
-            window_count=data.get('window_count'),
-            window_total_area=data.get('window_total_area'),
-            natural_light_rating=data.get('natural_light_rating', ''),
-            ventilation_rating=data.get('ventilation_rating', ''),
-            door_count=data.get('door_count'),
-            door_type=data.get('door_type', ''),
-            door_material=data.get('door_material', ''),
-            door_width=data.get('door_width'),
-            door_height=data.get('door_height'),
-            window_type=data.get('window_type', ''),
-            window_material=data.get('window_material', ''),
-            window_width=data.get('window_width'),
-            window_height=data.get('window_height'),
-            electrical_points=data.get('electrical_points'),
-            fan_points=data.get('fan_points'),
-            ac_points=data.get('ac_points'),
-            light_points=data.get('light_points'),
-            flooring_type=data.get('flooring_type', ''),
-            flooring_brand=data.get('flooring_brand', ''),
-            ceiling_type=data.get('ceiling_type', ''),
-            ceiling_height=data.get('ceiling_height'),
-            has_geyser_provision=data.get('has_geyser_provision', False),
-            has_exhaust_fan=data.get('has_exhaust_fan', False),
-            has_chimney_provision=data.get('has_chimney_provision', False),
-            privacy_level=data.get('privacy_level', ''),
-            position_in_unit=data.get('position_in_unit', '')
-        )
-        db.session.add(rd)
-        db.session.commit()
-        flash('Unit room detail added successfully!', 'success')
-        return redirect(url_for('admin.unit_room_details'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert unit_type_id to int with validation
+            if data.get('unit_type_id'):
+                try:
+                    data['unit_type_id'] = int(data['unit_type_id'])
+                except ValueError:
+                    flash('Invalid unit type ID provided.', 'error')
+                    return render_template('admin/unit_room_details/new.html', unit_types=unit_types)
+            else:
+                data['unit_type_id'] = None
+            
+            # Convert integer fields with error handling
+            integer_fields = ['room_sequence', 'window_count', 'door_count', 'electrical_points', 'fan_points', 'ac_points', 'light_points']
+            for field in integer_fields:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert float fields with error handling
+            float_fields = ['room_length', 'room_width', 'room_area', 'wardrobe_area', 'window_total_area', 'door_width', 'door_height', 'window_width', 'window_height', 'ceiling_height']
+            for field in float_fields:
+                if data.get(field):
+                    try:
+                        data[field] = float(data[field])
+                    except ValueError:
+                        data[field] = None
+                else:
+                    data[field] = None
+            
+            # Convert boolean fields
+            boolean_fields = ['has_attached_bathroom', 'has_balcony_access', 'has_wardrobe', 'has_window', 'has_geyser_provision', 'has_exhaust_fan', 'has_chimney_provision']
+            for field in boolean_fields:
+                data[field] = field in request.form
+                
+            rd = UnitRoomDetail(
+                unit_type_id=data['unit_type_id'],
+                room_type=data.get('room_type', ''),
+                room_name=data.get('room_name', ''),
+                room_sequence=data.get('room_sequence'),
+                room_length=data.get('room_length'),
+                room_width=data.get('room_width'),
+                room_area=data.get('room_area'),
+                room_shape=data.get('room_shape', ''),
+                has_attached_bathroom=data.get('has_attached_bathroom', False),
+                has_balcony_access=data.get('has_balcony_access', False),
+                has_wardrobe=data.get('has_wardrobe', False),
+                wardrobe_type=data.get('wardrobe_type', ''),
+                wardrobe_area=data.get('wardrobe_area'),
+                has_window=data.get('has_window', False),
+                window_count=data.get('window_count'),
+                window_total_area=data.get('window_total_area'),
+                natural_light_rating=data.get('natural_light_rating', ''),
+                ventilation_rating=data.get('ventilation_rating', ''),
+                door_count=data.get('door_count'),
+                door_type=data.get('door_type', ''),
+                door_material=data.get('door_material', ''),
+                door_width=data.get('door_width'),
+                door_height=data.get('door_height'),
+                window_type=data.get('window_type', ''),
+                window_material=data.get('window_material', ''),
+                window_width=data.get('window_width'),
+                window_height=data.get('window_height'),
+                electrical_points=data.get('electrical_points'),
+                fan_points=data.get('fan_points'),
+                ac_points=data.get('ac_points'),
+                light_points=data.get('light_points'),
+                flooring_type=data.get('flooring_type', ''),
+                flooring_brand=data.get('flooring_brand', ''),
+                ceiling_type=data.get('ceiling_type', ''),
+                ceiling_height=data.get('ceiling_height'),
+                has_geyser_provision=data.get('has_geyser_provision', False),
+                has_exhaust_fan=data.get('has_exhaust_fan', False),
+                has_chimney_provision=data.get('has_chimney_provision', False),
+                privacy_level=data.get('privacy_level', ''),
+                position_in_unit=data.get('position_in_unit', '')
+            )
+            db.session.add(rd)
+            db.session.commit()
+            flash('Unit room detail added successfully!', 'success')
+            return redirect(url_for('admin.unit_room_details'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating unit room detail: {str(e)}', 'error')
+            
     return render_template('admin/unit_room_details/new.html', unit_types=unit_types)
 
 @admin.route('/unit-room-details/<int:room_detail_id>')
@@ -2463,32 +3034,71 @@ def edit_unit_room_detail(room_detail_id):
     rd = UnitRoomDetail.query.get_or_404(room_detail_id)
     unit_types = UnitType.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        for field in ['room_sequence', 'window_count', 'door_count', 'electrical_points', 'fan_points', 'ac_points', 'light_points']:
-            setattr(rd, field, int(data[field]) if data.get(field) else None)
-        for field in ['room_length', 'room_width', 'room_area', 'wardrobe_area', 'window_total_area', 'door_width', 'door_height', 'window_width', 'window_height', 'ceiling_height']:
-            setattr(rd, field, float(data[field]) if data.get(field) else None)
-        for field in ['has_attached_bathroom', 'has_balcony_access', 'has_wardrobe', 'has_window', 'has_geyser_provision', 'has_exhaust_fan', 'has_chimney_provision']:
-            setattr(rd, field, field in request.form)
-        rd.unit_type_id = int(data['unit_type_id']) if data.get('unit_type_id') else None
-        rd.room_type = data.get('room_type', '')
-        rd.room_name = data.get('room_name', '')
-        rd.room_shape = data.get('room_shape', '')
-        rd.wardrobe_type = data.get('wardrobe_type', '')
-        rd.natural_light_rating = data.get('natural_light_rating', '')
-        rd.ventilation_rating = data.get('ventilation_rating', '')
-        rd.door_type = data.get('door_type', '')
-        rd.door_material = data.get('door_material', '')
-        rd.window_type = data.get('window_type', '')
-        rd.window_material = data.get('window_material', '')
-        rd.flooring_type = data.get('flooring_type', '')
-        rd.flooring_brand = data.get('flooring_brand', '')
-        rd.ceiling_type = data.get('ceiling_type', '')
-        rd.privacy_level = data.get('privacy_level', '')
-        rd.position_in_unit = data.get('position_in_unit', '')
-        db.session.commit()
-        flash('Unit room detail updated successfully!', 'success')
-        return redirect(url_for('admin.unit_room_details'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert integer fields with error handling
+            integer_fields = ['room_sequence', 'window_count', 'door_count', 'electrical_points', 'fan_points', 'ac_points', 'light_points']
+            for field in integer_fields:
+                if data.get(field):
+                    try:
+                        setattr(rd, field, int(data[field]))
+                    except ValueError:
+                        setattr(rd, field, None)
+                else:
+                    setattr(rd, field, None)
+            
+            # Convert float fields with error handling
+            float_fields = ['room_length', 'room_width', 'room_area', 'wardrobe_area', 'window_total_area', 'door_width', 'door_height', 'window_width', 'window_height', 'ceiling_height']
+            for field in float_fields:
+                if data.get(field):
+                    try:
+                        setattr(rd, field, float(data[field]))
+                    except ValueError:
+                        setattr(rd, field, None)
+                else:
+                    setattr(rd, field, None)
+            
+            # Convert boolean fields
+            boolean_fields = ['has_attached_bathroom', 'has_balcony_access', 'has_wardrobe', 'has_window', 'has_geyser_provision', 'has_exhaust_fan', 'has_chimney_provision']
+            for field in boolean_fields:
+                setattr(rd, field, field in request.form)
+            
+            # Convert unit_type_id with validation
+            if data.get('unit_type_id'):
+                try:
+                    rd.unit_type_id = int(data['unit_type_id'])
+                except ValueError:
+                    flash('Invalid unit type ID provided.', 'error')
+                    return render_template('admin/unit_room_details/edit.html', rd=rd, unit_types=unit_types)
+            else:
+                rd.unit_type_id = None
+                
+            # Update string fields
+            rd.room_type = data.get('room_type', '')
+            rd.room_name = data.get('room_name', '')
+            rd.room_shape = data.get('room_shape', '')
+            rd.wardrobe_type = data.get('wardrobe_type', '')
+            rd.natural_light_rating = data.get('natural_light_rating', '')
+            rd.ventilation_rating = data.get('ventilation_rating', '')
+            rd.door_type = data.get('door_type', '')
+            rd.door_material = data.get('door_material', '')
+            rd.window_type = data.get('window_type', '')
+            rd.window_material = data.get('window_material', '')
+            rd.flooring_type = data.get('flooring_type', '')
+            rd.flooring_brand = data.get('flooring_brand', '')
+            rd.ceiling_type = data.get('ceiling_type', '')
+            rd.privacy_level = data.get('privacy_level', '')
+            rd.position_in_unit = data.get('position_in_unit', '')
+            
+            db.session.commit()
+            flash('Unit room detail updated successfully!', 'success')
+            return redirect(url_for('admin.unit_room_details'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating unit room detail: {str(e)}', 'error')
+            
     return render_template('admin/unit_room_details/edit.html', rd=rd, unit_types=unit_types)
 
 @admin.route('/unit-room-details/<int:room_detail_id>/delete', methods=['POST'])

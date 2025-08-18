@@ -23,11 +23,6 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin.projects') }}" class="nav-link">
-                        <i class="fas fa-project-diagram"></i> Projects
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a href="{{ url_for('admin.developers') }}" class="nav-link">
                         <i class="fas fa-users"></i> Developers
                     </a>
@@ -43,6 +38,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ url_for('admin.projects') }}" class="nav-link">
+                        <i class="fas fa-project-diagram"></i> Projects
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ url_for('admin.amenities') }}" class="nav-link">
                         <i class="fas fa-concierge-bell"></i> Amenities
                     </a>
@@ -53,13 +53,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin.project_approvals') }}" class="nav-link">
-                        <i class="fas fa-file-signature"></i> Project Approvals
+                    <a href="{{ url_for('admin.approvals') }}" class="nav-link">
+                        <i class="fas fa-check-circle"></i> Approvals
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin.approvals') }}" class="nav-link">
-                        <i class="fas fa-check-circle"></i> Approvals
+                    <a href="{{ url_for('admin.project_approvals') }}" class="nav-link">
+                        <i class="fas fa-file-signature"></i> Project Approvals
                     </a>
                 </li>
                 <li class="nav-item">

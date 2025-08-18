@@ -6,9 +6,11 @@ $(document).ready(function() {
 });
 
 function initAdminPanel() {
-    // Sidebar toggle for mobile
-    $('.sidebar-toggle').on('click', function() {
+    // Sidebar toggle for mobile and desktop
+    $('.sidebar-toggle').on('click', function(e) {
+        e.preventDefault();
         $('.sidebar').toggleClass('show');
+        $('.main-content').toggleClass('sidebar-collapsed');
     });
 
     // Close sidebar when clicking outside on mobile
