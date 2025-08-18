@@ -406,15 +406,6 @@ body {
     padding: 15px 20px;
 }
 
-/* Sidebar Toggle for Desktop */
-.sidebar.show {
-    transform: translateX(0) !important;
-}
-
-.main-content.sidebar-collapsed {
-    margin-left: 0 !important;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .sidebar {
@@ -435,20 +426,6 @@ body {
     
     .table-responsive {
         overflow-x: auto;
-    }
-}
-
-@media (min-width: 769px) {
-    .sidebar {
-        transform: translateX(0);
-    }
-    
-    .sidebar:not(.show) {
-        transform: translateX(-100%);
-    }
-    
-    .main-content:not(.sidebar-collapsed) {
-        margin-left: var(--sidebar-width);
     }
 }
 
