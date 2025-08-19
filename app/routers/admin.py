@@ -296,29 +296,33 @@ def new_developer():
                     file.save(os.path.join(upload_folder, filename))
                     data['logo_url'] = filename
             
-            # Convert numeric fields - handle empty strings
-            if 'established_year' in data:
-                if data['established_year']:
-                    data['established_year'] = int(data['established_year'])
+            # Clean up empty strings from all fields first
+            cleaned_data = {}
+            for key, value in data.items():
+                if value == '':
+                    # Skip empty strings - let the model defaults handle them
+                    continue
                 else:
-                    data['established_year'] = None
+                    cleaned_data[key] = value
             
-            if 'total_projects' in data:
-                data['total_projects'] = int(data['total_projects']) if data['total_projects'] else 0
+            # Now process the cleaned data
+            if 'established_year' in cleaned_data:
+                try:
+                    cleaned_data['established_year'] = int(cleaned_data['established_year'])
+                except (ValueError, TypeError):
+                    cleaned_data['established_year'] = None
             
-            if 'completed_projects' in data:
-                data['completed_projects'] = int(data['completed_projects']) if data['completed_projects'] else 0
+            # Set defaults for numeric fields if not present
+            cleaned_data['total_projects'] = int(cleaned_data.get('total_projects', 0)) if cleaned_data.get('total_projects') else 0
+            cleaned_data['completed_projects'] = int(cleaned_data.get('completed_projects', 0)) if cleaned_data.get('completed_projects') else 0
+            cleaned_data['ongoing_projects'] = int(cleaned_data.get('ongoing_projects', 0)) if cleaned_data.get('ongoing_projects') else 0
+            cleaned_data['rating'] = float(cleaned_data.get('rating', 0.0)) if cleaned_data.get('rating') else 0.0
+            cleaned_data['total_reviews'] = int(cleaned_data.get('total_reviews', 0)) if cleaned_data.get('total_reviews') else 0
             
-            if 'ongoing_projects' in data:
-                data['ongoing_projects'] = int(data['ongoing_projects']) if data['ongoing_projects'] else 0
+            # Handle is_verified boolean
+            cleaned_data['is_verified'] = cleaned_data.get('is_verified', False) in [True, 'true', 'True', '1', 'on']
             
-            if 'rating' in data:
-                data['rating'] = float(data['rating']) if data['rating'] else 0.0
-            
-            if 'total_reviews' in data:
-                data['total_reviews'] = int(data['total_reviews']) if data['total_reviews'] else 0
-            
-            developer = Developer(**data)
+            developer = Developer(**cleaned_data)
             db.session.add(developer)
             db.session.commit()
             
