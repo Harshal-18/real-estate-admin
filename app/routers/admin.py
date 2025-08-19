@@ -296,17 +296,27 @@ def new_developer():
                     file.save(os.path.join(upload_folder, filename))
                     data['logo_url'] = filename
             
-            # Convert numeric fields
-            if 'established_year' in data and data['established_year']:
-                data['established_year'] = int(data['established_year'])
-            if 'total_projects' in data and data['total_projects']:
-                data['total_projects'] = int(data['total_projects'])
-            if 'completed_projects' in data and data['completed_projects']:
-                data['completed_projects'] = int(data['completed_projects'])
-            if 'ongoing_projects' in data and data['ongoing_projects']:
-                data['ongoing_projects'] = int(data['ongoing_projects'])
-            if 'rating' in data and data['rating']:
-                data['rating'] = float(data['rating'])
+            # Convert numeric fields - handle empty strings
+            if 'established_year' in data:
+                if data['established_year']:
+                    data['established_year'] = int(data['established_year'])
+                else:
+                    data['established_year'] = None
+            
+            if 'total_projects' in data:
+                data['total_projects'] = int(data['total_projects']) if data['total_projects'] else 0
+            
+            if 'completed_projects' in data:
+                data['completed_projects'] = int(data['completed_projects']) if data['completed_projects'] else 0
+            
+            if 'ongoing_projects' in data:
+                data['ongoing_projects'] = int(data['ongoing_projects']) if data['ongoing_projects'] else 0
+            
+            if 'rating' in data:
+                data['rating'] = float(data['rating']) if data['rating'] else 0.0
+            
+            if 'total_reviews' in data:
+                data['total_reviews'] = int(data['total_reviews']) if data['total_reviews'] else 0
             
             developer = Developer(**data)
             db.session.add(developer)
@@ -333,23 +343,40 @@ def edit_developer(developer_id):
     developer = Developer.query.get_or_404(developer_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        
-        # Handle logo upload
-        if 'logo' in request.files:
-            file = request.files['logo']
-            if file and file.filename:
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
-                data['logo_url'] = filename
-        
-        for key, value in data.items():
-            if hasattr(developer, key):
-                setattr(developer, key, value)
-        
-        db.session.commit()
-        flash('Developer updated successfully!', 'success')
-        return redirect(url_for('admin.developers'))
+        try:
+            data = request.form.to_dict()
+            
+            # Handle logo upload
+            if 'logo' in request.files:
+                file = request.files['logo']
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'app/static/uploads')
+                    os.makedirs(upload_folder, exist_ok=True)
+                    file.save(os.path.join(upload_folder, filename))
+                    data['logo_url'] = filename
+            
+            # Convert and validate numeric fields before setting
+            for key, value in data.items():
+                if hasattr(developer, key):
+                    if key == 'established_year':
+                        setattr(developer, key, int(value) if value else None)
+                    elif key in ['total_projects', 'completed_projects', 'ongoing_projects', 'total_reviews']:
+                        setattr(developer, key, int(value) if value else 0)
+                    elif key == 'rating':
+                        setattr(developer, key, float(value) if value else 0.0)
+                    elif key == 'is_verified':
+                        setattr(developer, key, value.lower() in ['true', '1', 'yes'])
+                    else:
+                        setattr(developer, key, value if value else None)
+            
+            db.session.commit()
+            flash('Developer updated successfully!', 'success')
+            return redirect(url_for('admin.developers'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating developer: {str(e)}', 'error')
+            return render_template('admin/developers/edit.html', developer=developer)
     
     return render_template('admin/developers/edit.html', developer=developer)
 
@@ -1023,12 +1050,44 @@ def property_units():
 def new_property_unit():
     """Create new property unit"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        property_unit = PropertyUnit(**data)
-        db.session.add(property_unit)
-        db.session.commit()
-        flash('Property unit created successfully!', 'success')
-        return redirect(url_for('admin.property_units'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert integer fields
+            integer_fields = ['project_id', 'unit_type_id', 'tower_id', 'floor_number']
+            for field in integer_fields:
+                if field in data and data[field]:
+                    data[field] = int(data[field])
+                elif field in data:
+                    data[field] = None
+            
+            # Convert decimal fields
+            decimal_fields = ['carpet_area', 'built_up_area', 'super_area', 'unit_price', 
+                            'price_per_sqft', 'maintenance_charge', 'total_price',
+                            'premium_percentage', 'discount_percentage']
+            for field in decimal_fields:
+                if field in data and data[field]:
+                    data[field] = float(data[field])
+                elif field in data:
+                    data[field] = None
+            
+            # Convert boolean fields
+            boolean_fields = ['has_corner_unit', 'has_extra_balcony', 'has_servant_quarter', 'is_active']
+            for field in boolean_fields:
+                data[field] = field in request.form
+            
+            property_unit = PropertyUnit(**data)
+            db.session.add(property_unit)
+            db.session.commit()
+            flash('Property unit created successfully!', 'success')
+            return redirect(url_for('admin.property_units'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating property unit: {str(e)}', 'error')
+            projects = Project.query.all()
+            towers = Tower.query.all()
+            unit_types = UnitType.query.all()
+            return render_template('admin/property_units/new.html', projects=projects, towers=towers, unit_types=unit_types)
     
     projects = Project.query.all()
     towers = Tower.query.all()
@@ -1042,14 +1101,37 @@ def edit_property_unit(unit_id):
     property_unit = PropertyUnit.query.get_or_404(unit_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        for key, value in data.items():
-            if hasattr(property_unit, key):
-                setattr(property_unit, key, value)
-        
-        db.session.commit()
-        flash('Property unit updated successfully!', 'success')
-        return redirect(url_for('admin.property_units'))
+        try:
+            data = request.form.to_dict()
+            
+            # Convert and validate fields before setting
+            for key, value in data.items():
+                if hasattr(property_unit, key):
+                    # Integer fields
+                    if key in ['project_id', 'unit_type_id', 'tower_id', 'floor_number']:
+                        setattr(property_unit, key, int(value) if value else None)
+                    # Decimal fields
+                    elif key in ['carpet_area', 'built_up_area', 'super_area', 'unit_price', 
+                                'price_per_sqft', 'maintenance_charge', 'total_price',
+                                'premium_percentage', 'discount_percentage']:
+                        setattr(property_unit, key, float(value) if value else None)
+                    # Boolean fields
+                    elif key in ['has_corner_unit', 'has_extra_balcony', 'has_servant_quarter', 'is_active']:
+                        setattr(property_unit, key, value.lower() in ['true', '1', 'yes', 'on'])
+                    else:
+                        setattr(property_unit, key, value if value else None)
+            
+            db.session.commit()
+            flash('Property unit updated successfully!', 'success')
+            return redirect(url_for('admin.property_units'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating property unit: {str(e)}', 'error')
+            projects = Project.query.all()
+            towers = Tower.query.all()
+            unit_types = UnitType.query.all()
+            return render_template('admin/property_units/edit.html', property_unit=property_unit, 
+                                 projects=projects, towers=towers, unit_types=unit_types)
     
     projects = Project.query.all()
     towers = Tower.query.all()
@@ -1094,22 +1176,30 @@ def new_review():
     """Create new review"""
     from app.models import Project, Developer, User, Review
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['is_verified'] = 'is_verified' in request.form
-        # Convert IDs to int
-        for field in ['project_id', 'developer_id', 'user_id', 'rating', 'construction_quality_rating', 'amenities_rating', 'location_rating', 'value_for_money_rating']:
-            if data.get(field):
-                try:
-                    data[field] = int(data[field])
-                except Exception:
+        try:
+            data = request.form.to_dict()
+            data['is_verified'] = 'is_verified' in request.form
+            # Convert IDs to int
+            for field in ['project_id', 'developer_id', 'user_id', 'rating', 'construction_quality_rating', 'amenities_rating', 'location_rating', 'value_for_money_rating']:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except Exception:
+                        data[field] = None
+                else:
                     data[field] = None
-            else:
-                data[field] = None
-        review = Review(**data)
-        db.session.add(review)
-        db.session.commit()
-        flash('Review created successfully!', 'success')
-        return redirect(url_for('admin.reviews'))
+            review = Review(**data)
+            db.session.add(review)
+            db.session.commit()
+            flash('Review created successfully!', 'success')
+            return redirect(url_for('admin.reviews'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating review: {str(e)}', 'error')
+            projects = Project.query.all()
+            developers = Developer.query.all()
+            users = User.query.all()
+            return render_template('admin/reviews/new.html', projects=projects, developers=developers, users=users)
     projects = Project.query.all()
     developers = Developer.query.all()
     users = User.query.all()
@@ -1121,23 +1211,31 @@ def edit_review(review_id):
     from app.models import Project, Developer, User, Review
     review = Review.query.get_or_404(review_id)
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['is_verified'] = 'is_verified' in request.form
-        # Convert IDs to int
-        for field in ['project_id', 'developer_id', 'user_id', 'rating', 'construction_quality_rating', 'amenities_rating', 'location_rating', 'value_for_money_rating']:
-            if data.get(field):
-                try:
-                    data[field] = int(data[field])
-                except Exception:
+        try:
+            data = request.form.to_dict()
+            data['is_verified'] = 'is_verified' in request.form
+            # Convert IDs to int
+            for field in ['project_id', 'developer_id', 'user_id', 'rating', 'construction_quality_rating', 'amenities_rating', 'location_rating', 'value_for_money_rating']:
+                if data.get(field):
+                    try:
+                        data[field] = int(data[field])
+                    except Exception:
+                        data[field] = None
+                else:
                     data[field] = None
-            else:
-                data[field] = None
-        for key, value in data.items():
-            if hasattr(review, key):
-                setattr(review, key, value)
-        db.session.commit()
-        flash('Review updated successfully!', 'success')
-        return redirect(url_for('admin.reviews'))
+            for key, value in data.items():
+                if hasattr(review, key):
+                    setattr(review, key, value)
+            db.session.commit()
+            flash('Review updated successfully!', 'success')
+            return redirect(url_for('admin.reviews'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating review: {str(e)}', 'error')
+            projects = Project.query.all()
+            developers = Developer.query.all()
+            users = User.query.all()
+            return render_template('admin/reviews/edit.html', review=review, projects=projects, developers=developers, users=users)
     projects = Project.query.all()
     developers = Developer.query.all()
     users = User.query.all()
