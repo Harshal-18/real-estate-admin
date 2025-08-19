@@ -9,12 +9,18 @@
         <h5><i class="fas fa-plus"></i> Create New Amenity</h5>
     </div>
     <div class="card-body">
+        {% if draft %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle"></i> You have a saved draft. The form has been populated with your previous entries.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
         <form method="POST" id="amenityForm">
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="name" class="form-label">Amenity Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -39,7 +45,7 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="icon_url" class="form-label">Icon URL</label>
-                        <input type="text" class="form-control" id="icon_url" name="icon_url" placeholder="https://example.com/icon.png">
+                        <input type="text" class="form-control" id="icon_url" name="icon_url" value="{{ draft.get('icon_url', '') }}" placeholder="https://example.com/icon.png">
                         <div class="form-text">URL to the icon image (e.g., https://example.com/icon.png)</div>
                     </div>
                 </div>
@@ -60,7 +66,7 @@
                 <div class="col-md-12">
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ draft.get('description', '') }}</textarea>
                     </div>
                 </div>
             </div>
@@ -68,11 +74,29 @@
                 <a href="{{ url_for('admin.amenities') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Amenities
                 </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Create Amenity
-                </button>
+                <div>
+                    <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
+                        <i class="fas fa-save"></i> Save Draft
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Amenity
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+function saveDraft() {
+    // Add a hidden field to indicate this is a draft
+    $('<input>').attr({
+        type: 'hidden',
+        name: 'is_draft',
+        value: '1'
+    }).appendTo('#amenityForm');
+    
+    $('#amenityForm').submit();
+}
+</script>
 {% endblock %} 

@@ -181,7 +181,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 // Country codes data
 const countryCodes = [
@@ -252,13 +254,15 @@ $(document).ready(function() {
         countryCodes.forEach(country => {
             const item = $(`
                 <div class="country-item" data-code="${country.code}" data-iso="${country.iso.toLowerCase()}" data-name="${country.name}">
-                    <img src="https://flagcdn.com/24x18/${country.iso.toLowerCase()}.png" alt="${country.iso}">
+                    <img src="https://flagcdn.com/24x18/${country.iso.toLowerCase()}.png" alt="${country.iso}" onerror="this.style.display='none'">
                     <span class="country-name">${country.name}</span>
                     <span class="country-code">${country.code}</span>
                 </div>
             `);
             countryList.append(item);
         });
+        
+        console.log('Country list initialized with', countryCodes.length, 'countries');
     }
     
     // Initialize on page load
@@ -288,6 +292,11 @@ $(document).ready(function() {
             $('#contact_phone').val(existingPhone);
         }
     }
+    
+    // Prevent dropdown from closing when clicking inside
+    $('.country-dropdown').on('click', function(e) {
+        e.stopPropagation();
+    });
     
     // Country search functionality
     $('#countrySearch').on('input', function() {

@@ -58,19 +58,26 @@
         <h5><i class="fas fa-plus"></i> Create New Developer</h5>
     </div>
     <div class="card-body">
+        {% if draft %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle"></i> You have a saved draft. The form has been populated with your previous entries.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
         <form method="POST" enctype="multipart/form-data" id="developerForm">
             <!-- Basic Information -->
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="name" class="form-label">Developer Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" required>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="established_year" class="form-label">Established Year</label>
                         <input type="number" class="form-control" id="established_year" name="established_year" 
+                               value="{{ draft.get('established_year', '') }}"
                                min="1800" max="{{ current_year }}" 
                                placeholder="e.g. {{ current_year }}"
                                pattern="[0-9]{4}"
@@ -83,7 +90,7 @@
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                <textarea class="form-control" id="description" name="description" rows="4">{{ draft.get('description', '') }}</textarea>
             </div>
             <!-- Logo Upload -->
             <div class="mb-3">
@@ -97,7 +104,7 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="contact_email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="contact_email" name="contact_email">
+                        <input type="email" class="form-control" id="contact_email" name="contact_email" value="{{ draft.get('contact_email', '') }}">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -113,7 +120,7 @@
                                 <div id="countryList"></div>
                             </div>
                             <input type="hidden" id="country_code" name="country_code" value="+91">
-                            <input type="tel" class="form-control" id="contact_phone" name="contact_phone" placeholder="Enter phone number">
+                            <input type="tel" class="form-control" id="contact_phone" name="contact_phone" value="{{ draft.get('contact_phone', '') }}" placeholder="Enter phone number">
                         </div>
                         <small class="text-muted">Format: Country code will be added automatically</small>
                     </div>
@@ -121,30 +128,30 @@
             </div>
             <div class="mb-3">
                 <label for="website_url" class="form-label">Website URL</label>
-                <input type="url" class="form-control" id="website_url" name="website_url" placeholder="https://example.com">
+                <input type="url" class="form-control" id="website_url" name="website_url" value="{{ draft.get('website_url', '') }}" placeholder="https://example.com">
             </div>
             <div class="mb-3">
                 <label for="address" class="form-label">Address</label>
-                <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                <textarea class="form-control" id="address" name="address" rows="3">{{ draft.get('address', '') }}</textarea>
             </div>
             <!-- Project Statistics -->
             <div class="row">
                 <div class="col-md-4">
                     <div class="mb-3">
                         <label for="total_projects" class="form-label">Total Projects</label>
-                        <input type="number" class="form-control" id="total_projects" name="total_projects" min="0" value="0">
+                        <input type="number" class="form-control" id="total_projects" name="total_projects" min="0" value="{{ draft.get('total_projects', '0') }}">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
                         <label for="completed_projects" class="form-label">Completed Projects</label>
-                        <input type="number" class="form-control" id="completed_projects" name="completed_projects" min="0" value="0">
+                        <input type="number" class="form-control" id="completed_projects" name="completed_projects" min="0" value="{{ draft.get('completed_projects', '0') }}">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
                         <label for="ongoing_projects" class="form-label">Ongoing Projects</label>
-                        <input type="number" class="form-control" id="ongoing_projects" name="ongoing_projects" min="0" value="0">
+                        <input type="number" class="form-control" id="ongoing_projects" name="ongoing_projects" min="0" value="{{ draft.get('ongoing_projects', '0') }}">
                     </div>
                 </div>
             </div>
@@ -153,14 +160,14 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="rating" class="form-label">Average Rating</label>
-                        <input type="number" class="form-control" id="rating" name="rating" min="0" max="5" step="0.01" value="0" placeholder="0.00">
+                        <input type="number" class="form-control" id="rating" name="rating" min="0" max="5" step="0.01" value="{{ draft.get('rating', '0') }}" placeholder="0.00">
                         <div class="form-text">Rating from 0.00 to 5.00</div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="total_reviews" class="form-label">Total Reviews</label>
-                        <input type="number" class="form-control" id="total_reviews" name="total_reviews" min="0" value="0">
+                        <input type="number" class="form-control" id="total_reviews" name="total_reviews" min="0" value="{{ draft.get('total_reviews', '0') }}">
                     </div>
                 </div>
             </div>

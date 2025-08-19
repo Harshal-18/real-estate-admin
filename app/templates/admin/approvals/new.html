@@ -13,18 +13,24 @@
 
     <div class="card">
         <div class="card-body">
+            {% if draft %}
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle"></i> You have a saved draft. The form has been populated with your previous entries.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
             <form method="POST">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="name" class="form-label">Approval Name *</label>
-                            <input type="text" class="form-control" id="name" name="name" required>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="category" class="form-label">Category</label>
-                            <input type="text" class="form-control" id="category" name="category">
+                            <input type="text" class="form-control" id="category" name="category" value="{{ draft.get('category', '') }}">
                         </div>
                         <div class="form-check form-switch mt-3">
                             <input class="form-check-input" type="checkbox" id="is_mandatory" name="is_mandatory" checked>
@@ -34,14 +40,36 @@
                 </div>
                 <div class="mb-3">
                     <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ draft.get('description', '') }}</textarea>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Create Approval</button>
-                    <a href="{{ url_for('admin.approvals') }}" class="btn btn-secondary">Cancel</a>
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('admin.approvals') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Approvals
+                    </a>
+                    <div>
+                        <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
+                            <i class="fas fa-save"></i> Save Draft
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Create Approval
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+function saveDraft() {
+    // Add a hidden field to indicate this is a draft
+    $('<input>').attr({
+        type: 'hidden',
+        name: 'is_draft',
+        value: '1'
+    }).appendTo('#approvalForm');
+    
+    $('#approvalForm').submit();
+}
+</script>
 {% endblock %} 

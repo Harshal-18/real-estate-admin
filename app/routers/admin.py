@@ -282,9 +282,24 @@ def developers():
 @admin.route('/developers/new', methods=['GET', 'POST'])
 def new_developer():
     """Create new developer"""
+    from datetime import datetime
+    current_year = datetime.now().year
+    
+    # Check if there's a draft to restore
+    draft_data = session.get('developer_draft', {})
+    
     if request.method == 'POST':
         try:
             data = request.form.to_dict()
+            
+            # Check if this is a draft save
+            if data.get('is_draft') == '1':
+                # Remove the is_draft flag before saving
+                data.pop('is_draft', None)
+                # Save draft to session
+                session['developer_draft'] = data
+                flash('Draft saved successfully! You can resume it later.', 'info')
+                return redirect(url_for('admin.developers'))
             
             # Handle logo upload
             if 'logo' in request.files:
@@ -303,7 +318,7 @@ def new_developer():
             cleaned_data['name'] = data.get('name')
             if not cleaned_data['name']:
                 flash('Developer name is required!', 'error')
-                return render_template('admin/developers/new.html')
+                return render_template('admin/developers/new.html', current_year=current_year, draft=draft_data)
             
             # Optional fields - convert empty strings to None
             optional_text_fields = ['description', 'website_url', 'contact_email', 'address']
@@ -351,16 +366,17 @@ def new_developer():
             db.session.add(developer)
             db.session.commit()
             
+            # Clear draft after successful save
+            session.pop('developer_draft', None)
+            
             flash('Developer created successfully!', 'success')
             return redirect(url_for('admin.developers'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating developer: {str(e)}', 'error')
-            from datetime import datetime
-            return render_template('admin/developers/new.html', current_year=datetime.now().year)
+            return render_template('admin/developers/new.html', current_year=current_year, draft=draft_data)
     
-    from datetime import datetime
-    return render_template('admin/developers/new.html', current_year=datetime.now().year)
+    return render_template('admin/developers/new.html', current_year=current_year, draft=draft_data)
 
 @admin.route('/developers/<int:developer_id>')
 def view_developer(developer_id):
@@ -469,9 +485,19 @@ def cities():
 @admin.route('/cities/new', methods=['GET', 'POST'])
 def new_city():
     """Create new city"""
+    # Check if there's a draft to restore
+    draft_data = session.get('city_draft', {})
+    
     if request.method == 'POST':
         try:
             data = request.form.to_dict()
+            
+            # Check if this is a draft save
+            if data.get('is_draft') == '1':
+                data.pop('is_draft', None)
+                session['city_draft'] = data
+                flash('Draft saved successfully! You can resume it later.', 'info')
+                return redirect(url_for('admin.cities'))
             
             # Process form data
             cleaned_data = {}
@@ -480,7 +506,7 @@ def new_city():
             cleaned_data['name'] = data.get('name', '').strip()
             if not cleaned_data['name']:
                 flash('City name is required!', 'error')
-                return render_template('admin/cities/new.html')
+                return render_template('admin/cities/new.html', draft=draft_data)
             
             # Optional fields - convert empty strings to None
             optional_fields = ['state', 'country', 'description', 'population', 'area_sq_km']
@@ -497,14 +523,18 @@ def new_city():
             city = City(**cleaned_data)
             db.session.add(city)
             db.session.commit()
+            
+            # Clear draft after successful save
+            session.pop('city_draft', None)
+            
             flash('City created successfully!', 'success')
             return redirect(url_for('admin.cities'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating city: {str(e)}', 'error')
-            return render_template('admin/cities/new.html')
+            return render_template('admin/cities/new.html', draft=draft_data)
     
-    return render_template('admin/cities/new.html')
+    return render_template('admin/cities/new.html', draft=draft_data)
 
 @admin.route('/cities/<int:city_id>/edit', methods=['GET', 'POST'])
 def edit_city(city_id):
@@ -578,9 +608,18 @@ def amenities():
 @admin.route('/amenities/new', methods=['GET', 'POST'])
 def new_amenity():
     """Create new amenity"""
+    draft_data = session.get('amenity_draft', {})
+    
     if request.method == 'POST':
         try:
             data = request.form.to_dict()
+            
+            # Check if this is a draft save
+            if data.get('is_draft') == '1':
+                data.pop('is_draft', None)
+                session['amenity_draft'] = data
+                flash('Draft saved successfully! You can resume it later.', 'info')
+                return redirect(url_for('admin.amenities'))
             
             # Process form data
             cleaned_data = {}
@@ -589,7 +628,7 @@ def new_amenity():
             cleaned_data['name'] = data.get('name', '').strip()
             if not cleaned_data['name']:
                 flash('Amenity name is required!', 'error')
-                return render_template('admin/amenities/new.html')
+                return render_template('admin/amenities/new.html', draft=draft_data)
             
             # Optional fields
             cleaned_data['category'] = data.get('category', '').strip() or None
@@ -603,14 +642,18 @@ def new_amenity():
             amenity = Amenity(**cleaned_data)
             db.session.add(amenity)
             db.session.commit()
+            
+            # Clear draft after successful save
+            session.pop('amenity_draft', None)
+            
             flash('Amenity created successfully!', 'success')
             return redirect(url_for('admin.amenities'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating amenity: {str(e)}', 'error')
-            return render_template('admin/amenities/new.html')
+            return render_template('admin/amenities/new.html', draft=draft_data)
     
-    return render_template('admin/amenities/new.html')
+    return render_template('admin/amenities/new.html', draft=draft_data)
 
 @admin.route('/amenities/<int:amenity_id>/edit', methods=['GET', 'POST'])
 def edit_amenity(amenity_id):
@@ -681,9 +724,18 @@ def approvals():
 @admin.route('/approvals/new', methods=['GET', 'POST'])
 def new_approval():
     """Create new approval"""
+    draft_data = session.get('approval_draft', {})
+    
     if request.method == 'POST':
         try:
             data = request.form.to_dict()
+            
+            # Check if this is a draft save
+            if data.get('is_draft') == '1':
+                data.pop('is_draft', None)
+                session['approval_draft'] = data
+                flash('Draft saved successfully! You can resume it later.', 'info')
+                return redirect(url_for('admin.approvals'))
             
             # Process form data
             cleaned_data = {}
@@ -692,7 +744,7 @@ def new_approval():
             cleaned_data['name'] = data.get('name', '').strip()
             if not cleaned_data['name']:
                 flash('Approval name is required!', 'error')
-                return render_template('admin/approvals/new.html')
+                return render_template('admin/approvals/new.html', draft=draft_data)
             
             # Optional fields
             cleaned_data['category'] = data.get('category', '').strip() or None
@@ -705,14 +757,18 @@ def new_approval():
             approval = Approval(**cleaned_data)
             db.session.add(approval)
             db.session.commit()
+            
+            # Clear draft after successful save
+            session.pop('approval_draft', None)
+            
             flash('Approval created successfully!', 'success')
             return redirect(url_for('admin.approvals'))
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating approval: {str(e)}', 'error')
-            return render_template('admin/approvals/new.html')
+            return render_template('admin/approvals/new.html', draft=draft_data)
     
-    return render_template('admin/approvals/new.html')
+    return render_template('admin/approvals/new.html', draft=draft_data)
 
 @admin.route('/approvals/<int:approval_id>/edit', methods=['GET', 'POST'])
 def edit_approval(approval_id):
