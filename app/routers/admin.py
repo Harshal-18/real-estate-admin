@@ -339,9 +339,11 @@ def new_developer():
         except Exception as e:
             db.session.rollback()
             flash(f'Error creating developer: {str(e)}', 'error')
-            return render_template('admin/developers/new.html')
+            from datetime import datetime
+            return render_template('admin/developers/new.html', current_year=datetime.now().year)
     
-    return render_template('admin/developers/new.html')
+    from datetime import datetime
+    return render_template('admin/developers/new.html', current_year=datetime.now().year)
 
 @admin.route('/developers/<int:developer_id>')
 def view_developer(developer_id):
@@ -388,9 +390,11 @@ def edit_developer(developer_id):
         except Exception as e:
             db.session.rollback()
             flash(f'Error updating developer: {str(e)}', 'error')
-            return render_template('admin/developers/edit.html', developer=developer)
+            from datetime import datetime
+            return render_template('admin/developers/edit.html', developer=developer, current_year=datetime.now().year)
     
-    return render_template('admin/developers/edit.html', developer=developer)
+    from datetime import datetime
+    return render_template('admin/developers/edit.html', developer=developer, current_year=datetime.now().year)
 
 @admin.route('/developers/<int:developer_id>/delete', methods=['POST'])
 def delete_developer(developer_id):

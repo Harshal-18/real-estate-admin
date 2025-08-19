@@ -4,6 +4,19 @@
 {% block page_title %}Add New Developer{% endblock %}
 
 {% block content %}
+<style>
+    /* Make number inputs more user-friendly */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        opacity: 1;
+        height: auto;
+    }
+    
+    /* Better styling for year input */
+    #established_year {
+        -moz-appearance: textfield; /* Firefox */
+    }
+</style>
 <div class="card">
     <div class="card-header">
         <h5><i class="fas fa-plus"></i> Create New Developer</h5>
@@ -21,7 +34,11 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="established_year" class="form-label">Established Year</label>
-                        <input type="number" class="form-control" id="established_year" name="established_year" min="1800" max="{{ current_year }}">
+                        <input type="number" class="form-control" id="established_year" name="established_year" 
+                               min="1800" max="{{ current_year }}" 
+                               placeholder="e.g. {{ current_year }}"
+                               pattern="[0-9]{4}"
+                               title="Enter a year between 1800 and {{ current_year }}">
                     </div>
                 </div>
             </div>
@@ -166,11 +183,18 @@ $(document).ready(function() {
     });
 
     // Validate established year
-    $('#established_year').on('input', function() {
+    // Allow manual typing for established year
+    $('#established_year').on('blur', function() {
         const year = parseInt($(this).val());
         const currentYear = new Date().getFullYear();
-        if (year < 1800) $(this).val(1800);
-        if (year > currentYear) $(this).val(currentYear);
+        if (year && year < 1800) {
+            $(this).val(1800);
+            alert('Year must be 1800 or later');
+        }
+        if (year && year > currentYear) {
+            $(this).val(currentYear);
+            alert('Year cannot be in the future');
+        }
     });
 });
 
