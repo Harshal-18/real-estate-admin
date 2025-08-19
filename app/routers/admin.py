@@ -637,9 +637,10 @@ def new_amenity():
                 flash('Amenity name is required!', 'error')
                 return render_template('admin/amenities/new.html', draft=draft_data)
             
-            # Optional fields
-            cleaned_data['category'] = data.get('category', '').strip() or None
-            cleaned_data['icon_class'] = data.get('icon_class', '').strip() or None
+            # Optional fields (Note: category is required in model, so provide default)
+            category = data.get('category', '').strip()
+            cleaned_data['category'] = category if category else 'General'
+            cleaned_data['icon_url'] = data.get('icon_url', '').strip() or None
             cleaned_data['description'] = data.get('description', '').strip() or None
             
             # Boolean fields
@@ -677,9 +678,10 @@ def edit_amenity(amenity_id):
                 flash('Amenity name is required!', 'error')
                 return render_template('admin/amenities/edit.html', amenity=amenity)
             
-            # Optional fields
-            amenity.category = data.get('category', '').strip() or None
-            amenity.icon_class = data.get('icon_class', '').strip() or None
+            # Category is required in model, so provide default
+            category = data.get('category', '').strip()
+            amenity.category = category if category else 'General'
+            amenity.icon_url = data.get('icon_url', '').strip() or None
             amenity.description = data.get('description', '').strip() or None
             
             # Boolean fields
