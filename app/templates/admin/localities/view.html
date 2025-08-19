@@ -1,40 +1,135 @@
 {% extends "admin/base.html" %}
 
-{% block title %}View Locality - Admin Panel{% endblock %}
-{% block page_title %}Locality Details{% endblock %}
+{% block title %}{{ locality.name }} - Admin Panel{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-body">
-            <h3 class="card-title mb-4">Locality Details</h3>
-            <dl class="row">
-                <dt class="col-sm-3">Name</dt>
-                <dd class="col-sm-9">{{ locality.name }}</dd>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ locality.name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_locality', locality_id=locality.locality_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.localities') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Localities
+            </a>
+        </div>
+    </div>
 
-                <dt class="col-sm-3">City</dt>
-                <dd class="col-sm-9">{{ locality.city.name if locality.city else 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Type</dt>
-                <dd class="col-sm-9">{{ locality.locality_type or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Pincode</dt>
-                <dd class="col-sm-9">{{ locality.pincode or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Latitude</dt>
-                <dd class="col-sm-9">{{ locality.latitude or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Longitude</dt>
-                <dd class="col-sm-9">{{ locality.longitude or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Description</dt>
-                <dd class="col-sm-9">{{ locality.description or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Created</dt>
-                <dd class="col-sm-9">{{ locality.created_at.strftime('%Y-%m-%d') if locality.created_at else 'N/A' }}</dd>
-            </dl>
-            <a href="{{ url_for('admin.edit_locality', locality_id=locality.locality_id) }}" class="btn btn-warning">Edit</a>
-            <a href="{{ url_for('admin.localities') }}" class="btn btn-secondary ms-2">Back to List</a>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Locality Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Locality ID:</strong> {{ locality.locality_id }}</p>
+                            <p><strong>Name:</strong> {{ locality.name }}</p>
+                            <p><strong>City:</strong> 
+                                {% if locality.city %}
+                                    <a href="{{ url_for('admin.view_city', city_id=locality.city.city_id) }}">{{ locality.city.name }}</a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Type:</strong> 
+                                <span class="badge bg-info">{{ locality.locality_type or 'N/A' }}</span>
+                            </p>
+                            <p><strong>Pincode:</strong> {{ locality.pincode or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Latitude:</strong> 
+                                {% if locality.latitude %}
+                                    <code>{{ locality.latitude }}</code>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Longitude:</strong> 
+                                {% if locality.longitude %}
+                                    <code>{{ locality.longitude }}</code>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Created:</strong> {{ locality.created_at.strftime('%Y-%m-%d %H:%M') if locality.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if locality.description %}
+                    <hr class="my-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Description</h6>
+                        <p class="mb-0">{{ locality.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if locality.latitude and locality.longitude %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Location Map</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-map-marker-alt"></i> Coordinates: {{ locality.latitude }}, {{ locality.longitude }}
+                        <a href="https://www.google.com/maps?q={{ locality.latitude }},{{ locality.longitude }}" target="_blank" class="btn btn-sm btn-outline-primary float-end">
+                            <i class="fas fa-external-link-alt"></i> View on Google Maps
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Projects in this locality:</span>
+                        <span class="badge bg-primary">{{ locality.projects|length if locality.projects else 0 }}</span>
+                    </div>
+                    {% if locality.city %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>City:</span>
+                        <span class="badge bg-secondary">{{ locality.city.name }}</span>
+                    </div>
+                    {% if locality.city.state %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>State:</span>
+                        <span class="badge bg-secondary">{{ locality.city.state }}</span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.projects') }}?locality_id={{ locality.locality_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-project-diagram"></i> View Projects
+                        </a>
+                        <a href="{{ url_for('admin.new_project') }}?locality_id={{ locality.locality_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Add New Project
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="if(confirm('Are you sure you want to delete this locality?')) { document.getElementById('delete-form').submit(); }">
+                            <i class="fas fa-trash"></i> Delete Locality
+                        </button>
+                        <form id="delete-form" action="{{ url_for('admin.delete_locality', locality_id=locality.locality_id) }}" method="POST" style="display: none;">
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

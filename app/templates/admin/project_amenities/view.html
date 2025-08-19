@@ -1,40 +1,163 @@
 {% extends "admin/base.html" %}
 
-{% block title %}View Project Amenity - Admin Panel{% endblock %}
-{% block page_title %}Project Amenity{% endblock %}
+{% block title %}Project Amenity - Admin Panel{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-body">
-            <h3 class="card-title mb-4">Project Amenity</h3>
-            <dl class="row">
-                <dt class="col-sm-3">Project</dt>
-                <dd class="col-sm-9">{{ pa.project.name if pa.project else 'N/A' }}</dd>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Project Amenity Details</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_project_amenity', project_id=pa.project_id, amenity_id=pa.amenity_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.project_amenities') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Project Amenities
+            </a>
+        </div>
+    </div>
 
-                <dt class="col-sm-3">Amenity</dt>
-                <dd class="col-sm-9">{{ pa.amenity.name if pa.amenity else 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Is Available</dt>
-                <dd class="col-sm-9"><span class="badge bg-{{ 'success' if pa.is_available else 'secondary' }}">{{ 'Yes' if pa.is_available else 'No' }}</span></dd>
-
-                <dt class="col-sm-3">Description</dt>
-                <dd class="col-sm-9">{{ pa.description or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Area Size</dt>
-                <dd class="col-sm-9">{{ pa.area_size or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Capacity</dt>
-                <dd class="col-sm-9">{{ pa.capacity or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Operating Hours</dt>
-                <dd class="col-sm-9">{{ pa.operating_hours or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Created</dt>
-                <dd class="col-sm-9">{{ pa.created_at.strftime('%Y-%m-%d') if pa.created_at else 'N/A' }}</dd>
-            </dl>
-            <a href="{{ url_for('admin.edit_project_amenity', project_id=pa.project_id, amenity_id=pa.amenity_id) }}" class="btn btn-warning">Edit</a>
-            <a href="{{ url_for('admin.project_amenities') }}" class="btn btn-secondary ms-2">Back to List</a>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Amenity Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Project:</strong> 
+                                {% if pa.project %}
+                                    <a href="{{ url_for('admin.view_project', project_id=pa.project.project_id) }}">
+                                        {{ pa.project.name }}
+                                    </a>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Amenity:</strong> 
+                                {% if pa.amenity %}
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-{{ pa.amenity.icon or 'check' }}"></i> {{ pa.amenity.name }}
+                                    </span>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Availability Status:</strong> 
+                                <span class="badge bg-{{ 'success' if pa.is_available else 'danger' }}">
+                                    <i class="fas fa-{{ 'check-circle' if pa.is_available else 'times-circle' }}"></i>
+                                    {{ 'Available' if pa.is_available else 'Not Available' }}
+                                </span>
+                            </p>
+                            <p><strong>Area Size:</strong> 
+                                {% if pa.area_size %}
+                                    <span class="badge bg-info">{{ pa.area_size }}</span>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Capacity:</strong> 
+                                {% if pa.capacity %}
+                                    <span class="badge bg-warning text-dark">{{ pa.capacity }}</span>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Operating Hours:</strong> 
+                                {% if pa.operating_hours %}
+                                    <code>{{ pa.operating_hours }}</code>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Created:</strong> {{ pa.created_at.strftime('%Y-%m-%d %H:%M') if pa.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if pa.description %}
+                    <hr class="my-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Description</h6>
+                        <p class="mb-0">{{ pa.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if pa.amenity %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Amenity Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Amenity Name:</strong> {{ pa.amenity.name }}</p>
+                            <p><strong>Category:</strong> 
+                                <span class="badge bg-secondary">{{ pa.amenity.category or 'Uncategorized' }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if pa.amenity.description %}
+                            <p><strong>Amenity Description:</strong></p>
+                            <p class="text-muted">{{ pa.amenity.description }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            {% if pa.project %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Project Information</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Project:</strong> {{ pa.project.name }}</p>
+                    {% if pa.project.developer %}
+                    <p class="mb-2"><strong>Developer:</strong> {{ pa.project.developer.name }}</p>
+                    {% endif %}
+                    {% if pa.project.locality %}
+                    <p class="mb-2"><strong>Location:</strong> {{ pa.project.locality.name }}</p>
+                    {% endif %}
+                    <div class="mt-3">
+                        <a href="{{ url_for('admin.view_project', project_id=pa.project.project_id) }}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-eye"></i> View Project Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if pa.project %}
+                        <a href="{{ url_for('admin.project_amenities') }}?project_id={{ pa.project_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> View All Project Amenities
+                        </a>
+                        {% endif %}
+                        {% if pa.amenity %}
+                        <a href="{{ url_for('admin.project_amenities') }}?amenity_id={{ pa.amenity_id }}" class="btn btn-outline-info">
+                            <i class="fas fa-filter"></i> Projects with this Amenity
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-outline-danger" onclick="if(confirm('Are you sure you want to delete this project amenity?')) { document.getElementById('delete-form').submit(); }">
+                            <i class="fas fa-trash"></i> Delete Project Amenity
+                        </button>
+                        <form id="delete-form" action="{{ url_for('admin.delete_project_amenity', project_id=pa.project_id, amenity_id=pa.amenity_id) }}" method="POST" style="display: none;">
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
