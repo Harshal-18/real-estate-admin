@@ -508,17 +508,20 @@ def new_city():
                 flash('City name is required!', 'error')
                 return render_template('admin/cities/new.html', draft=draft_data)
             
-            # Optional fields - convert empty strings to None
-            optional_fields = ['state', 'country', 'description', 'population', 'area_sq_km']
-            for field in optional_fields:
-                value = data.get(field, '').strip()
-                if field in ['population', 'area_sq_km'] and value:
+            # State and Country fields - provide defaults if empty since they're required in DB
+            cleaned_data['state'] = data.get('state', '').strip() or 'Not Specified'
+            cleaned_data['country'] = data.get('country', '').strip() or 'India'
+            
+            # Handle latitude and longitude (numeric fields)
+            for coord_field in ['latitude', 'longitude']:
+                value = data.get(coord_field, '').strip()
+                if value:
                     try:
-                        cleaned_data[field] = float(value) if field == 'area_sq_km' else int(value)
+                        cleaned_data[coord_field] = float(value)
                     except (ValueError, TypeError):
-                        cleaned_data[field] = None
+                        cleaned_data[coord_field] = None
                 else:
-                    cleaned_data[field] = value if value else None
+                    cleaned_data[coord_field] = None
             
             city = City(**cleaned_data)
             db.session.add(city)
@@ -551,17 +554,21 @@ def edit_city(city_id):
                 flash('City name is required!', 'error')
                 return render_template('admin/cities/edit.html', city=city)
             
-            # Optional fields
-            for key, value in data.items():
-                if hasattr(city, key) and key != 'name':
-                    value = value.strip()
-                    if key in ['population', 'area_sq_km'] and value:
+            # State and Country fields - provide defaults if empty since they're required in DB
+            city.state = data.get('state', '').strip() or 'Not Specified'
+            city.country = data.get('country', '').strip() or 'India'
+            
+            # Handle latitude and longitude
+            for coord_field in ['latitude', 'longitude']:
+                if coord_field in data:
+                    value = data[coord_field].strip()
+                    if value:
                         try:
-                            setattr(city, key, float(value) if key == 'area_sq_km' else int(value))
+                            setattr(city, coord_field, float(value))
                         except (ValueError, TypeError):
-                            setattr(city, key, None)
+                            setattr(city, coord_field, None)
                     else:
-                        setattr(city, key, value if value else None)
+                        setattr(city, coord_field, None)
             
             db.session.commit()
             flash('City updated successfully!', 'success')
