@@ -1145,51 +1145,92 @@ def new_unit_type():
         try:
             data = request.form.to_dict()
             
-            # Convert project_id to int with validation
-            if data.get('project_id'):
-                try:
-                    data['project_id'] = int(data['project_id'])
-                except ValueError:
-                    flash('Invalid project ID provided.', 'error')
-                    projects = Project.query.all()
-                    return render_template('admin/unit_types/new.html', projects=projects)
-            else:
-                data['project_id'] = None
+            # Process form data - convert empty strings to None/defaults
+            cleaned_data = {}
             
-            # Convert integer fields
-            integer_fields = ['bedrooms', 'bathrooms', 'master_bedrooms', 'child_bedrooms', 
+            # Required fields
+            type_name = data.get('type_name', '').strip()
+            if not type_name:
+                flash('Unit type name is required!', 'error')
+                projects = Project.query.all()
+                return render_template('admin/unit_types/new.html', projects=projects)
+            cleaned_data['type_name'] = type_name
+            
+            # Required project_id
+            project_id = data.get('project_id', '').strip()
+            if not project_id:
+                flash('Please select a project!', 'error')
+                projects = Project.query.all()
+                return render_template('admin/unit_types/new.html', projects=projects)
+            try:
+                cleaned_data['project_id'] = int(project_id)
+            except ValueError:
+                flash('Invalid project selected!', 'error')
+                projects = Project.query.all()
+                return render_template('admin/unit_types/new.html', projects=projects)
+            
+            # Required numeric fields with defaults
+            bedrooms = data.get('bedrooms', '').strip()
+            if bedrooms:
+                try:
+                    cleaned_data['bedrooms'] = int(bedrooms)
+                except ValueError:
+                    cleaned_data['bedrooms'] = 1
+            else:
+                cleaned_data['bedrooms'] = 1
+            
+            bathrooms = data.get('bathrooms', '').strip()
+            if bathrooms:
+                try:
+                    cleaned_data['bathrooms'] = int(bathrooms)
+                except ValueError:
+                    cleaned_data['bathrooms'] = 1
+            else:
+                cleaned_data['bathrooms'] = 1
+            
+            # Optional integer fields (skip bedrooms and bathrooms as they're already handled)
+            optional_integer_fields = ['master_bedrooms', 'child_bedrooms', 
                             'guest_bedrooms', 'study_rooms', 'living_rooms', 'dining_rooms', 
                             'kitchens', 'utility_rooms', 'store_rooms', 'pooja_rooms', 'balcony_count']
-            for field in integer_fields:
-                if data.get(field):
+            for field in optional_integer_fields:
+                value = data.get(field, '').strip()
+                if value:
                     try:
-                        data[field] = int(data[field])
+                        cleaned_data[field] = int(value)
                     except ValueError:
-                        data[field] = None
+                        cleaned_data[field] = 0
                 else:
-                    data[field] = None
+                    cleaned_data[field] = 0
             
-            # Convert decimal fields
+            # Optional decimal fields
             decimal_fields = ['maid_room_area', 'total_balcony_area', 'terrace_area', 
                             'private_garden_area', 'carpet_area', 'built_up_area', 'super_area', 
                             'carpet_ratio', 'base_price', 'price_per_sqft', 'floor_height', 
                             'ceiling_height', 'main_door_width', 'main_door_height']
             for field in decimal_fields:
-                if data.get(field):
+                value = data.get(field, '').strip()
+                if value:
                     try:
-                        data[field] = float(data[field])
+                        cleaned_data[field] = float(value)
                     except ValueError:
-                        data[field] = None
+                        cleaned_data[field] = None
                 else:
-                    data[field] = None
+                    cleaned_data[field] = None
             
-            # Convert boolean fields
+            # Boolean fields
             boolean_fields = ['has_maid_room', 'has_maid_bathroom', 'has_balcony', 
                             'has_terrace', 'has_private_garden']
             for field in boolean_fields:
-                data[field] = field in request.form
+                cleaned_data[field] = field in request.form
             
-            unit_type = UnitType(**data)
+            # Optional text fields
+            for field in ['config', 'name', 'direction_facing', 'floor_plan_url', 
+                         'vr_tour_url', 'description']:
+                if field in data:
+                    value = data[field].strip()
+                    cleaned_data[field] = value if value else None
+            
+            unit_type = UnitType(**cleaned_data)
             db.session.add(unit_type)
             db.session.commit()
             flash('Unit type created successfully!', 'success')
@@ -1211,54 +1252,87 @@ def edit_unit_type(unit_type_id):
         try:
             data = request.form.to_dict()
             
-            # Convert project_id to int with validation
-            if data.get('project_id'):
-                try:
-                    data['project_id'] = int(data['project_id'])
-                except ValueError:
-                    flash('Invalid project ID provided.', 'error')
-                    projects = Project.query.all()
-                    return render_template('admin/unit_types/edit.html', unit_type=unit_type, projects=projects)
-            else:
-                data['project_id'] = None
+            # Required fields
+            type_name = data.get('type_name', '').strip()
+            if not type_name:
+                flash('Unit type name is required!', 'error')
+                projects = Project.query.all()
+                return render_template('admin/unit_types/edit.html', unit_type=unit_type, projects=projects)
+            unit_type.type_name = type_name
             
-            # Convert integer fields
-            integer_fields = ['bedrooms', 'bathrooms', 'master_bedrooms', 'child_bedrooms', 
+            # Required project_id
+            project_id = data.get('project_id', '').strip()
+            if not project_id:
+                flash('Please select a project!', 'error')
+                projects = Project.query.all()
+                return render_template('admin/unit_types/edit.html', unit_type=unit_type, projects=projects)
+            try:
+                unit_type.project_id = int(project_id)
+            except ValueError:
+                flash('Invalid project selected!', 'error')
+                projects = Project.query.all()
+                return render_template('admin/unit_types/edit.html', unit_type=unit_type, projects=projects)
+            
+            # Required numeric fields with defaults
+            bedrooms = data.get('bedrooms', '').strip()
+            if bedrooms:
+                try:
+                    unit_type.bedrooms = int(bedrooms)
+                except ValueError:
+                    unit_type.bedrooms = 1
+            else:
+                unit_type.bedrooms = 1
+            
+            bathrooms = data.get('bathrooms', '').strip()
+            if bathrooms:
+                try:
+                    unit_type.bathrooms = int(bathrooms)
+                except ValueError:
+                    unit_type.bathrooms = 1
+            else:
+                unit_type.bathrooms = 1
+            
+            # Optional integer fields
+            optional_integer_fields = ['master_bedrooms', 'child_bedrooms', 
                             'guest_bedrooms', 'study_rooms', 'living_rooms', 'dining_rooms', 
                             'kitchens', 'utility_rooms', 'store_rooms', 'pooja_rooms', 'balcony_count']
-            for field in integer_fields:
-                if data.get(field):
+            for field in optional_integer_fields:
+                value = data.get(field, '').strip()
+                if value:
                     try:
-                        data[field] = int(data[field])
+                        setattr(unit_type, field, int(value))
                     except ValueError:
-                        data[field] = None
+                        setattr(unit_type, field, 0)
                 else:
-                    data[field] = None
+                    setattr(unit_type, field, 0)
             
-            # Convert decimal fields
+            # Optional decimal fields
             decimal_fields = ['maid_room_area', 'total_balcony_area', 'terrace_area', 
                             'private_garden_area', 'carpet_area', 'built_up_area', 'super_area', 
                             'carpet_ratio', 'base_price', 'price_per_sqft', 'floor_height', 
                             'ceiling_height', 'main_door_width', 'main_door_height']
             for field in decimal_fields:
-                if data.get(field):
+                value = data.get(field, '').strip()
+                if value:
                     try:
-                        data[field] = float(data[field])
+                        setattr(unit_type, field, float(value))
                     except ValueError:
-                        data[field] = None
+                        setattr(unit_type, field, None)
                 else:
-                    data[field] = None
+                    setattr(unit_type, field, None)
             
-            # Convert boolean fields
+            # Boolean fields
             boolean_fields = ['has_maid_room', 'has_maid_bathroom', 'has_balcony', 
                             'has_terrace', 'has_private_garden']
             for field in boolean_fields:
-                data[field] = field in request.form
+                setattr(unit_type, field, field in request.form)
             
-            # Update unit type fields
-            for key, value in data.items():
-                if hasattr(unit_type, key):
-                    setattr(unit_type, key, value)
+            # Optional text fields
+            for field in ['config', 'name', 'direction_facing', 'floor_plan_url', 
+                         'vr_tour_url', 'description']:
+                if field in data:
+                    value = data[field].strip()
+                    setattr(unit_type, field, value if value else None)
             
             db.session.commit()
             flash('Unit type updated successfully!', 'success')
@@ -1415,18 +1489,28 @@ def view_property_unit(unit_id):
 def reviews():
     """List all reviews"""
     page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
     rating = request.args.get('rating', '')
     
     query = Review.query
     
+    if search:
+        query = query.filter(
+            Review.title.ilike(f'%{search}%') | 
+            Review.review_text.ilike(f'%{search}%')
+        )
+    
     if rating:
-        query = query.filter(Review.rating == int(rating))
+        try:
+            query = query.filter(Review.rating == int(rating))
+        except ValueError:
+            pass
     
     reviews = query.order_by(Review.created_at.desc()).paginate(
         page=page, per_page=10, error_out=False
     )
     
-    return render_template('admin/reviews/index.html', reviews=reviews, rating=rating)
+    return render_template('admin/reviews/index.html', reviews=reviews, search=search, rating=rating)
 
 @admin.route('/reviews/new', methods=['GET', 'POST'])
 def new_review():

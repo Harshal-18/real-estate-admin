@@ -53,7 +53,7 @@
                         <td>{{ review.review_id }}</td>
                         <td>{{ review.project.name if review.project else 'N/A' }}</td>
                         <td>{{ review.developer.name if review.developer else 'N/A' }}</td>
-                        <td>{{ review.user.full_name if review.user else 'N/A' }}</td>
+                        <td>{{ (review.user.first_name ~ ' ' ~ review.user.last_name) if review.user and review.user.first_name else review.user.email if review.user else 'N/A' }}</td>
                         <td>{{ review.title or 'N/A' }}</td>
                         <td>{{ review.rating or 'N/A' }}</td>
                         <td>{{ review.review_text[:30] ~ ('...' if review.review_text and review.review_text|length > 30 else '') if review.review_text else 'N/A' }}</td>
