@@ -293,8 +293,8 @@ $(document).ready(function() {
         }
     }
     
-    // Prevent dropdown from closing when clicking inside
-    $('.country-dropdown').on('click', function(e) {
+    // Prevent dropdown from closing when clicking on search input
+    $('#countrySearch').on('click', function(e) {
         e.stopPropagation();
     });
     
@@ -321,6 +321,7 @@ $(document).ready(function() {
     
     // Country selection
     $(document).on('click', '.country-item', function(e) {
+        e.preventDefault();
         e.stopPropagation();
         
         const code = $(this).data('code');
@@ -332,8 +333,14 @@ $(document).ready(function() {
         $('#selectedFlag').attr('alt', iso.toUpperCase());
         $('#country_code').val(code);
         
-        // Close dropdown
-        $('#countryCodeButton').dropdown('hide');
+        // Close dropdown using Bootstrap's method
+        const dropdownButton = document.getElementById('countryCodeButton');
+        const dropdown = bootstrap.Dropdown.getInstance(dropdownButton);
+        if (dropdown) {
+            dropdown.hide();
+        }
+        
+        console.log('Selected country:', name, code);
     });
     
     // Phone number formatting
