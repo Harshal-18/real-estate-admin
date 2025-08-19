@@ -755,10 +755,10 @@ def new_approval():
                 flash('Approval name is required!', 'error')
                 return render_template('admin/approvals/new.html', draft=draft_data)
             
-            # Optional fields
-            cleaned_data['category'] = data.get('category', '').strip() or None
+            # Optional fields - category has default 'legal' in model
+            category = data.get('category', '').strip()
+            cleaned_data['category'] = category if category else 'legal'
             cleaned_data['description'] = data.get('description', '').strip() or None
-            cleaned_data['issuing_authority'] = data.get('issuing_authority', '').strip() or None
             
             # Boolean field
             cleaned_data['is_mandatory'] = 'is_mandatory' in request.form
@@ -794,10 +794,10 @@ def edit_approval(approval_id):
                 flash('Approval name is required!', 'error')
                 return render_template('admin/approvals/edit.html', approval=approval)
             
-            # Optional fields
-            approval.category = data.get('category', '').strip() or None
+            # Optional fields - category has default 'legal' in model
+            category = data.get('category', '').strip()
+            approval.category = category if category else 'legal'
             approval.description = data.get('description', '').strip() or None
-            approval.issuing_authority = data.get('issuing_authority', '').strip() or None
             
             # Boolean field
             approval.is_mandatory = 'is_mandatory' in request.form
