@@ -1020,28 +1020,36 @@ def new_user():
         try:
             data = request.form.to_dict()
             
-            # Convert boolean fields
-            boolean_fields = ['is_verified', 'is_active', 'is_admin']
-            for field in boolean_fields:
-                data[field] = field in request.form
+            # Process form data - convert empty strings to None
+            cleaned_data = {}
             
-            # Handle password hashing if password provided
-            if data.get('password'):
-                user = User(
-                    email=data.get('email'),
-                    phone=data.get('phone'),
-                    first_name=data.get('first_name'),
-                    last_name=data.get('last_name'),
-                    user_type=data.get('user_type', 'buyer'),
-                    is_verified=data.get('is_verified', False),
-                    profile_image_url=data.get('profile_image_url'),
-                    is_active=data.get('is_active', True),
-                    is_admin=data.get('is_admin', False)
-                )
-                user.set_password(data['password'])
-            else:
-                flash('Password is required for new user.', 'error')
+            # Required fields
+            email = data.get('email', '').strip()
+            if not email:
+                flash('Email is required!', 'error')
                 return render_template('admin/users/new.html')
+            cleaned_data['email'] = email
+            
+            password = data.get('password', '').strip()
+            if not password:
+                flash('Password is required for new user!', 'error')
+                return render_template('admin/users/new.html')
+            
+            # Optional text fields
+            for field in ['phone', 'first_name', 'last_name', 'profile_image_url']:
+                value = data.get(field, '').strip()
+                cleaned_data[field] = value if value else None
+            
+            # User type with default
+            user_type = data.get('user_type', '').strip()
+            cleaned_data['user_type'] = user_type if user_type else 'buyer'
+            
+            # Boolean fields
+            for field in ['is_verified', 'is_active', 'is_admin']:
+                cleaned_data[field] = field in request.form
+            
+            user = User(**cleaned_data)
+            user.set_password(password)
             
             db.session.add(user)
             db.session.commit()
@@ -1063,23 +1071,30 @@ def edit_user(user_id):
         try:
             data = request.form.to_dict()
             
-            # Convert boolean fields
-            boolean_fields = ['is_verified', 'is_active', 'is_admin']
-            for field in boolean_fields:
-                data[field] = field in request.form
+            # Required field
+            email = data.get('email', '').strip()
+            if not email:
+                flash('Email is required!', 'error')
+                return render_template('admin/users/edit.html', user=user)
+            user.email = email
+            
+            # Optional text fields
+            for field in ['phone', 'first_name', 'last_name', 'profile_image_url']:
+                value = data.get(field, '').strip()
+                setattr(user, field, value if value else None)
+            
+            # User type
+            user_type = data.get('user_type', '').strip()
+            user.user_type = user_type if user_type else 'buyer'
+            
+            # Boolean fields
+            for field in ['is_verified', 'is_active', 'is_admin']:
+                setattr(user, field, field in request.form)
             
             # Handle password update (only if provided)
-            password = data.pop('password', None)
+            password = data.get('password', '').strip()
             if password:
                 user.set_password(password)
-            
-            # Update other fields
-            updatable_fields = ['email', 'phone', 'first_name', 'last_name', 'user_type', 
-                              'is_verified', 'profile_image_url', 'is_active', 'is_admin']
-            
-            for key, value in data.items():
-                if key in updatable_fields and hasattr(user, key):
-                    setattr(user, key, value)
             
             db.session.commit()
             flash('User updated successfully!', 'success')
@@ -2478,15 +2493,47 @@ def localities():
 def new_locality():
     cities = City.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['city_id'] = int(data['city_id']) if data.get('city_id') else None
-        data['latitude'] = float(data['latitude']) if data.get('latitude') else None
-        data['longitude'] = float(data['longitude']) if data.get('longitude') else None
-        locality = Locality(**data)
-        db.session.add(locality)
-        db.session.commit()
-        flash('Locality created successfully!', 'success')
-        return redirect(url_for('admin.localities'))
+        try:
+            data = request.form.to_dict()
+            
+            # Process form data - convert empty strings to None
+            cleaned_data = {}
+            
+            # Required field
+            cleaned_data['name'] = data.get('name', '').strip()
+            if not cleaned_data['name']:
+                flash('Locality name is required!', 'error')
+                return render_template('admin/localities/new.html', cities=cities)
+            
+            # Foreign key
+            city_id = data.get('city_id', '').strip()
+            cleaned_data['city_id'] = int(city_id) if city_id else None
+            
+            # Optional text fields
+            for field in ['locality_type', 'pincode', 'description']:
+                value = data.get(field, '').strip()
+                cleaned_data[field] = value if value else None
+            
+            # Numeric fields
+            for field in ['latitude', 'longitude']:
+                value = data.get(field, '').strip()
+                if value:
+                    try:
+                        cleaned_data[field] = float(value)
+                    except (ValueError, TypeError):
+                        cleaned_data[field] = None
+                else:
+                    cleaned_data[field] = None
+            
+            locality = Locality(**cleaned_data)
+            db.session.add(locality)
+            db.session.commit()
+            flash('Locality created successfully!', 'success')
+            return redirect(url_for('admin.localities'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating locality: {str(e)}', 'error')
+            return render_template('admin/localities/new.html', cities=cities)
     return render_template('admin/localities/new.html', cities=cities)
 
 @admin.route('/localities/<int:locality_id>/edit', methods=['GET', 'POST'])
@@ -2494,16 +2541,42 @@ def edit_locality(locality_id):
     locality = Locality.query.get_or_404(locality_id)
     cities = City.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['city_id'] = int(data['city_id']) if data.get('city_id') else None
-        data['latitude'] = float(data['latitude']) if data.get('latitude') else None
-        data['longitude'] = float(data['longitude']) if data.get('longitude') else None
-        for key, value in data.items():
-            if hasattr(locality, key):
-                setattr(locality, key, value)
-        db.session.commit()
-        flash('Locality updated successfully!', 'success')
-        return redirect(url_for('admin.localities'))
+        try:
+            data = request.form.to_dict()
+            
+            # Required field
+            locality.name = data.get('name', '').strip()
+            if not locality.name:
+                flash('Locality name is required!', 'error')
+                return render_template('admin/localities/edit.html', locality=locality, cities=cities)
+            
+            # Foreign key
+            city_id = data.get('city_id', '').strip()
+            locality.city_id = int(city_id) if city_id else None
+            
+            # Optional text fields
+            for field in ['locality_type', 'pincode', 'description']:
+                value = data.get(field, '').strip()
+                setattr(locality, field, value if value else None)
+            
+            # Numeric fields
+            for field in ['latitude', 'longitude']:
+                value = data.get(field, '').strip()
+                if value:
+                    try:
+                        setattr(locality, field, float(value))
+                    except (ValueError, TypeError):
+                        setattr(locality, field, None)
+                else:
+                    setattr(locality, field, None)
+            
+            db.session.commit()
+            flash('Locality updated successfully!', 'success')
+            return redirect(url_for('admin.localities'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating locality: {str(e)}', 'error')
+            return render_template('admin/localities/edit.html', locality=locality, cities=cities)
     return render_template('admin/localities/edit.html', locality=locality, cities=cities)
 
 @admin.route('/localities/<int:locality_id>')
