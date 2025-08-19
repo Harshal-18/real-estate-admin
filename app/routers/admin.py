@@ -306,10 +306,19 @@ def new_developer():
                 return render_template('admin/developers/new.html')
             
             # Optional fields - convert empty strings to None
-            optional_text_fields = ['description', 'website_url', 'contact_email', 'contact_phone', 'address']
+            optional_text_fields = ['description', 'website_url', 'contact_email', 'address']
             for field in optional_text_fields:
                 value = data.get(field, '').strip()
                 cleaned_data[field] = value if value else None
+            
+            # Handle phone number with country code
+            country_code = data.get('country_code', '+91').strip()
+            phone_number = data.get('contact_phone', '').strip()
+            if phone_number:
+                # Combine country code and phone number
+                cleaned_data['contact_phone'] = f"{country_code}{phone_number}"
+            else:
+                cleaned_data['contact_phone'] = None
             
             # Year field - optional with validation
             if data.get('established_year'):
@@ -378,12 +387,24 @@ def edit_developer(developer_id):
                     file.save(os.path.join(upload_folder, filename))
                     data['logo_url'] = filename
             
+            # Handle phone number with country code
+            if 'contact_phone' in data:
+                country_code = data.get('country_code', '+91').strip()
+                phone_number = data.get('contact_phone', '').strip()
+                if phone_number:
+                    developer.contact_phone = f"{country_code}{phone_number}"
+                else:
+                    developer.contact_phone = None
+                # Remove these from data dict to avoid double processing
+                data.pop('contact_phone', None)
+                data.pop('country_code', None)
+            
             # Convert and validate numeric fields before setting
             from datetime import datetime
             current_year = datetime.now().year
             
             for key, value in data.items():
-                if hasattr(developer, key):
+                if hasattr(developer, key) and key != 'contact_phone':
                     if key == 'established_year':
                         if value:
                             try:

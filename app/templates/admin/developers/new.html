@@ -16,6 +16,42 @@
     #established_year {
         -moz-appearance: textfield; /* Firefox */
     }
+    
+    /* Country dropdown styles */
+    .country-dropdown {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .country-item {
+        padding: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+    
+    .country-item:hover {
+        background-color: #f0f0f0;
+    }
+    
+    .country-item img {
+        margin-right: 10px;
+    }
+    
+    .country-item .country-name {
+        flex: 1;
+    }
+    
+    .country-item .country-code {
+        font-weight: bold;
+        color: #0066cc;
+        margin-left: 10px;
+    }
+    
+    .dropdown-menu.show {
+        display: block;
+    }
 </style>
 <div class="card">
     <div class="card-header">
@@ -67,7 +103,19 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="contact_phone" class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control" id="contact_phone" name="contact_phone">
+                        <div class="input-group">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="countryCodeButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="https://flagcdn.com/16x12/in.png" alt="IN" class="me-1" id="selectedFlag">
+                                <span id="selectedCode">+91</span>
+                            </button>
+                            <div class="dropdown-menu country-dropdown p-2" style="max-height: 300px; overflow-y: auto; width: 350px;">
+                                <input type="text" class="form-control form-control-sm mb-2" id="countrySearch" placeholder="Search country, code or initials...">
+                                <div id="countryList"></div>
+                            </div>
+                            <input type="hidden" id="country_code" name="country_code" value="+91">
+                            <input type="tel" class="form-control" id="contact_phone" name="contact_phone" placeholder="Enter phone number">
+                        </div>
+                        <small class="text-muted">Format: Country code will be added automatically</small>
                     </div>
                 </div>
             </div>
@@ -150,7 +198,136 @@
 
 {% block extra_js %}
 <script>
+// Country codes data
+const countryCodes = [
+    { name: "United States", code: "+1", iso: "US", initials: "USA" },
+    { name: "United Kingdom", code: "+44", iso: "GB", initials: "UK" },
+    { name: "India", code: "+91", iso: "IN", initials: "IND" },
+    { name: "Canada", code: "+1", iso: "CA", initials: "CAN" },
+    { name: "Australia", code: "+61", iso: "AU", initials: "AUS" },
+    { name: "Germany", code: "+49", iso: "DE", initials: "GER" },
+    { name: "France", code: "+33", iso: "FR", initials: "FRA" },
+    { name: "Japan", code: "+81", iso: "JP", initials: "JPN" },
+    { name: "China", code: "+86", iso: "CN", initials: "CHN" },
+    { name: "Brazil", code: "+55", iso: "BR", initials: "BRA" },
+    { name: "Mexico", code: "+52", iso: "MX", initials: "MEX" },
+    { name: "Russia", code: "+7", iso: "RU", initials: "RUS" },
+    { name: "South Korea", code: "+82", iso: "KR", initials: "KOR" },
+    { name: "Italy", code: "+39", iso: "IT", initials: "ITA" },
+    { name: "Spain", code: "+34", iso: "ES", initials: "ESP" },
+    { name: "Netherlands", code: "+31", iso: "NL", initials: "NED" },
+    { name: "Belgium", code: "+32", iso: "BE", initials: "BEL" },
+    { name: "Switzerland", code: "+41", iso: "CH", initials: "CHE" },
+    { name: "Sweden", code: "+46", iso: "SE", initials: "SWE" },
+    { name: "Norway", code: "+47", iso: "NO", initials: "NOR" },
+    { name: "Denmark", code: "+45", iso: "DK", initials: "DEN" },
+    { name: "Finland", code: "+358", iso: "FI", initials: "FIN" },
+    { name: "Poland", code: "+48", iso: "PL", initials: "POL" },
+    { name: "Austria", code: "+43", iso: "AT", initials: "AUT" },
+    { name: "Greece", code: "+30", iso: "GR", initials: "GRE" },
+    { name: "Portugal", code: "+351", iso: "PT", initials: "POR" },
+    { name: "Turkey", code: "+90", iso: "TR", initials: "TUR" },
+    { name: "UAE", code: "+971", iso: "AE", initials: "UAE" },
+    { name: "Saudi Arabia", code: "+966", iso: "SA", initials: "KSA" },
+    { name: "South Africa", code: "+27", iso: "ZA", initials: "RSA" },
+    { name: "Egypt", code: "+20", iso: "EG", initials: "EGY" },
+    { name: "Nigeria", code: "+234", iso: "NG", initials: "NGA" },
+    { name: "Argentina", code: "+54", iso: "AR", initials: "ARG" },
+    { name: "Singapore", code: "+65", iso: "SG", initials: "SGP" },
+    { name: "Malaysia", code: "+60", iso: "MY", initials: "MYS" },
+    { name: "Thailand", code: "+66", iso: "TH", initials: "THA" },
+    { name: "Indonesia", code: "+62", iso: "ID", initials: "IDN" },
+    { name: "Philippines", code: "+63", iso: "PH", initials: "PHL" },
+    { name: "Vietnam", code: "+84", iso: "VN", initials: "VNM" },
+    { name: "Pakistan", code: "+92", iso: "PK", initials: "PAK" },
+    { name: "Bangladesh", code: "+880", iso: "BD", initials: "BGD" },
+    { name: "Sri Lanka", code: "+94", iso: "LK", initials: "LKA" },
+    { name: "Nepal", code: "+977", iso: "NP", initials: "NPL" },
+    { name: "New Zealand", code: "+64", iso: "NZ", initials: "NZL" },
+    { name: "Ireland", code: "+353", iso: "IE", initials: "IRL" },
+    { name: "Israel", code: "+972", iso: "IL", initials: "ISR" },
+    { name: "Hong Kong", code: "+852", iso: "HK", initials: "HKG" },
+    { name: "Taiwan", code: "+886", iso: "TW", initials: "TWN" },
+    { name: "Chile", code: "+56", iso: "CL", initials: "CHL" },
+    { name: "Colombia", code: "+57", iso: "CO", initials: "COL" },
+    { name: "Peru", code: "+51", iso: "PE", initials: "PER" },
+    { name: "Venezuela", code: "+58", iso: "VE", initials: "VEN" },
+    { name: "Qatar", code: "+974", iso: "QA", initials: "QAT" },
+    { name: "Kuwait", code: "+965", iso: "KW", initials: "KWT" },
+    { name: "Bahrain", code: "+973", iso: "BH", initials: "BHR" },
+    { name: "Oman", code: "+968", iso: "OM", initials: "OMN" }
+];
+
 $(document).ready(function() {
+    // Initialize country list
+    function initCountryList() {
+        const countryList = $('#countryList');
+        countryList.empty();
+        
+        countryCodes.forEach(country => {
+            const item = $(`
+                <div class="country-item" data-code="${country.code}" data-iso="${country.iso.toLowerCase()}" data-name="${country.name}">
+                    <img src="https://flagcdn.com/24x18/${country.iso.toLowerCase()}.png" alt="${country.iso}">
+                    <span class="country-name">${country.name}</span>
+                    <span class="country-code">${country.code}</span>
+                </div>
+            `);
+            countryList.append(item);
+        });
+    }
+    
+    // Initialize on page load
+    initCountryList();
+    
+    // Country search functionality
+    $('#countrySearch').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        
+        $('.country-item').each(function() {
+            const country = countryCodes.find(c => 
+                c.code === $(this).data('code')
+            );
+            
+            if (country) {
+                const matches = 
+                    country.name.toLowerCase().includes(searchTerm) ||
+                    country.code.includes(searchTerm) ||
+                    country.iso.toLowerCase().includes(searchTerm) ||
+                    country.initials.toLowerCase().includes(searchTerm);
+                
+                $(this).toggle(matches);
+            }
+        });
+    });
+    
+    // Country selection
+    $(document).on('click', '.country-item', function(e) {
+        e.stopPropagation();
+        
+        const code = $(this).data('code');
+        const iso = $(this).data('iso');
+        const name = $(this).data('name');
+        
+        $('#selectedCode').text(code);
+        $('#selectedFlag').attr('src', `https://flagcdn.com/16x12/${iso}.png`);
+        $('#selectedFlag').attr('alt', iso.toUpperCase());
+        $('#country_code').val(code);
+        
+        // Close dropdown
+        $('#countryCodeButton').dropdown('hide');
+    });
+    
+    // Phone number formatting
+    $('#contact_phone').on('input', function() {
+        let value = $(this).val();
+        // Remove any non-digit characters
+        value = value.replace(/\D/g, '');
+        // Limit to reasonable phone number length
+        if (value.length > 15) {
+            value = value.substr(0, 15);
+        }
+        $(this).val(value);
+    });
     // File upload preview
     $('#logo_url').on('change', function() {
         const file = this.files[0];
