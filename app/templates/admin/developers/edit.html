@@ -43,6 +43,9 @@
                                    placeholder="e.g. {{ current_year }}"
                                    pattern="[0-9]{4}"
                                    title="Enter a year between 1800 and {{ current_year }}">
+                            <div class="invalid-feedback" id="year-error">
+                                Please enter a valid year (1800 - {{ current_year }})
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -130,4 +133,43 @@
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    // Validate established year
+    function validateYear() {
+        const yearInput = $('#established_year');
+        const year = parseInt(yearInput.val());
+        const currentYear = {{ current_year }};
+        
+        if (yearInput.val() && (year < 1800 || year > currentYear || isNaN(year))) {
+            yearInput.addClass('is-invalid');
+            if (year > currentYear) {
+                $('#year-error').text(`Year cannot be greater than ${currentYear}`);
+            } else if (year < 1800) {
+                $('#year-error').text('Year must be 1800 or later');
+            } else {
+                $('#year-error').text('Please enter a valid year');
+            }
+            return false;
+        } else {
+            yearInput.removeClass('is-invalid');
+            return true;
+        }
+    }
+    
+    $('#established_year').on('input blur', function() {
+        validateYear();
+    });
+    
+    // Prevent form submission if year is invalid
+    $('form').on('submit', function(e) {
+        if (!validateYear()) {
+            e.preventDefault();
+            $('#established_year').focus();
+            return false;
+        }
+    });
+});
+</script>
 {% endblock %} 

@@ -311,12 +311,20 @@ def new_developer():
                 value = data.get(field, '').strip()
                 cleaned_data[field] = value if value else None
             
-            # Year field - optional
+            # Year field - optional with validation
             if data.get('established_year'):
                 try:
-                    cleaned_data['established_year'] = int(data['established_year'])
+                    year = int(data['established_year'])
+                    from datetime import datetime
+                    current_year = datetime.now().year
+                    if year < 1800 or year > current_year:
+                        flash(f'Established year must be between 1800 and {current_year}', 'error')
+                        return render_template('admin/developers/new.html', current_year=current_year)
+                    cleaned_data['established_year'] = year
                 except (ValueError, TypeError):
-                    cleaned_data['established_year'] = None
+                    flash('Please enter a valid year', 'error')
+                    from datetime import datetime
+                    return render_template('admin/developers/new.html', current_year=datetime.now().year)
             else:
                 cleaned_data['established_year'] = None
             
@@ -371,10 +379,24 @@ def edit_developer(developer_id):
                     data['logo_url'] = filename
             
             # Convert and validate numeric fields before setting
+            from datetime import datetime
+            current_year = datetime.now().year
+            
             for key, value in data.items():
                 if hasattr(developer, key):
                     if key == 'established_year':
-                        setattr(developer, key, int(value) if value else None)
+                        if value:
+                            try:
+                                year = int(value)
+                                if year < 1800 or year > current_year:
+                                    flash(f'Established year must be between 1800 and {current_year}', 'error')
+                                    return render_template('admin/developers/edit.html', developer=developer, current_year=current_year)
+                                setattr(developer, key, year)
+                            except (ValueError, TypeError):
+                                flash('Please enter a valid year', 'error')
+                                return render_template('admin/developers/edit.html', developer=developer, current_year=current_year)
+                        else:
+                            setattr(developer, key, None)
                     elif key in ['total_projects', 'completed_projects', 'ongoing_projects', 'total_reviews']:
                         setattr(developer, key, int(value) if value else 0)
                     elif key == 'rating':
