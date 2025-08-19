@@ -267,8 +267,12 @@ $(document).ready(function() {
     // Parse existing phone number if it has country code
     const existingPhone = '{{ developer.contact_phone or "" }}';
     if (existingPhone) {
+        // Sort country codes by length (longest first) to match correctly
+        // This ensures +1 doesn't match before +1XXX codes
+        const sortedCountries = [...countryCodes].sort((a, b) => b.code.length - a.code.length);
+        
         // Check if phone starts with a country code
-        for (let country of countryCodes) {
+        for (let country of sortedCountries) {
             if (existingPhone.startsWith(country.code)) {
                 $('#selectedCode').text(country.code);
                 $('#selectedFlag').attr('src', `https://flagcdn.com/16x12/${country.iso.toLowerCase()}.png`);
@@ -277,6 +281,11 @@ $(document).ready(function() {
                 $('#contact_phone').val(existingPhone.substring(country.code.length));
                 break;
             }
+        }
+        
+        // If no country code found, assume the whole thing is the phone number
+        if ($('#contact_phone').val() === '') {
+            $('#contact_phone').val(existingPhone);
         }
     }
     
