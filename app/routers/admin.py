@@ -296,31 +296,39 @@ def new_developer():
                     file.save(os.path.join(upload_folder, filename))
                     data['logo_url'] = filename
             
-            # Clean up empty strings from all fields first
+            # Process form data - convert empty strings to None for optional fields
             cleaned_data = {}
-            for key, value in data.items():
-                if value == '':
-                    # Skip empty strings - let the model defaults handle them
-                    continue
-                else:
-                    cleaned_data[key] = value
             
-            # Now process the cleaned data
-            if 'established_year' in cleaned_data:
+            # Required field
+            cleaned_data['name'] = data.get('name')
+            if not cleaned_data['name']:
+                flash('Developer name is required!', 'error')
+                return render_template('admin/developers/new.html')
+            
+            # Optional fields - convert empty strings to None
+            optional_text_fields = ['description', 'website_url', 'contact_email', 'contact_phone', 'address']
+            for field in optional_text_fields:
+                value = data.get(field, '').strip()
+                cleaned_data[field] = value if value else None
+            
+            # Year field - optional
+            if data.get('established_year'):
                 try:
-                    cleaned_data['established_year'] = int(cleaned_data['established_year'])
+                    cleaned_data['established_year'] = int(data['established_year'])
                 except (ValueError, TypeError):
                     cleaned_data['established_year'] = None
+            else:
+                cleaned_data['established_year'] = None
             
-            # Set defaults for numeric fields if not present
-            cleaned_data['total_projects'] = int(cleaned_data.get('total_projects', 0)) if cleaned_data.get('total_projects') else 0
-            cleaned_data['completed_projects'] = int(cleaned_data.get('completed_projects', 0)) if cleaned_data.get('completed_projects') else 0
-            cleaned_data['ongoing_projects'] = int(cleaned_data.get('ongoing_projects', 0)) if cleaned_data.get('ongoing_projects') else 0
-            cleaned_data['rating'] = float(cleaned_data.get('rating', 0.0)) if cleaned_data.get('rating') else 0.0
-            cleaned_data['total_reviews'] = int(cleaned_data.get('total_reviews', 0)) if cleaned_data.get('total_reviews') else 0
+            # Numeric fields with defaults
+            cleaned_data['total_projects'] = int(data['total_projects']) if data.get('total_projects') else 0
+            cleaned_data['completed_projects'] = int(data['completed_projects']) if data.get('completed_projects') else 0
+            cleaned_data['ongoing_projects'] = int(data['ongoing_projects']) if data.get('ongoing_projects') else 0
+            cleaned_data['rating'] = float(data['rating']) if data.get('rating') else 0.0
+            cleaned_data['total_reviews'] = int(data['total_reviews']) if data.get('total_reviews') else 0
             
-            # Handle is_verified boolean
-            cleaned_data['is_verified'] = cleaned_data.get('is_verified', False) in [True, 'true', 'True', '1', 'on']
+            # Boolean field
+            cleaned_data['is_verified'] = 'is_verified' in request.form
             
             developer = Developer(**cleaned_data)
             db.session.add(developer)
@@ -415,12 +423,39 @@ def cities():
 def new_city():
     """Create new city"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        city = City(**data)
-        db.session.add(city)
-        db.session.commit()
-        flash('City created successfully!', 'success')
-        return redirect(url_for('admin.cities'))
+        try:
+            data = request.form.to_dict()
+            
+            # Process form data
+            cleaned_data = {}
+            
+            # Required field
+            cleaned_data['name'] = data.get('name', '').strip()
+            if not cleaned_data['name']:
+                flash('City name is required!', 'error')
+                return render_template('admin/cities/new.html')
+            
+            # Optional fields - convert empty strings to None
+            optional_fields = ['state', 'country', 'description', 'population', 'area_sq_km']
+            for field in optional_fields:
+                value = data.get(field, '').strip()
+                if field in ['population', 'area_sq_km'] and value:
+                    try:
+                        cleaned_data[field] = float(value) if field == 'area_sq_km' else int(value)
+                    except (ValueError, TypeError):
+                        cleaned_data[field] = None
+                else:
+                    cleaned_data[field] = value if value else None
+            
+            city = City(**cleaned_data)
+            db.session.add(city)
+            db.session.commit()
+            flash('City created successfully!', 'success')
+            return redirect(url_for('admin.cities'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating city: {str(e)}', 'error')
+            return render_template('admin/cities/new.html')
     
     return render_template('admin/cities/new.html')
 
@@ -430,14 +465,34 @@ def edit_city(city_id):
     city = City.query.get_or_404(city_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        for key, value in data.items():
-            if hasattr(city, key):
-                setattr(city, key, value)
-        
-        db.session.commit()
-        flash('City updated successfully!', 'success')
-        return redirect(url_for('admin.cities'))
+        try:
+            data = request.form.to_dict()
+            
+            # Required field
+            city.name = data.get('name', '').strip()
+            if not city.name:
+                flash('City name is required!', 'error')
+                return render_template('admin/cities/edit.html', city=city)
+            
+            # Optional fields
+            for key, value in data.items():
+                if hasattr(city, key) and key != 'name':
+                    value = value.strip()
+                    if key in ['population', 'area_sq_km'] and value:
+                        try:
+                            setattr(city, key, float(value) if key == 'area_sq_km' else int(value))
+                        except (ValueError, TypeError):
+                            setattr(city, key, None)
+                    else:
+                        setattr(city, key, value if value else None)
+            
+            db.session.commit()
+            flash('City updated successfully!', 'success')
+            return redirect(url_for('admin.cities'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating city: {str(e)}', 'error')
+            return render_template('admin/cities/edit.html', city=city)
     
     return render_template('admin/cities/edit.html', city=city)
 
@@ -477,14 +532,36 @@ def amenities():
 def new_amenity():
     """Create new amenity"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['is_active'] = 'is_active' in request.form
-        data['is_rare'] = 'is_rare' in request.form
-        amenity = Amenity(**data)
-        db.session.add(amenity)
-        db.session.commit()
-        flash('Amenity created successfully!', 'success')
-        return redirect(url_for('admin.amenities'))
+        try:
+            data = request.form.to_dict()
+            
+            # Process form data
+            cleaned_data = {}
+            
+            # Required field
+            cleaned_data['name'] = data.get('name', '').strip()
+            if not cleaned_data['name']:
+                flash('Amenity name is required!', 'error')
+                return render_template('admin/amenities/new.html')
+            
+            # Optional fields
+            cleaned_data['category'] = data.get('category', '').strip() or None
+            cleaned_data['icon_class'] = data.get('icon_class', '').strip() or None
+            cleaned_data['description'] = data.get('description', '').strip() or None
+            
+            # Boolean fields
+            cleaned_data['is_active'] = 'is_active' in request.form
+            cleaned_data['is_rare'] = 'is_rare' in request.form
+            
+            amenity = Amenity(**cleaned_data)
+            db.session.add(amenity)
+            db.session.commit()
+            flash('Amenity created successfully!', 'success')
+            return redirect(url_for('admin.amenities'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating amenity: {str(e)}', 'error')
+            return render_template('admin/amenities/new.html')
     
     return render_template('admin/amenities/new.html')
 
@@ -494,17 +571,31 @@ def edit_amenity(amenity_id):
     amenity = Amenity.query.get_or_404(amenity_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['is_active'] = 'is_active' in request.form
-        data['is_rare'] = 'is_rare' in request.form
-        for key, value in data.items():
-            if key in ['is_active', 'is_rare']:
-                setattr(amenity, key, value)
-            elif hasattr(amenity, key):
-                setattr(amenity, key, value)
-        db.session.commit()
-        flash('Amenity updated successfully!', 'success')
-        return redirect(url_for('admin.amenities'))
+        try:
+            data = request.form.to_dict()
+            
+            # Required field
+            amenity.name = data.get('name', '').strip()
+            if not amenity.name:
+                flash('Amenity name is required!', 'error')
+                return render_template('admin/amenities/edit.html', amenity=amenity)
+            
+            # Optional fields
+            amenity.category = data.get('category', '').strip() or None
+            amenity.icon_class = data.get('icon_class', '').strip() or None
+            amenity.description = data.get('description', '').strip() or None
+            
+            # Boolean fields
+            amenity.is_active = 'is_active' in request.form
+            amenity.is_rare = 'is_rare' in request.form
+            
+            db.session.commit()
+            flash('Amenity updated successfully!', 'success')
+            return redirect(url_for('admin.amenities'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating amenity: {str(e)}', 'error')
+            return render_template('admin/amenities/edit.html', amenity=amenity)
     
     return render_template('admin/amenities/edit.html', amenity=amenity)
 
@@ -544,13 +635,35 @@ def approvals():
 def new_approval():
     """Create new approval"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['is_mandatory'] = 'is_mandatory' in request.form
-        approval = Approval(**data)
-        db.session.add(approval)
-        db.session.commit()
-        flash('Approval created successfully!', 'success')
-        return redirect(url_for('admin.approvals'))
+        try:
+            data = request.form.to_dict()
+            
+            # Process form data
+            cleaned_data = {}
+            
+            # Required field
+            cleaned_data['name'] = data.get('name', '').strip()
+            if not cleaned_data['name']:
+                flash('Approval name is required!', 'error')
+                return render_template('admin/approvals/new.html')
+            
+            # Optional fields
+            cleaned_data['category'] = data.get('category', '').strip() or None
+            cleaned_data['description'] = data.get('description', '').strip() or None
+            cleaned_data['issuing_authority'] = data.get('issuing_authority', '').strip() or None
+            
+            # Boolean field
+            cleaned_data['is_mandatory'] = 'is_mandatory' in request.form
+            
+            approval = Approval(**cleaned_data)
+            db.session.add(approval)
+            db.session.commit()
+            flash('Approval created successfully!', 'success')
+            return redirect(url_for('admin.approvals'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating approval: {str(e)}', 'error')
+            return render_template('admin/approvals/new.html')
     
     return render_template('admin/approvals/new.html')
 
@@ -560,15 +673,30 @@ def edit_approval(approval_id):
     approval = Approval.query.get_or_404(approval_id)
     
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['is_mandatory'] = 'is_mandatory' in request.form
-        for key, value in data.items():
-            if hasattr(approval, key):
-                setattr(approval, key, value)
-        
-        db.session.commit()
-        flash('Approval updated successfully!', 'success')
-        return redirect(url_for('admin.approvals'))
+        try:
+            data = request.form.to_dict()
+            
+            # Required field
+            approval.name = data.get('name', '').strip()
+            if not approval.name:
+                flash('Approval name is required!', 'error')
+                return render_template('admin/approvals/edit.html', approval=approval)
+            
+            # Optional fields
+            approval.category = data.get('category', '').strip() or None
+            approval.description = data.get('description', '').strip() or None
+            approval.issuing_authority = data.get('issuing_authority', '').strip() or None
+            
+            # Boolean field
+            approval.is_mandatory = 'is_mandatory' in request.form
+            
+            db.session.commit()
+            flash('Approval updated successfully!', 'success')
+            return redirect(url_for('admin.approvals'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating approval: {str(e)}', 'error')
+            return render_template('admin/approvals/edit.html', approval=approval)
     
     return render_template('admin/approvals/edit.html', approval=approval)
 
