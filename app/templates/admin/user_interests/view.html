@@ -22,21 +22,79 @@
                     <h5 class="card-title mb-0">User Interest Details</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Interest ID:</strong> {{ interest.interest_id }}</p>
-                    <p><strong>User:</strong> {% if interest.user %}{{ interest.user.full_name if interest.user.full_name else (interest.user.first_name ~ ' ' ~ interest.user.last_name) }}{% else %}{{ interest.user_id }}{% endif %}</p>
-                    <p><strong>Project:</strong> {{ interest.project.name if interest.project else interest.project_id }}</p>
-                    <p><strong>Unit Type:</strong> {{ interest.unit_type.type_name if interest.unit_type else interest.unit_type_id }}</p>
-                    <p><strong>Interest Type:</strong> {{ interest.interest_type or 'N/A' }}</p>
-                    <p><strong>Preferred Contact Method:</strong> {{ interest.preferred_contact_method or 'N/A' }}</p>
-                    <p><strong>Preferred Contact Time:</strong> {{ interest.preferred_contact_time or 'N/A' }}</p>
-                    <p><strong>Budget Min:</strong> {{ interest.budget_min or 'N/A' }}</p>
-                    <p><strong>Budget Max:</strong> {{ interest.budget_max or 'N/A' }}</p>
-                    <p><strong>Preferred Floors:</strong> {{ interest.preferred_floors or 'N/A' }}</p>
-                    <p><strong>Specific Requirements:</strong> {{ interest.specific_requirements or 'N/A' }}</p>
-                    <p><strong>Status:</strong> {{ interest.status or 'N/A' }}</p>
-                    <p><strong>Assigned To:</strong> {{ interest.assigned_to if interest.assigned_to else 'N/A' }}</p>
-                    <p><strong>Notes:</strong> {{ interest.notes or 'N/A' }}</p>
-                    <p><strong>Created:</strong> {{ interest.created_at.strftime('%Y-%m-%d %H:%M') if interest.created_at else 'N/A' }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Interest ID:</strong> {{ interest.interest_id }}</p>
+                            <p><strong>User:</strong> {% if interest.user %}{{ interest.user.full_name if interest.user.full_name else (interest.user.first_name ~ ' ' ~ interest.user.last_name) }}{% else %}{{ interest.user_id }}{% endif %}</p>
+                            <p><strong>Project:</strong> {{ interest.project.name if interest.project else interest.project_id }}</p>
+                            <p><strong>Unit Type:</strong> {{ interest.unit_type.type_name if interest.unit_type else interest.unit_type_id }}</p>
+                            <p><strong>Interest Type:</strong> 
+                                <span class="badge bg-{{ 'primary' if interest.interest_type == 'purchase' else 'info' if interest.interest_type == 'investment' else 'secondary' }}">
+                                    {{ interest.interest_type or 'N/A' }}
+                                </span>
+                            </p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{{ 'success' if interest.status == 'active' else 'warning' if interest.status == 'contacted' else 'danger' if interest.status == 'closed' else 'secondary' }}">
+                                    {{ interest.status or 'N/A' }}
+                                </span>
+                            </p>
+                            <p><strong>Budget Range:</strong> 
+                                {% if interest.budget_min and interest.budget_max %}
+                                <span class="badge bg-success">₹{{ "{:,}".format(interest.budget_min) }} - ₹{{ "{:,}".format(interest.budget_max) }}</span>
+                                {% elif interest.budget_min %}
+                                <span class="badge bg-info">Min: ₹{{ "{:,}".format(interest.budget_min) }}</span>
+                                {% elif interest.budget_max %}
+                                <span class="badge bg-info">Max: ₹{{ "{:,}".format(interest.budget_max) }}</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Contact Preferences:</strong></p>
+                            <p class="ms-3"><strong>Method:</strong> {{ interest.preferred_contact_method or 'N/A' }}</p>
+                            <p class="ms-3"><strong>Time:</strong> {{ interest.preferred_contact_time or 'N/A' }}</p>
+                            <p><strong>Preferred Floors:</strong> {{ interest.preferred_floors or 'N/A' }}</p>
+                            <p><strong>Specific Requirements:</strong> {{ interest.specific_requirements or 'N/A' }}</p>
+                            <p><strong>Assigned To:</strong> {{ interest.assigned_to if interest.assigned_to else 'N/A' }}</p>
+                            <p><strong>Notes:</strong> {{ interest.notes or 'N/A' }}</p>
+                            <p><strong>Created:</strong> {{ interest.created_at.strftime('%Y-%m-%d %H:%M') if interest.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if interest.user %}
+                        <a href="{{ url_for('admin.view_user', user_id=interest.user.user_id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-user"></i> View User Profile
+                        </a>
+                        {% endif %}
+                        {% if interest.project %}
+                        <a href="{{ url_for('admin.view_project', project_id=interest.project.project_id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-building"></i> View Project
+                        </a>
+                        {% endif %}
+                        {% if interest.unit_type %}
+                        <a href="{{ url_for('admin.view_unit_type', unit_type_id=interest.unit_type.unit_type_id) }}" class="btn btn-outline-success">
+                            <i class="fas fa-home"></i> View Unit Type
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('admin.new_notification') }}?user_id={{ interest.user_id if interest.user else '' }}" class="btn btn-outline-warning">
+                            <i class="fas fa-bell"></i> Send Notification
+                        </a>
+                        {% if interest.status != 'closed' %}
+                        <button class="btn btn-outline-danger" onclick="closeInterest('{{ interest.interest_id }}')">
+                            <i class="fas fa-times"></i> Close Interest
+                        </button>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

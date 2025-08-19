@@ -15,6 +15,7 @@
             </a>
         </div>
     </div>
+
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -22,15 +23,98 @@
                     <h5 class="card-title mb-0">Approval Details</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Approval ID:</strong> {{ approval.approval_id }}</p>
-                    <p><strong>Name:</strong> {{ approval.name }}</p>
-                    <p><strong>Category:</strong> {{ approval.category or 'N/A' }}</p>
-                    <p><strong>Description:</strong> {{ approval.description or 'N/A' }}</p>
-                    <p><strong>Is Mandatory:</strong> <span class="badge bg-{{ 'success' if approval.is_mandatory else 'secondary' }}">{{ 'Yes' if approval.is_mandatory else 'No' }}</span></p>
-                    <p><strong>Created:</strong> {{ approval.created_at.strftime('%Y-%m-%d %H:%M') if approval.created_at else 'N/A' }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Approval ID:</strong> {{ approval.approval_id }}</p>
+                            <p><strong>Name:</strong> 
+                                <span class="h6">{{ approval.name }}</span>
+                            </p>
+                            <p><strong>Category:</strong> 
+                                <span class="badge bg-info">{{ approval.category or 'General' }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Requirement Status:</strong> 
+                                <span class="badge bg-{{ 'danger' if approval.is_mandatory else 'warning' }}">
+                                    <i class="fas fa-{{ 'exclamation-circle' if approval.is_mandatory else 'info-circle' }}"></i>
+                                    {{ 'Mandatory' if approval.is_mandatory else 'Optional' }}
+                                </span>
+                            </p>
+                            <p><strong>Created:</strong> {{ approval.created_at.strftime('%Y-%m-%d %H:%M') if approval.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if approval.description %}
+                    <hr class="my-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Description</h6>
+                        <p class="mb-0">{{ approval.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Compliance Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-{{ 'danger' if approval.is_mandatory else 'info' }} mb-0">
+                        <i class="fas fa-{{ 'exclamation-triangle' if approval.is_mandatory else 'info-circle' }}"></i> 
+                        {% if approval.is_mandatory %}
+                            <strong>This is a mandatory approval.</strong> All projects must obtain this approval before completion.
+                        {% else %}
+                            This is an optional approval. Projects may proceed without this approval, but it's recommended for compliance.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Projects with this approval:</span>
+                        <span class="badge bg-primary">{{ approval.project_approvals|length if approval.project_approvals else 0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Category:</span>
+                        <span class="badge bg-secondary">{{ approval.category or 'General' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Type:</span>
+                        <span class="badge bg-{{ 'danger' if approval.is_mandatory else 'warning' }}">
+                            {{ 'Mandatory' if approval.is_mandatory else 'Optional' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.project_approvals') }}?approval_id={{ approval.approval_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-project-diagram"></i> View Projects with this Approval
+                        </a>
+                        <a href="{{ url_for('admin.new_project_approval') }}?approval_id={{ approval.approval_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Assign to Project
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="if(confirm('Are you sure you want to delete this approval?')) { document.getElementById('delete-form').submit(); }">
+                            <i class="fas fa-trash"></i> Delete Approval
+                        </button>
+                        <form id="delete-form" action="{{ url_for('admin.delete_approval', approval_id=approval.approval_id) }}" method="POST" style="display: none;">
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

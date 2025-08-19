@@ -1,73 +1,94 @@
 {% extends "admin/base.html" %}
 
-{% block title %}View Door/Window Spec - Admin Panel{% endblock %}
-{% block page_title %}Door/Window Spec{% endblock %}
+{% block title %}{{ spec.item_type }} Spec - Admin Panel{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-body">
-            <h3 class="card-title mb-4">Door/Window Spec</h3>
-            <dl class="row">
-                <dt class="col-sm-3">Unit Type</dt>
-                <dd class="col-sm-9">{{ spec.unit_type.type_name if spec.unit_type else 'N/A' }}</dd>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ spec.item_type }} Specification</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_door_window_spec', spec_id=spec.spec_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.door_window_specs') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Specifications
+            </a>
+        </div>
+    </div>
 
-                <dt class="col-sm-3">Item Type</dt>
-                <dd class="col-sm-9">{{ spec.item_type }}</dd>
-
-                <dt class="col-sm-3">Location</dt>
-                <dd class="col-sm-9">{{ spec.location or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Width</dt>
-                <dd class="col-sm-9">{{ spec.width or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Height</dt>
-                <dd class="col-sm-9">{{ spec.height or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Thickness</dt>
-                <dd class="col-sm-9">{{ spec.thickness or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Material</dt>
-                <dd class="col-sm-9">{{ spec.material or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Finish</dt>
-                <dd class="col-sm-9">{{ spec.finish or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Brand</dt>
-                <dd class="col-sm-9">{{ spec.brand or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Grade</dt>
-                <dd class="col-sm-9">{{ spec.grade or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Security Door</dt>
-                <dd class="col-sm-9">{{ 'Yes' if spec.is_security_door else 'No' }}</dd>
-
-                <dt class="col-sm-3">Grill</dt>
-                <dd class="col-sm-9">{{ 'Yes' if spec.has_grill else 'No' }}</dd>
-
-                <dt class="col-sm-3">Opening Type</dt>
-                <dd class="col-sm-9">{{ spec.opening_type or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Lock Type</dt>
-                <dd class="col-sm-9">{{ spec.lock_type or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Handle Type</dt>
-                <dd class="col-sm-9">{{ spec.handle_type or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Handle Material</dt>
-                <dd class="col-sm-9">{{ spec.handle_material or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Glass Type</dt>
-                <dd class="col-sm-9">{{ spec.glass_type or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Glass Thickness</dt>
-                <dd class="col-sm-9">{{ spec.glass_thickness or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Created</dt>
-                <dd class="col-sm-9">{{ spec.created_at.strftime('%Y-%m-%d') if spec.created_at else 'N/A' }}</dd>
-            </dl>
-            <a href="{{ url_for('admin.edit_door_window_spec', spec_id=spec.spec_id) }}" class="btn btn-warning">Edit</a>
-            <a href="{{ url_for('admin.door_window_specs') }}" class="btn btn-secondary ms-2">Back to List</a>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Door/Window Specification Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Spec ID:</strong> {{ spec.spec_id }}</p>
+                            <p><strong>Unit Type:</strong> {{ spec.unit_type.type_name if spec.unit_type else 'N/A' }}</p>
+                            <p><strong>Item Type:</strong> 
+                                <span class="badge bg-{{ 'primary' if spec.item_type == 'door' else 'info' if spec.item_type == 'window' else 'secondary' }}">
+                                    {{ spec.item_type }}
+                                </span>
+                            </p>
+                            <p><strong>Location:</strong> {{ spec.location or 'N/A' }}</p>
+                            <p><strong>Dimensions:</strong> 
+                                {% if spec.width and spec.height %}
+                                <span class="badge bg-info">{{ spec.width }} x {{ spec.height }}{% if spec.thickness %} x {{ spec.thickness }}{% endif %}</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Material:</strong> 
+                                <span class="badge bg-secondary">{{ spec.material or 'N/A' }}</span>
+                            </p>
+                            <p><strong>Finish:</strong> {{ spec.finish or 'N/A' }}</p>
+                            <p><strong>Brand:</strong> {{ spec.brand or 'N/A' }}</p>
+                            <p><strong>Grade:</strong> {{ spec.grade or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Security Features:</strong></p>
+                            <p class="ms-3"><strong>Security Door:</strong> <span class="badge bg-{{ 'success' if spec.is_security_door else 'secondary' }}">{{ 'Yes' if spec.is_security_door else 'No' }}</span></p>
+                            <p class="ms-3"><strong>Grill:</strong> <span class="badge bg-{{ 'success' if spec.has_grill else 'secondary' }}">{{ 'Yes' if spec.has_grill else 'No' }}</span></p>
+                            <p><strong>Hardware:</strong></p>
+                            <p class="ms-3"><strong>Opening Type:</strong> {{ spec.opening_type or 'N/A' }}</p>
+                            <p class="ms-3"><strong>Lock Type:</strong> {{ spec.lock_type or 'N/A' }}</p>
+                            <p class="ms-3"><strong>Handle Type:</strong> {{ spec.handle_type or 'N/A' }}</p>
+                            <p class="ms-3"><strong>Handle Material:</strong> {{ spec.handle_material or 'N/A' }}</p>
+                            <p><strong>Glass Details:</strong></p>
+                            <p class="ms-3"><strong>Glass Type:</strong> {{ spec.glass_type or 'N/A' }}</p>
+                            <p class="ms-3"><strong>Glass Thickness:</strong> {{ spec.glass_thickness or 'N/A' }}</p>
+                            <p><strong>Created:</strong> {{ spec.created_at.strftime('%Y-%m-%d %H:%M') if spec.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if spec.unit_type %}
+                        <a href="{{ url_for('admin.view_unit_type', unit_type_id=spec.unit_type.unit_type_id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-home"></i> View Unit Type
+                        </a>
+                        <a href="{{ url_for('admin.door_window_specs') }}?unit_type_id={{ spec.unit_type.unit_type_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-list"></i> Unit Type Specs
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('admin.new_door_window_spec') }}{% if spec.unit_type %}?unit_type_id={{ spec.unit_type.unit_type_id }}{% endif %}" class="btn btn-outline-info">
+                            <i class="fas fa-plus"></i> Add Another Spec
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="deleteSpec('{{ spec.spec_id }}')">
+                            <i class="fas fa-trash"></i> Delete Specification
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

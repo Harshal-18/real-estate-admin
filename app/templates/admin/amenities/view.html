@@ -15,6 +15,7 @@
             </a>
         </div>
     </div>
+
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -22,17 +23,123 @@
                     <h5 class="card-title mb-0">Amenity Details</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Amenity ID:</strong> {{ amenity.amenity_id }}</p>
-                    <p><strong>Name:</strong> {{ amenity.name }}</p>
-                    <p><strong>Category:</strong> {{ amenity.category or 'N/A' }}</p>
-                    <p><strong>Description:</strong> {{ amenity.description or 'N/A' }}</p>
-                    <p><strong>Icon:</strong> {% if amenity.icon_url %}<img src="{{ amenity.icon_url }}" alt="Icon" style="width:32px;height:32px;object-fit:contain;">{% else %}N/A{% endif %}</p>
-                    <p><strong>Is Rare:</strong> <span class="badge bg-{{ 'warning' if amenity.is_rare else 'secondary' }}">{{ 'Yes' if amenity.is_rare else 'No' }}</span></p>
-                    <p><strong>Active:</strong> <span class="badge bg-{{ 'success' if amenity.is_active else 'danger' }}">{{ 'Yes' if amenity.is_active else 'No' }}</span></p>
-                    <p><strong>Created:</strong> {{ amenity.created_at.strftime('%Y-%m-%d %H:%M') if amenity.created_at else 'N/A' }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Amenity ID:</strong> {{ amenity.amenity_id }}</p>
+                            <p><strong>Name:</strong> 
+                                <span class="h6">{{ amenity.name }}</span>
+                            </p>
+                            <p><strong>Category:</strong> 
+                                <span class="badge bg-info">{{ amenity.category or 'Uncategorized' }}</span>
+                            </p>
+                            <p><strong>Icon:</strong> 
+                                {% if amenity.icon_url %}
+                                    <img src="{{ amenity.icon_url }}" alt="Icon" class="ms-2" style="width:32px;height:32px;object-fit:contain;">
+                                {% else %}
+                                    <span class="text-muted">No icon</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Rarity Status:</strong> 
+                                <span class="badge bg-{{ 'warning' if amenity.is_rare else 'secondary' }}">
+                                    <i class="fas fa-{{ 'gem' if amenity.is_rare else 'circle' }}"></i>
+                                    {{ 'Rare Amenity' if amenity.is_rare else 'Common Amenity' }}
+                                </span>
+                            </p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{{ 'success' if amenity.is_active else 'danger' }}">
+                                    <i class="fas fa-{{ 'check-circle' if amenity.is_active else 'times-circle' }}"></i>
+                                    {{ 'Active' if amenity.is_active else 'Inactive' }}
+                                </span>
+                            </p>
+                            <p><strong>Created:</strong> {{ amenity.created_at.strftime('%Y-%m-%d %H:%M') if amenity.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if amenity.description %}
+                    <hr class="my-3">
+                    <div>
+                        <h6 class="text-muted mb-2">Description</h6>
+                        <p class="mb-0">{{ amenity.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Usage Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle"></i> 
+                        This amenity can be assigned to projects through the Project Amenities section.
+                        {% if amenity.is_rare %}
+                        <br><strong class="text-warning mt-2 d-block">
+                            <i class="fas fa-gem"></i> This is marked as a rare amenity and will be highlighted in project listings.
+                        </strong>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            {% if amenity.icon_url %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Amenity Icon</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ amenity.icon_url }}" alt="{{ amenity.name }} Icon" class="img-fluid" style="max-width: 100px; max-height: 100px;">
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Projects using this:</span>
+                        <span class="badge bg-primary">{{ amenity.project_amenities|length if amenity.project_amenities else 0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Category:</span>
+                        <span class="badge bg-secondary">{{ amenity.category or 'General' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Type:</span>
+                        <span class="badge bg-{{ 'warning' if amenity.is_rare else 'info' }}">
+                            {{ 'Rare' if amenity.is_rare else 'Common' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.project_amenities') }}?amenity_id={{ amenity.amenity_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-project-diagram"></i> View Projects with this Amenity
+                        </a>
+                        <a href="{{ url_for('admin.new_project_amenity') }}?amenity_id={{ amenity.amenity_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Assign to Project
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="if(confirm('Are you sure you want to delete this amenity?')) { document.getElementById('delete-form').submit(); }">
+                            <i class="fas fa-trash"></i> Delete Amenity
+                        </button>
+                        <form id="delete-form" action="{{ url_for('admin.delete_amenity', amenity_id=amenity.amenity_id) }}" method="POST" style="display: none;">
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

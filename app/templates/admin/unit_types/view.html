@@ -22,18 +22,63 @@
                     <h5 class="card-title mb-0">Unit Type Details</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Unit Type ID:</strong> {{ unit_type.unit_type_id }}</p>
-                    <p><strong>Name:</strong> {{ unit_type.type_name }}</p>
-                    <p><strong>Project:</strong> {{ unit_type.project.name if unit_type.project else 'N/A' }}</p>
-                    <p><strong>Bedrooms:</strong> {{ unit_type.bedrooms or 'N/A' }}</p>
-                    <p><strong>Bathrooms:</strong> {{ unit_type.bathrooms or 'N/A' }}</p>
-                    <p><strong>Carpet Area:</strong> {{ unit_type.carpet_area or 'N/A' }}</p>
-                    <p><strong>Built Up Area:</strong> {{ unit_type.built_up_area or 'N/A' }}</p>
-                    <p><strong>Super Area:</strong> {{ unit_type.super_area or 'N/A' }}</p>
-                    <p><strong>Base Price:</strong> {{ unit_type.base_price or 'N/A' }}</p>
-                    <p><strong>Price per Sqft:</strong> {{ unit_type.price_per_sqft or 'N/A' }}</p>
-                    <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if unit_type.is_active else 'danger' }}">{{ 'Active' if unit_type.is_active else 'Inactive' }}</span></p>
-                    <p><strong>Created:</strong> {{ unit_type.created_at.strftime('%Y-%m-%d %H:%M') if unit_type.created_at else 'N/A' }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Unit Type ID:</strong> {{ unit_type.unit_type_id }}</p>
+                            <p><strong>Name:</strong> {{ unit_type.type_name }}</p>
+                            <p><strong>Project:</strong> {{ unit_type.project.name if unit_type.project else 'N/A' }}</p>
+                            <p><strong>Configuration:</strong> 
+                                <span class="badge bg-info">{{ unit_type.bedrooms or '0' }}BHK</span>
+                                <span class="badge bg-secondary">{{ unit_type.bathrooms or '0' }} Bath</span>
+                            </p>
+                            <p><strong>Carpet Area:</strong> {{ unit_type.carpet_area or 'N/A' }} sq ft</p>
+                            <p><strong>Built Up Area:</strong> {{ unit_type.built_up_area or 'N/A' }} sq ft</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Super Area:</strong> {{ unit_type.super_area or 'N/A' }} sq ft</p>
+                            <p><strong>Base Price:</strong> 
+                                {% if unit_type.base_price %}
+                                <span class="badge bg-success">₹{{ "{:,}".format(unit_type.base_price) }}</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Price per Sqft:</strong> 
+                                {% if unit_type.price_per_sqft %}
+                                ₹{{ "{:,}".format(unit_type.price_per_sqft) }}
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Status:</strong> <span class="badge bg-{{ 'success' if unit_type.is_active else 'danger' }}">{{ 'Active' if unit_type.is_active else 'Inactive' }}</span></p>
+                            <p><strong>Created:</strong> {{ unit_type.created_at.strftime('%Y-%m-%d %H:%M') if unit_type.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin.new_property_unit') }}?unit_type_id={{ unit_type.unit_type_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Create Property Unit
+                        </a>
+                        <a href="{{ url_for('admin.property_units') }}?unit_type_id={{ unit_type.unit_type_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-home"></i> View Units
+                        </a>
+                        <a href="{{ url_for('admin.new_unit_room_details') }}?unit_type_id={{ unit_type.unit_type_id }}" class="btn btn-outline-info">
+                            <i class="fas fa-door-open"></i> Add Room Details
+                        </a>
+                        {% if unit_type.project %}
+                        <a href="{{ url_for('admin.view_project', project_id=unit_type.project.project_id) }}" class="btn btn-outline-warning">
+                            <i class="fas fa-building"></i> View Project
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>

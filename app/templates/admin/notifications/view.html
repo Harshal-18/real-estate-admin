@@ -22,17 +22,56 @@
                     <h5 class="card-title mb-0">Notification Details</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Notification ID:</strong> {{ notification.notification_id }}</p>
-                    <p><strong>User:</strong> {{ notification.user.full_name if notification.user else 'All Users' }}</p>
-                    <p><strong>Type:</strong> {{ notification.type or 'N/A' }}</p>
-                    <p><strong>Title:</strong> {{ notification.title or 'N/A' }}</p>
-                    <p><strong>Message:</strong> {{ notification.message or 'N/A' }}</p>
-                    <p><strong>Related Project:</strong> {{ notification.related_project_id or 'N/A' }}</p>
-                    <p><strong>Read:</strong> <span class="badge bg-{{ 'success' if notification.is_read else 'secondary' }}">{{ 'Yes' if notification.is_read else 'No' }}</span></p>
-                    <p><strong>Sent:</strong> <span class="badge bg-{{ 'success' if notification.is_sent else 'secondary' }}">{{ 'Yes' if notification.is_sent else 'No' }}</span></p>
-                    <p><strong>Delivery Method:</strong> {{ notification.delivery_method or 'N/A' }}</p>
-                    <p><strong>Read At:</strong> {{ notification.read_at.strftime('%Y-%m-%d %H:%M') if notification.read_at else 'N/A' }}</p>
-                    <p><strong>Created:</strong> {{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else 'N/A' }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Notification ID:</strong> {{ notification.notification_id }}</p>
+                            <p><strong>User:</strong> {{ notification.user.full_name if notification.user else 'All Users' }}</p>
+                            <p><strong>Type:</strong> 
+                                <span class="badge bg-{{ 'primary' if notification.type == 'system' else 'info' if notification.type == 'promotional' else 'warning' if notification.type == 'alert' else 'secondary' }}">
+                                    {{ notification.type or 'N/A' }}
+                                </span>
+                            </p>
+                            <p><strong>Title:</strong> {{ notification.title or 'N/A' }}</p>
+                            <p><strong>Message:</strong> {{ notification.message or 'N/A' }}</p>
+                            <p><strong>Related Project:</strong> {{ notification.related_project_id or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Read:</strong> <span class="badge bg-{{ 'success' if notification.is_read else 'secondary' }}">{{ 'Yes' if notification.is_read else 'No' }}</span></p>
+                            <p><strong>Sent:</strong> <span class="badge bg-{{ 'success' if notification.is_sent else 'secondary' }}">{{ 'Yes' if notification.is_sent else 'No' }}</span></p>
+                            <p><strong>Delivery Method:</strong> 
+                                <span class="badge bg-info">{{ notification.delivery_method or 'N/A' }}</span>
+                            </p>
+                            <p><strong>Read At:</strong> {{ notification.read_at.strftime('%Y-%m-%d %H:%M') if notification.read_at else 'N/A' }}</p>
+                            <p><strong>Created:</strong> {{ notification.created_at.strftime('%Y-%m-%d %H:%M') if notification.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if not notification.is_sent %}
+                        <button class="btn btn-outline-primary" onclick="sendNotification('{{ notification.notification_id }}')">
+                            <i class="fas fa-paper-plane"></i> Send Notification
+                        </button>
+                        {% endif %}
+                        {% if notification.user %}
+                        <a href="{{ url_for('admin.view_user', user_id=notification.user.user_id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-user"></i> View User
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-outline-success" onclick="duplicateNotification('{{ notification.notification_id }}')">
+                            <i class="fas fa-copy"></i> Duplicate
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteNotification('{{ notification.notification_id }}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -22,21 +22,82 @@
                     <h5 class="card-title mb-0">Review Details</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Review ID:</strong> {{ review.review_id }}</p>
-                    <p><strong>User:</strong> {{ review.user.full_name if review.user else 'N/A' }}</p>
-                    <p><strong>Project:</strong> {{ review.project.name if review.project else 'N/A' }}</p>
-                    <p><strong>Developer:</strong> {{ review.developer.name if review.developer else 'N/A' }}</p>
-                    <p><strong>Rating:</strong> <span class="badge bg-warning">{{ review.rating }}/5</span></p>
-                    <p><strong>Title:</strong> {{ review.title or 'N/A' }}</p>
-                    <p><strong>Review:</strong> {{ review.review_text or 'N/A' }}</p>
-                    <p><strong>Pros:</strong> {{ review.pros or 'N/A' }}</p>
-                    <p><strong>Cons:</strong> {{ review.cons or 'N/A' }}</p>
-                    <p><strong>Construction Quality:</strong> {{ review.construction_quality_rating or 'N/A' }}</p>
-                    <p><strong>Amenities:</strong> {{ review.amenities_rating or 'N/A' }}</p>
-                    <p><strong>Location:</strong> {{ review.location_rating or 'N/A' }}</p>
-                    <p><strong>Value for Money:</strong> {{ review.value_for_money_rating or 'N/A' }}</p>
-                    <p><strong>Verified:</strong> <span class="badge bg-{{ 'success' if review.is_verified else 'secondary' }}">{{ 'Yes' if review.is_verified else 'No' }}</span></p>
-                    <p><strong>Created:</strong> {{ review.created_at.strftime('%Y-%m-%d %H:%M') if review.created_at else 'N/A' }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Review ID:</strong> {{ review.review_id }}</p>
+                            <p><strong>User:</strong> {{ review.user.full_name if review.user else 'N/A' }}</p>
+                            <p><strong>Project:</strong> {{ review.project.name if review.project else 'N/A' }}</p>
+                            <p><strong>Developer:</strong> {{ review.developer.name if review.developer else 'N/A' }}</p>
+                            <p><strong>Overall Rating:</strong> 
+                                <span class="badge bg-{{ 'success' if review.rating >= 4 else 'warning' if review.rating >= 3 else 'danger' }}">{{ review.rating }}/5 ★</span>
+                            </p>
+                            <p><strong>Title:</strong> {{ review.title or 'N/A' }}</p>
+                            <p><strong>Review:</strong> {{ review.review_text or 'N/A' }}</p>
+                            <p><strong>Pros:</strong> {{ review.pros or 'N/A' }}</p>
+                            <p><strong>Cons:</strong> {{ review.cons or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Construction Quality:</strong> 
+                                {% if review.construction_quality_rating %}
+                                <span class="badge bg-info">{{ review.construction_quality_rating }}/5</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Amenities:</strong> 
+                                {% if review.amenities_rating %}
+                                <span class="badge bg-info">{{ review.amenities_rating }}/5</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Location:</strong> 
+                                {% if review.location_rating %}
+                                <span class="badge bg-info">{{ review.location_rating }}/5</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Value for Money:</strong> 
+                                {% if review.value_for_money_rating %}
+                                <span class="badge bg-info">{{ review.value_for_money_rating }}/5</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Verified:</strong> <span class="badge bg-{{ 'success' if review.is_verified else 'secondary' }}">{{ 'Yes' if review.is_verified else 'No' }}</span></p>
+                            <p><strong>Created:</strong> {{ review.created_at.strftime('%Y-%m-%d %H:%M') if review.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if not review.is_verified %}
+                        <button class="btn btn-outline-success" onclick="verifyReview('{{ review.review_id }}')">
+                            <i class="fas fa-check"></i> Verify Review
+                        </button>
+                        {% endif %}
+                        {% if review.user %}
+                        <a href="{{ url_for('admin.view_user', user_id=review.user.user_id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-user"></i> View User
+                        </a>
+                        {% endif %}
+                        {% if review.project %}
+                        <a href="{{ url_for('admin.view_project', project_id=review.project.project_id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-building"></i> View Project
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-outline-danger" onclick="deleteReview('{{ review.review_id }}')">
+                            <i class="fas fa-trash"></i> Delete Review
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

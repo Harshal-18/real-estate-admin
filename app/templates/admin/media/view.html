@@ -22,16 +22,66 @@
                     <h5 class="card-title mb-0">Media Details</h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Media ID:</strong> {{ media.media_id }}</p>
-                    <p><strong>Project:</strong> {{ media.project.name if media.project else 'N/A' }}</p>
-                    <p><strong>Type:</strong> {{ media.media_type or 'N/A' }}</p>
-                    <p><strong>Category:</strong> {{ media.media_category or 'N/A' }}</p>
-                    <p><strong>Title:</strong> {{ media.title or 'N/A' }}</p>
-                    <p><strong>Description:</strong> {{ media.description or 'N/A' }}</p>
-                    <p><strong>Media:</strong> {% if media.media_url %}<a href="{{ media.media_url }}" target="_blank">View File</a>{% else %}N/A{% endif %}</p>
-                    <p><strong>Thumbnail:</strong> {% if media.thumbnail_url %}<img src="{{ media.thumbnail_url }}" alt="Thumbnail" style="width:40px;height:40px;object-fit:cover;">{% else %}N/A{% endif %}</p>
-                    <p><strong>Active:</strong> <span class="badge bg-{{ 'success' if media.is_active else 'danger' }}">{{ 'Yes' if media.is_active else 'No' }}</span></p>
-                    <p><strong>Created:</strong> {{ media.created_at.strftime('%Y-%m-%d %H:%M') if media.created_at else 'N/A' }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Media ID:</strong> {{ media.media_id }}</p>
+                            <p><strong>Project:</strong> {{ media.project.name if media.project else 'N/A' }}</p>
+                            <p><strong>Type:</strong> 
+                                <span class="badge bg-{{ 'primary' if media.media_type == 'image' else 'info' if media.media_type == 'video' else 'warning' if media.media_type == 'document' else 'secondary' }}">
+                                    {{ media.media_type or 'N/A' }}
+                                </span>
+                            </p>
+                            <p><strong>Category:</strong> 
+                                <span class="badge bg-info">{{ media.media_category or 'N/A' }}</span>
+                            </p>
+                            <p><strong>Title:</strong> {{ media.title or 'N/A' }}</p>
+                            <p><strong>Description:</strong> {{ media.description or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Media Preview:</strong></p>
+                            {% if media.thumbnail_url %}
+                            <div class="mb-3">
+                                <img src="{{ media.thumbnail_url }}" alt="Thumbnail" class="img-thumbnail" style="max-width:200px;max-height:150px;object-fit:cover;">
+                            </div>
+                            {% endif %}
+                            <p><strong>Media File:</strong> 
+                                {% if media.media_url %}
+                                <a href="{{ media.media_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View File</a>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Active:</strong> <span class="badge bg-{{ 'success' if media.is_active else 'danger' }}">{{ 'Yes' if media.is_active else 'No' }}</span></p>
+                            <p><strong>Created:</strong> {{ media.created_at.strftime('%Y-%m-%d %H:%M') if media.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if media.media_url %}
+                        <a href="{{ media.media_url }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="fas fa-external-link-alt"></i> Open Media
+                        </a>
+                        {% endif %}
+                        {% if media.project %}
+                        <a href="{{ url_for('admin.view_project', project_id=media.project.project_id) }}" class="btn btn-outline-info">
+                            <i class="fas fa-building"></i> View Project
+                        </a>
+                        <a href="{{ url_for('admin.media') }}?project_id={{ media.project.project_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-images"></i> Project Media
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-outline-danger" onclick="deleteMedia('{{ media.media_id }}')">
+                            <i class="fas fa-trash"></i> Delete Media
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

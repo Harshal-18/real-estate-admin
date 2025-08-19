@@ -1,64 +1,93 @@
 {% extends "admin/base.html" %}
 
-{% block title %}View Balcony Detail - Admin Panel{% endblock %}
-{% block page_title %}Balcony Detail{% endblock %}
+{% block title %}{{ balcony.balcony_name }} - Admin Panel{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-body">
-            <h3 class="card-title mb-4">Balcony Detail</h3>
-            <dl class="row">
-                <dt class="col-sm-3">Unit Type</dt>
-                <dd class="col-sm-9">{{ balcony.unit_type.type_name if balcony.unit_type else 'N/A' }}</dd>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">{{ balcony.balcony_name }}</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('admin.edit_balcony_detail', balcony_id=balcony.balcony_id) }}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('admin.balcony_details') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Balcony Details
+            </a>
+        </div>
+    </div>
 
-                <dt class="col-sm-3">Name</dt>
-                <dd class="col-sm-9">{{ balcony.balcony_name }}</dd>
-
-                <dt class="col-sm-3">Sequence</dt>
-                <dd class="col-sm-9">{{ balcony.balcony_sequence or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Length</dt>
-                <dd class="col-sm-9">{{ balcony.balcony_length or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Width</dt>
-                <dd class="col-sm-9">{{ balcony.balcony_width or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Area</dt>
-                <dd class="col-sm-9">{{ balcony.balcony_area or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Connected Room</dt>
-                <dd class="col-sm-9">{{ balcony.connected_room or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Access Type</dt>
-                <dd class="col-sm-9">{{ balcony.access_type or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Balcony Type</dt>
-                <dd class="col-sm-9">{{ balcony.balcony_type or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Provision for Washing Machine</dt>
-                <dd class="col-sm-9">{{ 'Yes' if balcony.has_provision_for_washing_machine else 'No' }}</dd>
-
-                <dt class="col-sm-3">Provision for Drying</dt>
-                <dd class="col-sm-9">{{ 'Yes' if balcony.has_provision_for_drying else 'No' }}</dd>
-
-                <dt class="col-sm-3">Safety Grill</dt>
-                <dd class="col-sm-9">{{ 'Yes' if balcony.has_safety_grill else 'No' }}</dd>
-
-                <dt class="col-sm-3">Facing Direction</dt>
-                <dd class="col-sm-9">{{ balcony.facing_direction or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">View Description</dt>
-                <dd class="col-sm-9">{{ balcony.view_description or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Floor Level</dt>
-                <dd class="col-sm-9">{{ balcony.floor_level or 'N/A' }}</dd>
-
-                <dt class="col-sm-3">Created</dt>
-                <dd class="col-sm-9">{{ balcony.created_at.strftime('%Y-%m-%d') if balcony.created_at else 'N/A' }}</dd>
-            </dl>
-            <a href="{{ url_for('admin.edit_balcony_detail', balcony_id=balcony.balcony_id) }}" class="btn btn-warning">Edit</a>
-            <a href="{{ url_for('admin.balcony_details') }}" class="btn btn-secondary ms-2">Back to List</a>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Balcony Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Balcony ID:</strong> {{ balcony.balcony_id }}</p>
+                            <p><strong>Unit Type:</strong> {{ balcony.unit_type.type_name if balcony.unit_type else 'N/A' }}</p>
+                            <p><strong>Name:</strong> {{ balcony.balcony_name }}</p>
+                            <p><strong>Sequence:</strong> {{ balcony.balcony_sequence or 'N/A' }}</p>
+                            <p><strong>Dimensions:</strong> 
+                                {% if balcony.balcony_length and balcony.balcony_width %}
+                                <span class="badge bg-info">{{ balcony.balcony_length }} x {{ balcony.balcony_width }} ft</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Area:</strong> 
+                                {% if balcony.balcony_area %}
+                                <span class="badge bg-success">{{ balcony.balcony_area }} sq ft</span>
+                                {% else %}
+                                N/A
+                                {% endif %}
+                            </p>
+                            <p><strong>Connected Room:</strong> {{ balcony.connected_room or 'N/A' }}</p>
+                            <p><strong>Access Type:</strong> {{ balcony.access_type or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Balcony Type:</strong> 
+                                <span class="badge bg-secondary">{{ balcony.balcony_type or 'N/A' }}</span>
+                            </p>
+                            <p><strong>Washing Machine Provision:</strong> <span class="badge bg-{{ 'success' if balcony.has_provision_for_washing_machine else 'secondary' }}">{{ 'Yes' if balcony.has_provision_for_washing_machine else 'No' }}</span></p>
+                            <p><strong>Drying Provision:</strong> <span class="badge bg-{{ 'success' if balcony.has_provision_for_drying else 'secondary' }}">{{ 'Yes' if balcony.has_provision_for_drying else 'No' }}</span></p>
+                            <p><strong>Safety Grill:</strong> <span class="badge bg-{{ 'success' if balcony.has_safety_grill else 'secondary' }}">{{ 'Yes' if balcony.has_safety_grill else 'No' }}</span></p>
+                            <p><strong>Facing Direction:</strong> 
+                                <span class="badge bg-warning">{{ balcony.facing_direction or 'N/A' }}</span>
+                            </p>
+                            <p><strong>View Description:</strong> {{ balcony.view_description or 'N/A' }}</p>
+                            <p><strong>Floor Level:</strong> {{ balcony.floor_level or 'N/A' }}</p>
+                            <p><strong>Created:</strong> {{ balcony.created_at.strftime('%Y-%m-%d %H:%M') if balcony.created_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if balcony.unit_type %}
+                        <a href="{{ url_for('admin.view_unit_type', unit_type_id=balcony.unit_type.unit_type_id) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-home"></i> View Unit Type
+                        </a>
+                        <a href="{{ url_for('admin.balcony_details') }}?unit_type_id={{ balcony.unit_type.unit_type_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-list"></i> Unit Type Balconies
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('admin.new_balcony_detail') }}{% if balcony.unit_type %}?unit_type_id={{ balcony.unit_type.unit_type_id }}{% endif %}" class="btn btn-outline-info">
+                            <i class="fas fa-plus"></i> Add Another Balcony
+                        </a>
+                        <button class="btn btn-outline-danger" onclick="deleteBalcony('{{ balcony.balcony_id }}')">
+                            <i class="fas fa-trash"></i> Delete Balcony
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
