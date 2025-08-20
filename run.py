@@ -16,15 +16,15 @@ def wait_for_db():
                 # Try a simple connection test
                 result = db.session.execute(text('SELECT 1'))
                 result.fetchone()
-                print("✅ Database connection successful!")
+                print("Database connection successful!")
                 return True
         except Exception as e:
             attempt += 1
-            print(f"⏳ Waiting for database... (attempt {attempt}/{max_attempts})")
+            print(f"Waiting for database... (attempt {attempt}/{max_attempts})")
             print(f"   Error: {str(e)}")
             time.sleep(2)
     
-    print("❌ Database connection failed after maximum attempts")
+    print("Database connection failed after maximum attempts")
     return False
 
 def init_db():
@@ -32,9 +32,9 @@ def init_db():
     with app.app_context():
         try:
             db.create_all()
-            print("✅ Database tables created successfully!")
+            print("Database tables created successfully!")
         except Exception as e:
-            print(f"❌ Error creating tables: {e}")
+            print(f"Error creating tables: {e}")
 
 def seed_db():
     """Seed database with initial data"""
@@ -43,7 +43,7 @@ def seed_db():
         with app.app_context():
             seed_data()
     except Exception as e:
-        print(f"❌ Error seeding database: {e}")
+        print(f"Error seeding database: {e}")
 
 if __name__ == '__main__':
     # Wait for database to be ready
@@ -52,10 +52,10 @@ if __name__ == '__main__':
         seed_db()
         
         # Start the Flask app
-        print("🚀 Starting Flask application...")
+        print("Starting Flask application...")
         app.run(host="0.0.0.0", debug=False, port=5000)
     else:
-        print("❌ Failed to connect to database. Exiting.")
+        print("Failed to connect to database. Exiting.")
         exit(1)
 
 # For gunicorn

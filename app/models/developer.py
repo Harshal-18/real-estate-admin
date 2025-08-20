@@ -24,6 +24,7 @@ class Developer(db.Model):
 
     # Relationships
     projects = db.relationship('Project', backref='developer', lazy=True)
+    reviews = db.relationship('Review', backref='developer', lazy=True)
 
     def __repr__(self):
         return f'<Developer {self.name}>'

@@ -1598,6 +1598,50 @@ def view_review(review_id):
     review = Review.query.get_or_404(review_id)
     return render_template('admin/reviews/view.html', review=review)
 
+@admin.route('/reviews/export/<export_type>')
+def export_reviews(export_type):
+    reviews = Review.query.order_by(Review.created_at.desc()).all()
+    data = []
+    for r in reviews:
+        data.append({
+            'Review ID': r.review_id,
+            'Project': r.project.name if r.project else 'N/A',
+            'Developer': r.developer.name if r.developer else 'N/A',
+            'User': f"{r.user.first_name} {r.user.last_name}" if r.user and r.user.first_name else r.user.email if r.user else 'N/A',
+            'Title': r.title or 'N/A',
+            'Rating': r.rating or 'N/A',
+            'Review Text': r.review_text or 'N/A',
+            'Pros': r.pros or 'N/A',
+            'Cons': r.cons or 'N/A',
+            'Construction Quality': r.construction_quality_rating or 'N/A',
+            'Amenities': r.amenities_rating or 'N/A',
+            'Location': r.location_rating or 'N/A',
+            'Value for Money': r.value_for_money_rating or 'N/A',
+            'Verified': 'Yes' if r.is_verified else 'No',
+            'Created': r.created_at.strftime('%Y-%m-%d') if r.created_at else 'N/A'
+        })
+    df = pd.DataFrame(data)
+    if export_type == 'csv':
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        return send_file(io.BytesIO(output.getvalue().encode()), as_attachment=True, download_name='reviews.csv', mimetype='text/csv')
+    elif export_type == 'excel':
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
+        return send_file(output, as_attachment=True, download_name='reviews.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    elif export_type == 'pdf':
+        if not PDFKIT_AVAILABLE:
+            return 'PDF export requires pdfkit and wkhtmltopdf installed.', 501
+        html = '<h2>Reviews List</h2>' + df.to_html(index=False, border=0)
+        pdf = pdfkit.from_string(html, False)
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=reviews.pdf'
+        return response
+
 # Notifications Routes
 @admin.route('/notifications')
 def notifications():
