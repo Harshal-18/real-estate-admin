@@ -36,11 +36,11 @@ def dashboard():
         'total_reviews': Review.query.count(),
         'active_projects': Project.query.filter_by(is_active=True).count(),
         'pending_approvals': ProjectApproval.query.filter_by(status='pending').count(),
-        'total_revenue': db.session.query(func.sum(PropertyUnit.total_price)).scalar() or 0,
+        'total_units': PropertyUnit.query.count(),
         'recent_projects': Project.query.order_by(Project.created_at.desc()).limit(5).all()
     }
-    # Calculate average revenue per project (avoid division by zero)
-    avg_revenue = stats['total_revenue'] / (stats['total_projects'] if stats['total_projects'] else 1)
+    # Calculate average units per project (avoid division by zero)
+    avg_units_per_project = stats['total_units'] / (stats['total_projects'] if stats['total_projects'] else 1)
     
     # Get recent activities
     recent_activities = []
@@ -69,7 +69,7 @@ def dashboard():
     recent_activities.sort(key=lambda x: x['time'], reverse=True)
     recent_activities = recent_activities[:10]
     
-    return render_template('admin/dashboard.html', stats=stats, avg_revenue=avg_revenue, recent_activities=recent_activities)
+    return render_template('admin/dashboard.html', stats=stats, avg_units_per_project=avg_units_per_project, recent_activities=recent_activities)
 
 # Projects Routes
 @admin.route('/projects')

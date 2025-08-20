@@ -1,20 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash
 from app.models.user import User
-from app import db
-from app.config import Config
+from app import db, create_app
 from dotenv import load_dotenv
 import os
 
 # Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
-
-# Configure the app using the Config class
-app.config.from_object(Config)
-
-# Initialize the database
-db.init_app(app)
+# Create the Flask app using the factory function
+app = create_app()
 
 @app.route('/users', methods=['GET'])
 def list_users():

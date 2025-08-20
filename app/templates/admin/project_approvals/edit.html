@@ -3,62 +3,244 @@
 {% block title %}Edit Project Approval - Admin Panel{% endblock %}
 {% block page_title %}Edit Project Approval{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-body">
-            <h3 class="card-title mb-4">Edit Project Approval</h3>
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="project_id" class="form-label">Project</label>
-                    <select class="form-select" id="project_id" name="project_id" required disabled>
-                        <option value="">Select Project</option>
-                        {% for project in projects %}
-                        <option value="{{ project.project_id }}" {% if project.project_id == pa.project_id %}selected{% endif %}>{{ project.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="approval_id" class="form-label">Approval</label>
-                    <select class="form-select" id="approval_id" name="approval_id" required disabled>
-                        <option value="">Select Approval</option>
-                        {% for approval in approvals %}
-                        <option value="{{ approval.approval_id }}" {% if approval.approval_id == pa.approval_id %}selected{% endif %}>{{ approval.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="status" class="form-label">Status</label>
-                    <input type="text" class="form-control" id="status" name="status" value="{{ pa.status }}">
-                </div>
-                <div class="mb-3">
-                    <label for="approval_number" class="form-label">Approval Number</label>
-                    <input type="text" class="form-control" id="approval_number" name="approval_number" value="{{ pa.approval_number }}">
-                </div>
-                <div class="mb-3">
-                    <label for="approval_date" class="form-label">Approval Date</label>
-                    <input type="date" class="form-control" id="approval_date" name="approval_date" value="{{ pa.approval_date.strftime('%Y-%m-%d') if pa.approval_date else '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="expiry_date" class="form-label">Expiry Date</label>
-                    <input type="date" class="form-control" id="expiry_date" name="expiry_date" value="{{ pa.expiry_date.strftime('%Y-%m-%d') if pa.expiry_date else '' }}">
-                </div>
-                <div class="mb-3">
-                    <label for="issuing_authority" class="form-label">Issuing Authority</label>
-                    <input type="text" class="form-control" id="issuing_authority" name="issuing_authority" value="{{ pa.issuing_authority }}">
-                </div>
-                <div class="mb-3">
-                    <label for="document_url" class="form-label">Document URL</label>
-                    <input type="url" class="form-control" id="document_url" name="document_url" value="{{ pa.document_url }}">
-                </div>
-                <div class="mb-3">
-                    <label for="notes" class="form-label">Notes</label>
-                    <textarea class="form-control" id="notes" name="notes" rows="3">{{ pa.notes }}</textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Update Project Approval</button>
-                <a href="{{ url_for('admin.project_approvals') }}" class="btn btn-secondary ms-2">Cancel</a>
-            </form>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1><i class="fas fa-stamp me-3"></i>Edit Project Approval</h1>
+                <p class="mb-0">Update approval details and status</p>
+            </div>
+            <div class="col-md-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-md-end">
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin.project_approvals') }}">Project Approvals</a></li>
+                        <li class="breadcrumb-item active">Edit</li>
+                    </ol>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="luxury-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-edit"></i>Approval Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="luxury-form">
+                        <div class="row">
+                            <!-- Project Selection (Disabled) -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="project_id" class="form-label">
+                                        <i class="fas fa-building"></i>Project
+                                    </label>
+                                    <select class="form-select" id="project_id" name="project_id" required disabled>
+                                        <option value="">Select Project</option>
+                                        {% for project in projects %}
+                                        <option value="{{ project.project_id }}" {% if project.project_id == pa.project_id %}selected{% endif %}>{{ project.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-muted">Project cannot be changed after creation</small>
+                                </div>
+                            </div>
+
+                            <!-- Approval Type (Disabled) -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="approval_id" class="form-label">
+                                        <i class="fas fa-certificate"></i>Approval Type
+                                    </label>
+                                    <select class="form-select" id="approval_id" name="approval_id" required disabled>
+                                        <option value="">Select Approval Type</option>
+                                        {% for approval in approvals %}
+                                        <option value="{{ approval.approval_id }}" {% if approval.approval_id == pa.approval_id %}selected{% endif %}>{{ approval.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-muted">Approval type cannot be changed after creation</small>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="status" class="form-label">
+                                        <i class="fas fa-flag"></i>Status
+                                    </label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="">Select Status</option>
+                                        <option value="Pending" {% if pa.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Approved" {% if pa.status == 'Approved' %}selected{% endif %}>Approved</option>
+                                        <option value="Rejected" {% if pa.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                        <option value="Expired" {% if pa.status == 'Expired' %}selected{% endif %}>Expired</option>
+                                        <option value="Under Review" {% if pa.status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                                    </select>
+                                    <small class="text-muted">Current approval status</small>
+                                </div>
+                            </div>
+
+                            <!-- Approval Number -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="approval_number" class="form-label">
+                                        <i class="fas fa-hashtag"></i>Approval Number
+                                    </label>
+                                    <input type="text" class="form-control" id="approval_number" name="approval_number" 
+                                           value="{{ pa.approval_number }}" placeholder="Enter approval reference number" required>
+                                    <small class="text-muted">Official approval reference number</small>
+                                </div>
+                            </div>
+
+                            <!-- Approval Date -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="approval_date" class="form-label">
+                                        <i class="fas fa-calendar-check"></i>Approval Date
+                                    </label>
+                                    <input type="date" class="form-control" id="approval_date" name="approval_date" 
+                                           value="{{ pa.approval_date.strftime('%Y-%m-%d') if pa.approval_date else '' }}">
+                                    <small class="text-muted">Date when approval was granted</small>
+                                </div>
+                            </div>
+
+                            <!-- Expiry Date -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="expiry_date" class="form-label">
+                                        <i class="fas fa-calendar-times"></i>Expiry Date
+                                    </label>
+                                    <input type="date" class="form-control" id="expiry_date" name="expiry_date" 
+                                           value="{{ pa.expiry_date.strftime('%Y-%m-%d') if pa.expiry_date else '' }}">
+                                    <small class="text-muted">Date when approval expires</small>
+                                </div>
+                            </div>
+
+                            <!-- Issuing Authority -->
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="issuing_authority" class="form-label">
+                                        <i class="fas fa-university"></i>Issuing Authority
+                                    </label>
+                                    <input type="text" class="form-control" id="issuing_authority" name="issuing_authority" 
+                                           value="{{ pa.issuing_authority }}" placeholder="Government department, municipal corporation, etc.">
+                                    <small class="text-muted">Authority that issued this approval</small>
+                                </div>
+                            </div>
+
+                            <!-- Document URL -->
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="document_url" class="form-label">
+                                        <i class="fas fa-link"></i>Document URL
+                                    </label>
+                                    <input type="url" class="form-control" id="document_url" name="document_url" 
+                                           value="{{ pa.document_url }}" placeholder="https://example.com/document.pdf">
+                                    <small class="text-muted">Link to the approval document (optional)</small>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="notes" class="form-label">
+                                        <i class="fas fa-sticky-note"></i>Notes
+                                    </label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                              placeholder="Additional notes or comments about this approval...">{{ pa.notes }}</textarea>
+                                    <small class="text-muted">Any additional information about this approval</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approval Status Information -->
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Approval Status</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Created:</strong> {{ pa.created_at.strftime('%B %d, %Y at %I:%M %p') if pa.created_at else 'Not available' }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Last Updated:</strong> {{ pa.updated_at.strftime('%B %d, %Y at %I:%M %p') if pa.updated_at else 'Not available' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions mt-4 text-end">
+                            <a href="{{ url_for('admin.project_approvals') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-save me-1"></i>Update Project Approval
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Date validation - expiry date should be after approval date
+    const approvalDate = document.getElementById('approval_date');
+    const expiryDate = document.getElementById('expiry_date');
+    
+    function validateDates() {
+        if (approvalDate.value && expiryDate.value) {
+            const approval = new Date(approvalDate.value);
+            const expiry = new Date(expiryDate.value);
+            
+            if (expiry <= approval) {
+                expiryDate.setCustomValidity('Expiry date must be after approval date');
+            } else {
+                expiryDate.setCustomValidity('');
+            }
+        }
+    }
+    
+    approvalDate.addEventListener('change', validateDates);
+    expiryDate.addEventListener('change', validateDates);
+    
+    // Status color coding
+    const statusSelect = document.getElementById('status');
+    function updateStatusColor() {
+        statusSelect.className = 'form-select';
+        switch(statusSelect.value) {
+            case 'Approved':
+                statusSelect.style.borderColor = '#27ae60';
+                break;
+            case 'Pending':
+            case 'Under Review':
+                statusSelect.style.borderColor = '#f39c12';
+                break;
+            case 'Rejected':
+            case 'Expired':
+                statusSelect.style.borderColor = '#e74c3c';
+                break;
+            default:
+                statusSelect.style.borderColor = '';
+        }
+    }
+    
+    updateStatusColor(); // Set initial color
+    statusSelect.addEventListener('change', updateStatusColor);
+});
+</script>
 {% endblock %}

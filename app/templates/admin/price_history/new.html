@@ -3,62 +3,354 @@
 {% block title %}New Price History - Admin Panel{% endblock %}
 {% block page_title %}Create New Price History{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-body">
-            <h3 class="card-title mb-4">Add New Price History</h3>
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="project_id" class="form-label">Project</label>
-                    <select class="form-select" id="project_id" name="project_id" required>
-                        <option value="">Select Project</option>
-                        {% for project in projects %}
-                        <option value="{{ project.project_id }}">{{ project.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="unit_type_id" class="form-label">Unit Type</label>
-                    <select class="form-select" id="unit_type_id" name="unit_type_id" required>
-                        <option value="">Select Unit Type</option>
-                        {% for ut in unit_types %}
-                        <option value="{{ ut.unit_type_id }}">{{ ut.type_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="old_price" class="form-label">Old Price</label>
-                    <input type="number" step="0.01" class="form-control" id="old_price" name="old_price">
-                </div>
-                <div class="mb-3">
-                    <label for="new_price" class="form-label">New Price</label>
-                    <input type="number" step="0.01" class="form-control" id="new_price" name="new_price">
-                </div>
-                <div class="mb-3">
-                    <label for="old_price_per_sqft" class="form-label">Old Price/Sqft</label>
-                    <input type="number" step="0.01" class="form-control" id="old_price_per_sqft" name="old_price_per_sqft">
-                </div>
-                <div class="mb-3">
-                    <label for="new_price_per_sqft" class="form-label">New Price/Sqft</label>
-                    <input type="number" step="0.01" class="form-control" id="new_price_per_sqft" name="new_price_per_sqft">
-                </div>
-                <div class="mb-3">
-                    <label for="change_percentage" class="form-label">Change %</label>
-                    <input type="number" step="0.01" class="form-control" id="change_percentage" name="change_percentage">
-                </div>
-                <div class="mb-3">
-                    <label for="change_reason" class="form-label">Change Reason</label>
-                    <input type="text" class="form-control" id="change_reason" name="change_reason">
-                </div>
-                <div class="mb-3">
-                    <label for="effective_date" class="form-label">Effective Date</label>
-                    <input type="date" class="form-control" id="effective_date" name="effective_date">
-                </div>
-                <button type="submit" class="btn btn-primary">Create Price History</button>
-                <a href="{{ url_for('admin.price_history') }}" class="btn btn-secondary ms-2">Cancel</a>
-            </form>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1><i class="fas fa-chart-line me-3"></i>Add Price History</h1>
+                <p class="mb-0">Track price changes over time</p>
+            </div>
+            <div class="col-md-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-md-end">
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('admin.price_history') }}">Price History</a></li>
+                        <li class="breadcrumb-item active">New</li>
+                    </ol>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="luxury-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-plus-circle"></i>Price History Information</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="luxury-form">
+                        <div class="row">
+                            <!-- Project Selection -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="project_id" class="form-label">
+                                        <i class="fas fa-building"></i>Project
+                                    </label>
+                                    <select class="form-select" id="project_id" name="project_id" required>
+                                        <option value="">Select Project</option>
+                                        {% for project in projects %}
+                                        <option value="{{ project.project_id }}">{{ project.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-muted">Choose the project for price tracking</small>
+                                </div>
+                            </div>
+
+                            <!-- Unit Type Selection -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="unit_type_id" class="form-label">
+                                        <i class="fas fa-home"></i>Unit Type
+                                    </label>
+                                    <select class="form-select" id="unit_type_id" name="unit_type_id" required>
+                                        <option value="">Select Unit Type</option>
+                                        {% for ut in unit_types %}
+                                        <option value="{{ ut.unit_type_id }}">{{ ut.type_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-muted">Unit type for this price history</small>
+                                </div>
+                            </div>
+
+                            <!-- Old Price -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="old_price" class="form-label">
+                                        <i class="fas fa-rupee-sign"></i>Previous Price
+                                    </label>
+                                    <div class="input-with-unit">
+                                        <input type="number" step="0.01" class="form-control" id="old_price" 
+                                               name="old_price" placeholder="0.00" min="0">
+                                        <span class="input-unit">₹</span>
+                                    </div>
+                                    <small class="text-muted">Previous unit price in rupees</small>
+                                </div>
+                            </div>
+
+                            <!-- New Price -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="new_price" class="form-label">
+                                        <i class="fas fa-rupee-sign"></i>New Price
+                                    </label>
+                                    <div class="input-with-unit">
+                                        <input type="number" step="0.01" class="form-control" id="new_price" 
+                                               name="new_price" placeholder="0.00" min="0" required>
+                                        <span class="input-unit">₹</span>
+                                    </div>
+                                    <small class="text-muted">Current unit price in rupees</small>
+                                </div>
+                            </div>
+
+                            <!-- Old Price per Sqft -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="old_price_per_sqft" class="form-label">
+                                        <i class="fas fa-rupee-sign"></i>Previous Price/Sqft
+                                    </label>
+                                    <div class="input-with-unit">
+                                        <input type="number" step="0.01" class="form-control" id="old_price_per_sqft" 
+                                               name="old_price_per_sqft" placeholder="0.00" min="0">
+                                        <span class="input-unit">₹/sq ft</span>
+                                    </div>
+                                    <small class="text-muted">Previous price per square foot</small>
+                                </div>
+                            </div>
+
+                            <!-- New Price per Sqft -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="new_price_per_sqft" class="form-label">
+                                        <i class="fas fa-rupee-sign"></i>New Price/Sqft
+                                    </label>
+                                    <div class="input-with-unit">
+                                        <input type="number" step="0.01" class="form-control" id="new_price_per_sqft" 
+                                               name="new_price_per_sqft" placeholder="0.00" min="0" required>
+                                        <span class="input-unit">₹/sq ft</span>
+                                    </div>
+                                    <small class="text-muted">Current price per square foot</small>
+                                </div>
+                            </div>
+
+                            <!-- Change Percentage -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="change_percentage" class="form-label">
+                                        <i class="fas fa-percentage"></i>Price Change
+                                    </label>
+                                    <div class="input-with-unit">
+                                        <input type="number" step="0.01" class="form-control" id="change_percentage" 
+                                               name="change_percentage" placeholder="0.00" readonly>
+                                        <span class="input-unit">%</span>
+                                    </div>
+                                    <small class="text-muted">Auto-calculated percentage change</small>
+                                </div>
+                            </div>
+
+                            <!-- Effective Date -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-group">
+                                    <label for="effective_date" class="form-label">
+                                        <i class="fas fa-calendar"></i>Effective Date
+                                    </label>
+                                    <input type="date" class="form-control" id="effective_date" name="effective_date" 
+                                           value="{{ today }}" required>
+                                    <small class="text-muted">Date when the price change takes effect</small>
+                                </div>
+                            </div>
+
+                            <!-- Change Reason -->
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label for="change_reason" class="form-label">
+                                        <i class="fas fa-clipboard-list"></i>Change Reason
+                                    </label>
+                                    <select class="form-select" id="change_reason" name="change_reason" required>
+                                        <option value="">Select Reason</option>
+                                        <option value="Market Adjustment">Market Adjustment</option>
+                                        <option value="Construction Progress">Construction Progress</option>
+                                        <option value="Launch Price">Launch Price</option>
+                                        <option value="Festival Offer">Festival Offer</option>
+                                        <option value="Bulk Discount">Bulk Discount</option>
+                                        <option value="Pre-Launch Offer">Pre-Launch Offer</option>
+                                        <option value="Year-End Sale">Year-End Sale</option>
+                                        <option value="Inventory Clearance">Inventory Clearance</option>
+                                        <option value="Premium Floor Charge">Premium Floor Charge</option>
+                                        <option value="Corner Unit Premium">Corner Unit Premium</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <small class="text-muted">Reason for the price change</small>
+                                </div>
+                            </div>
+
+                            <!-- Custom Reason (if Other is selected) -->
+                            <div class="col-md-12 mb-3" id="custom-reason-group" style="display: none;">
+                                <div class="form-group">
+                                    <label for="custom_reason" class="form-label">
+                                        <i class="fas fa-edit"></i>Custom Reason
+                                    </label>
+                                    <input type="text" class="form-control" id="custom_reason" name="custom_reason" 
+                                           placeholder="Enter custom reason for price change">
+                                    <small class="text-muted">Specify the custom reason</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Change Summary -->
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="alert alert-info" id="price-summary" style="display: none;">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Price Change Summary</h6>
+                                    <div id="summary-content"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions mt-4 text-end">
+                            <a href="{{ url_for('admin.price_history') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-plus me-1"></i>Create Price History
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const oldPriceInput = document.getElementById('old_price');
+    const newPriceInput = document.getElementById('new_price');
+    const changePercentageInput = document.getElementById('change_percentage');
+    const changeReasonSelect = document.getElementById('change_reason');
+    const customReasonGroup = document.getElementById('custom-reason-group');
+    const priceSummary = document.getElementById('price-summary');
+    const summaryContent = document.getElementById('summary-content');
+    
+    // Calculate percentage change
+    function calculatePercentageChange() {
+        const oldPrice = parseFloat(oldPriceInput.value) || 0;
+        const newPrice = parseFloat(newPriceInput.value) || 0;
+        
+        if (oldPrice > 0 && newPrice > 0) {
+            const percentage = ((newPrice - oldPrice) / oldPrice) * 100;
+            changePercentageInput.value = percentage.toFixed(2);
+            
+            // Show summary
+            updatePriceSummary(oldPrice, newPrice, percentage);
+        } else {
+            changePercentageInput.value = '';
+            priceSummary.style.display = 'none';
+        }
+    }
+    
+    // Update price summary
+    function updatePriceSummary(oldPrice, newPrice, percentage) {
+        const difference = newPrice - oldPrice;
+        const changeType = difference > 0 ? 'increase' : 'decrease';
+        const changeClass = difference > 0 ? 'text-success' : 'text-danger';
+        const arrow = difference > 0 ? '↗' : '↘';
+        
+        summaryContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Previous Price:</strong><br>
+                    <span class="text-muted">₹ ${oldPrice.toLocaleString('en-IN')}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>New Price:</strong><br>
+                    <span class="text-primary">₹ ${newPrice.toLocaleString('en-IN')}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Difference:</strong><br>
+                    <span class="${changeClass}">${arrow} ₹ ${Math.abs(difference).toLocaleString('en-IN')}</span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Change:</strong><br>
+                    <span class="${changeClass}">${percentage.toFixed(2)}%</span>
+                </div>
+            </div>
+        `;
+        priceSummary.style.display = 'block';
+    }
+    
+    // Show/hide custom reason field
+    changeReasonSelect.addEventListener('change', function() {
+        if (this.value === 'Other') {
+            customReasonGroup.style.display = 'block';
+            document.getElementById('custom_reason').required = true;
+        } else {
+            customReasonGroup.style.display = 'none';
+            document.getElementById('custom_reason').required = false;
+            document.getElementById('custom_reason').value = '';
+        }
+    });
+    
+    // Event listeners for price calculation
+    oldPriceInput.addEventListener('input', calculatePercentageChange);
+    newPriceInput.addEventListener('input', calculatePercentageChange);
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const projectId = document.getElementById('project_id').value;
+        const unitTypeId = document.getElementById('unit_type_id').value;
+        const newPrice = parseFloat(newPriceInput.value) || 0;
+        const newPricePerSqft = parseFloat(document.getElementById('new_price_per_sqft').value) || 0;
+        const effectiveDate = document.getElementById('effective_date').value;
+        const changeReason = changeReasonSelect.value;
+        
+        if (!projectId) {
+            e.preventDefault();
+            alert('Please select a project');
+            return;
+        }
+        
+        if (!unitTypeId) {
+            e.preventDefault();
+            alert('Please select a unit type');
+            return;
+        }
+        
+        if (newPrice <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid new price');
+            return;
+        }
+        
+        if (newPricePerSqft <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid price per square foot');
+            return;
+        }
+        
+        if (!effectiveDate) {
+            e.preventDefault();
+            alert('Please select an effective date');
+            return;
+        }
+        
+        if (!changeReason) {
+            e.preventDefault();
+            alert('Please select a change reason');
+            return;
+        }
+        
+        if (changeReason === 'Other' && !document.getElementById('custom_reason').value.trim()) {
+            e.preventDefault();
+            alert('Please provide a custom reason');
+            return;
+        }
+    });
+    
+    // Set today's date as default
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('effective_date').value = today;
+});
+</script>
 {% endblock %}

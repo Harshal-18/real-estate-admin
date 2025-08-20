@@ -1,75 +1,289 @@
 {% extends "admin/base.html" %}
 
-{% block title %}New Review - Admin Panel{% endblock %}
+{% block title %}New Review - Premium Real Estate Admin{% endblock %}
+{% block page_title %}New Review{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">New Review</h1>
-        <a href="{{ url_for('admin.reviews') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Reviews
-        </a>
-    </div>
-    <div class="card">
-        <div class="card-body">
-            <form method="POST">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label for="project_id" class="form-label">Project</label>
-                            <select class="form-select" id="project_id" name="project_id" required>
-                                <option value="">Select Project</option>
-                                {% for project in projects %}
-                                <option value="{{ project.project_id }}">{{ project.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label for="developer_id" class="form-label">Developer</label>
-                            <select class="form-select" id="developer_id" name="developer_id" required>
-                                <option value="">Select Developer</option>
-                                {% for developer in developers %}
-                                <option value="{{ developer.developer_id }}">{{ developer.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="mb-3">
-                            <label for="user_id" class="form-label">User</label>
-                            <select class="form-select" id="user_id" name="user_id" required>
-                                <option value="">Select User</option>
-                                {% for user in users %}
-                                <option value="{{ user.user_id }}">{{ user.first_name }} {{ user.last_name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-2"><div class="mb-3"><label for="rating" class="form-label">Overall Rating</label><input type="number" class="form-control" id="rating" name="rating" min="1" max="5" required></div></div>
-                    <div class="col-md-2"><div class="mb-3"><label for="construction_quality_rating" class="form-label">Construction Quality</label><input type="number" class="form-control" id="construction_quality_rating" name="construction_quality_rating" min="1" max="5"></div></div>
-                    <div class="col-md-2"><div class="mb-3"><label for="amenities_rating" class="form-label">Amenities</label><input type="number" class="form-control" id="amenities_rating" name="amenities_rating" min="1" max="5"></div></div>
-                    <div class="col-md-2"><div class="mb-3"><label for="location_rating" class="form-label">Location</label><input type="number" class="form-control" id="location_rating" name="location_rating" min="1" max="5"></div></div>
-                    <div class="col-md-2"><div class="mb-3"><label for="value_for_money_rating" class="form-label">Value for Money</label><input type="number" class="form-control" id="value_for_money_rating" name="value_for_money_rating" min="1" max="5"></div></div>
-                    <div class="col-md-2"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="is_verified" name="is_verified"><label class="form-check-label" for="is_verified">Verified</label></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6"><div class="mb-3"><label for="title" class="form-label">Title</label><input type="text" class="form-control" id="title" name="title"></div></div>
-                    <div class="col-md-6"><div class="mb-3"><label for="review_text" class="form-label">Review</label><textarea class="form-control" id="review_text" name="review_text"></textarea></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6"><div class="mb-3"><label for="pros" class="form-label">Pros</label><textarea class="form-control" id="pros" name="pros"></textarea></div></div>
-                    <div class="col-md-6"><div class="mb-3"><label for="cons" class="form-label">Cons</label><textarea class="form-control" id="cons" name="cons"></textarea></div></div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Create Review</button>
-                    <a href="{{ url_for('admin.reviews') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
-        </div>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-star"></i> Create New Premium Review</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.reviews') }}">Reviews</a></li>
+                <li class="breadcrumb-item active">New Review</li>
+            </ol>
+        </nav>
     </div>
 </div>
-{% endblock %} 
+
+<div class="luxury-card">
+    <div class="card-header">
+        <h5><i class="fas fa-comment"></i> Review Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="reviewForm">
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="project_id" class="form-label"><i class="fas fa-building"></i> Project *</label>
+                        <select class="form-select" id="project_id" name="project_id" required>
+                            <option value="">Select Project</option>
+                            {% for project in projects %}
+                            <option value="{{ project.project_id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="developer_id" class="form-label"><i class="fas fa-users-cog"></i> Developer *</label>
+                        <select class="form-select" id="developer_id" name="developer_id" required>
+                            <option value="">Select Developer</option>
+                            {% for developer in developers %}
+                            <option value="{{ developer.developer_id }}">{{ developer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label"><i class="fas fa-user"></i> User *</label>
+                        <select class="form-select" id="user_id" name="user_id" required>
+                            <option value="">Select User</option>
+                            {% for user in users %}
+                            <option value="{{ user.user_id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rating Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-star"></i> Ratings</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="rating" class="form-label"><i class="fas fa-star"></i> Overall Rating *</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="rating" name="rating" min="1" max="5" step="0.1" required placeholder="Enter rating">
+                            <div class="input-unit">★ stars</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="construction_quality_rating" class="form-label"><i class="fas fa-hammer"></i> Construction Quality</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="construction_quality_rating" name="construction_quality_rating" min="1" max="5" step="0.1" placeholder="Enter rating">
+                            <div class="input-unit">★ stars</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="amenities_rating" class="form-label"><i class="fas fa-swimming-pool"></i> Amenities</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="amenities_rating" name="amenities_rating" min="1" max="5" step="0.1" placeholder="Enter rating">
+                            <div class="input-unit">★ stars</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="location_rating" class="form-label"><i class="fas fa-map-marker-alt"></i> Location</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="location_rating" name="location_rating" min="1" max="5" step="0.1" placeholder="Enter rating">
+                            <div class="input-unit">★ stars</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="value_for_money_rating" class="form-label"><i class="fas fa-rupee-sign"></i> Value for Money</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="value_for_money_rating" name="value_for_money_rating" min="1" max="5" step="0.1" placeholder="Enter rating">
+                            <div class="input-unit">★ stars</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Content -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-comment-alt"></i> Review Content</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="title" class="form-label"><i class="fas fa-heading"></i> Review Title</label>
+                        <input type="text" class="form-control" id="title" name="title" placeholder="Enter a compelling title for the review">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="review_text" class="form-label"><i class="fas fa-comment"></i> Review Description</label>
+                        <textarea class="form-control" id="review_text" name="review_text" rows="4" placeholder="Write the detailed review"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="pros" class="form-label"><i class="fas fa-thumbs-up text-success"></i> Pros</label>
+                        <textarea class="form-control" id="pros" name="pros" rows="3" placeholder="List the positive aspects"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="cons" class="form-label"><i class="fas fa-thumbs-down text-danger"></i> Cons</label>
+                        <textarea class="form-control" id="cons" name="cons" rows="3" placeholder="List areas for improvement"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-toggle-on"></i> Status</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified">
+                            <label class="form-check-label" for="is_verified">
+                                Verified Review
+                            </label>
+                        </div>
+                        <div class="form-text">Enable this to mark the review as verified and trustworthy</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.reviews') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Reviews
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-plus"></i> Create Review
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Star rating visualization
+    function updateStarDisplay(inputId) {
+        const value = parseFloat($('#' + inputId).val()) || 0;
+        const parent = $('#' + inputId).parent().parent();
+        
+        // Remove existing star display
+        parent.find('.star-display').remove();
+        
+        if (value > 0) {
+            let starHtml = '<div class="star-display mt-1">';
+            const fullStars = Math.floor(value);
+            const hasHalfStar = value % 1 !== 0;
+            
+            // Add full stars
+            for (let i = 0; i < fullStars; i++) {
+                starHtml += '<i class="fas fa-star text-warning"></i>';
+            }
+            
+            // Add half star if needed
+            if (hasHalfStar) {
+                starHtml += '<i class="fas fa-star-half-alt text-warning"></i>';
+            }
+            
+            // Add empty stars
+            const remainingStars = 5 - Math.ceil(value);
+            for (let i = 0; i < remainingStars; i++) {
+                starHtml += '<i class="far fa-star text-muted"></i>';
+            }
+            
+            starHtml += ` <small class="text-muted ms-2">${value}/5</small></div>`;
+            parent.append(starHtml);
+        }
+    }
+    
+    // Bind star display to rating inputs
+    const ratingFields = ['rating', 'construction_quality_rating', 'amenities_rating', 'location_rating', 'value_for_money_rating'];
+    
+    ratingFields.forEach(field => {
+        $('#' + field).on('input', function() {
+            const value = parseFloat($(this).val());
+            if (value < 1) $(this).val(1);
+            if (value > 5) $(this).val(5);
+            updateStarDisplay(field);
+        });
+        
+        // Initialize display
+        updateStarDisplay(field);
+    });
+    
+    // Form validation
+    $('#reviewForm').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = ['project_id', 'developer_id', 'user_id', 'rating'];
+        requiredFields.forEach(field => {
+            const element = $('#' + field);
+            if (!element.val()) {
+                element.addClass('is-invalid');
+                isValid = false;
+            } else {
+                element.removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

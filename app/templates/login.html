@@ -36,6 +36,13 @@
             background-color: rgba(255, 255, 255, 0.15) !important;
             border-color: rgba(255, 255, 255, 0.5) !important;
         }
+        .auth-links a {
+            color: #007bff !important; /* Bootstrap primary blue */
+            text-decoration: none;
+        }
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -130,7 +137,7 @@
             <!-- Sign Up Link -->
             <div class="auth-links">
                 <span style="color: white;">Don't have an account?</span>
-                <a href="{{ url_for('auth.signup') }}">Create Account</a>
+                <a href="{{ url_for('auth.signup') }}" style="color: #007bff !important;">Create Account</a>
             </div>
         </div>
     </div>

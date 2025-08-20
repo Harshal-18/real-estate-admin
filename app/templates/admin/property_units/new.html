@@ -1,88 +1,461 @@
 {% extends "admin/base.html" %}
 
-{% block title %}New Property Unit - Admin Panel{% endblock %}
+{% block title %}New Property Unit - Premium Real Estate Admin{% endblock %}
+{% block page_title %}New Property Unit{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">New Property Unit</h1>
-        <a href="{{ url_for('admin.property_units') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Property Units
-        </a>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
-            <form method="POST">
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="unit_number" class="form-label">Unit Number</label><input type="text" class="form-control" id="unit_number" name="unit_number" required></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="project_id" class="form-label">Project</label><select class="form-select" id="project_id" name="project_id" required><option value="">Select Project</option>{% for project in projects %}<option value="{{ project.project_id }}">{{ project.name }}</option>{% endfor %}</select></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="unit_type_id" class="form-label">Unit Type</label><select class="form-select" id="unit_type_id" name="unit_type_id"><option value="">Select Unit Type (Optional)</option>{% for unit_type in unit_types %}<option value="{{ unit_type.unit_type_id }}">{{ unit_type.type_name }}</option>{% endfor %}</select></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="tower_id" class="form-label">Tower</label><select class="form-select" id="tower_id" name="tower_id"><option value="">Select Tower (Optional)</option>{% for tower in towers %}<option value="{{ tower.tower_id }}">{{ tower.tower_name }}</option>{% endfor %}</select></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="floor_number" class="form-label">Floor Number</label><input type="number" class="form-control" id="floor_number" name="floor_number"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="unit_position" class="form-label">Unit Position</label><input type="text" class="form-control" id="unit_position" name="unit_position"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="wing" class="form-label">Wing</label><input type="text" class="form-control" id="wing" name="wing"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="carpet_area" class="form-label">Carpet Area</label><input type="number" step="0.01" class="form-control" id="carpet_area" name="carpet_area"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="built_up_area" class="form-label">Built Up Area</label><input type="number" step="0.01" class="form-control" id="built_up_area" name="built_up_area"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="super_area" class="form-label">Super Area</label><input type="number" step="0.01" class="form-control" id="super_area" name="super_area"></div></div>
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_corner_unit" name="has_corner_unit"><label class="form-check-label" for="has_corner_unit">Corner Unit</label></div></div>
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_extra_balcony" name="has_extra_balcony"><label class="form-check-label" for="has_extra_balcony">Extra Balcony</label></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_servant_quarter" name="has_servant_quarter"><label class="form-check-label" for="has_servant_quarter">Servant Quarter</label></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="unit_price" class="form-label">Unit Price</label><input type="number" step="0.01" class="form-control" id="unit_price" name="unit_price"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="price_per_sqft" class="form-label">Price per Sqft</label><input type="number" step="0.01" class="form-control" id="price_per_sqft" name="price_per_sqft"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="maintenance_charge" class="form-label">Maintenance Charge</label><input type="number" step="0.01" class="form-control" id="maintenance_charge" name="maintenance_charge"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="status" class="form-label">Status</label><input type="text" class="form-control" id="status" name="status"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="possession_date" class="form-label">Possession Date</label><input type="date" class="form-control" id="possession_date" name="possession_date"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="premium_percentage" class="form-label">Premium %</label><input type="number" step="0.01" class="form-control" id="premium_percentage" name="premium_percentage"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="discount_percentage" class="form-label">Discount %</label><input type="number" step="0.01" class="form-control" id="discount_percentage" name="discount_percentage"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="actual_facing_direction" class="form-label">Actual Facing Direction</label><input type="text" class="form-control" id="actual_facing_direction" name="actual_facing_direction"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12"><div class="mb-3"><label for="view_description" class="form-label">View Description</label><textarea class="form-control" id="view_description" name="view_description"></textarea></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="is_active" name="is_active"><label class="form-check-label" for="is_active">Active</label></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="block_number" class="form-label">Block Number</label><input type="text" class="form-control" id="block_number" name="block_number"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="booking_status" class="form-label">Booking Status</label><input type="text" class="form-control" id="booking_status" name="booking_status"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="possession_status" class="form-label">Possession Status</label><input type="text" class="form-control" id="possession_status" name="possession_status"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="base_price" class="form-label">Base Price</label><input type="number" step="0.01" class="form-control" id="base_price" name="base_price"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="premium_charges" class="form-label">Premium Charges</label><input type="number" step="0.01" class="form-control" id="premium_charges" name="premium_charges"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="other_charges" class="form-label">Other Charges</label><input type="number" step="0.01" class="form-control" id="other_charges" name="other_charges"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="total_price" class="form-label">Total Price</label><input type="number" step="0.01" class="form-control" id="total_price" name="total_price"></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="facing_direction" class="form-label">Facing Direction</label><input type="text" class="form-control" id="facing_direction" name="facing_direction"></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="mb-3"><label for="view_type" class="form-label">View Type</label><input type="text" class="form-control" id="view_type" name="view_type"></div></div>
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="corner_unit" name="corner_unit"><label class="form-check-label" for="corner_unit">Corner Unit (Alt)</label></div></div>
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_private_terrace" name="has_private_terrace"><label class="form-check-label" for="has_private_terrace">Private Terrace</label></div></div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="has_private_garden" name="has_private_garden"><label class="form-check-label" for="has_private_garden">Private Garden</label></div></div>
-                    <div class="col-md-4"><div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" id="is_modified" name="is_modified"><label class="form-check-label" for="is_modified">Modified</label></div></div>
-                    <div class="col-md-4"><div class="mb-3"><label for="modifications" class="form-label">Modifications</label><textarea class="form-control" id="modifications" name="modifications"></textarea></div></div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Create Property Unit</button>
-                    <a href="{{ url_for('admin.property_units') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
-        </div>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-home"></i> Create New Premium Property Unit</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.property_units') }}">Property Units</a></li>
+                <li class="breadcrumb-item active">New Unit</li>
+            </ol>
+        </nav>
     </div>
 </div>
-{% endblock %} 
+
+<div class="luxury-card">
+    <div class="card-header">
+        <h5><i class="fas fa-home"></i> Property Unit Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="propertyUnitForm">
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="unit_number" class="form-label"><i class="fas fa-hashtag"></i> Unit Number *</label>
+                        <input type="text" class="form-control" id="unit_number" name="unit_number" required placeholder="e.g., A-101">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="project_id" class="form-label"><i class="fas fa-building"></i> Project *</label>
+                        <select class="form-select" id="project_id" name="project_id" required>
+                            <option value="">Select Project</option>
+                            {% for project in projects %}
+                            <option value="{{ project.project_id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="unit_type_id" class="form-label"><i class="fas fa-home"></i> Unit Type</label>
+                        <select class="form-select" id="unit_type_id" name="unit_type_id">
+                            <option value="">Select Unit Type (Optional)</option>
+                            {% for unit_type in unit_types %}
+                            <option value="{{ unit_type.unit_type_id }}">{{ unit_type.type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="tower_id" class="form-label"><i class="fas fa-building"></i> Tower</label>
+                        <select class="form-select" id="tower_id" name="tower_id">
+                            <option value="">Select Tower (Optional)</option>
+                            {% for tower in towers %}
+                            <option value="{{ tower.tower_id }}">{{ tower.tower_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="floor_number" class="form-label"><i class="fas fa-layer-group"></i> Floor Number</label>
+                        <input type="number" class="form-control" id="floor_number" name="floor_number" placeholder="e.g., 12">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="wing" class="form-label"><i class="fas fa-map-signs"></i> Wing</label>
+                        <input type="text" class="form-control" id="wing" name="wing" placeholder="e.g., A, B, C">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="block_number" class="form-label"><i class="fas fa-cube"></i> Block Number</label>
+                        <input type="text" class="form-control" id="block_number" name="block_number" placeholder="e.g., Block 1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area Details -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-ruler-combined"></i> Area Details</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="carpet_area" class="form-label"><i class="fas fa-th-large"></i> Carpet Area</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="carpet_area" name="carpet_area" placeholder="Enter area">
+                            <div class="input-unit">sq ft</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="built_up_area" class="form-label"><i class="fas fa-vector-square"></i> Built Up Area</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="built_up_area" name="built_up_area" placeholder="Enter area">
+                            <div class="input-unit">sq ft</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="super_area" class="form-label"><i class="fas fa-expand-alt"></i> Super Area</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="super_area" name="super_area" placeholder="Enter area">
+                            <div class="input-unit">sq ft</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-rupee-sign"></i> Pricing Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="base_price" class="form-label"><i class="fas fa-rupee-sign"></i> Base Price</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="base_price" name="base_price" placeholder="Enter amount">
+                            <div class="input-unit">₹ lakhs</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="premium_charges" class="form-label"><i class="fas fa-star"></i> Premium Charges</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="premium_charges" name="premium_charges" placeholder="Enter amount">
+                            <div class="input-unit">₹ lakhs</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="other_charges" class="form-label"><i class="fas fa-plus"></i> Other Charges</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="other_charges" name="other_charges" placeholder="Enter amount">
+                            <div class="input-unit">₹ lakhs</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="total_price" class="form-label"><i class="fas fa-calculator"></i> Total Price</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="total_price" name="total_price" placeholder="Auto-calculated">
+                            <div class="input-unit">₹ lakhs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="price_per_sqft" class="form-label"><i class="fas fa-calculator"></i> Price per Sq Ft</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="price_per_sqft" name="price_per_sqft" placeholder="Auto-calculated">
+                            <div class="input-unit">₹/sq ft</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="maintenance_charge" class="form-label"><i class="fas fa-tools"></i> Maintenance Charge</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="maintenance_charge" name="maintenance_charge" placeholder="Enter amount">
+                            <div class="input-unit">₹/month</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="premium_percentage" class="form-label"><i class="fas fa-percentage"></i> Premium Percentage</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="premium_percentage" name="premium_percentage" placeholder="Enter percentage">
+                            <div class="input-unit">%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location & Features -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-compass"></i> Location & Features</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="facing_direction" class="form-label"><i class="fas fa-compass"></i> Facing Direction</label>
+                        <select class="form-select" id="facing_direction" name="facing_direction">
+                            <option value="">Select Direction</option>
+                            <option value="North">North</option>
+                            <option value="South">South</option>
+                            <option value="East">East</option>
+                            <option value="West">West</option>
+                            <option value="North-East">North-East</option>
+                            <option value="North-West">North-West</option>
+                            <option value="South-East">South-East</option>
+                            <option value="South-West">South-West</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="view_type" class="form-label"><i class="fas fa-eye"></i> View Type</label>
+                        <select class="form-select" id="view_type" name="view_type">
+                            <option value="">Select View Type</option>
+                            <option value="Garden View">Garden View</option>
+                            <option value="Pool View">Pool View</option>
+                            <option value="City View">City View</option>
+                            <option value="Park View">Park View</option>
+                            <option value="Road View">Road View</option>
+                            <option value="Internal View">Internal View</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="unit_position" class="form-label"><i class="fas fa-map-marker-alt"></i> Unit Position</label>
+                        <input type="text" class="form-control" id="unit_position" name="unit_position" placeholder="e.g., Corner, Middle, End">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Features -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-star"></i> Special Features</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_corner_unit" name="has_corner_unit">
+                        <label class="form-check-label" for="has_corner_unit">Corner Unit</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_extra_balcony" name="has_extra_balcony">
+                        <label class="form-check-label" for="has_extra_balcony">Extra Balcony</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_servant_quarter" name="has_servant_quarter">
+                        <label class="form-check-label" for="has_servant_quarter">Servant Quarter</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_private_terrace" name="has_private_terrace">
+                        <label class="form-check-label" for="has_private_terrace">Private Terrace</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_private_garden" name="has_private_garden">
+                        <label class="form-check-label" for="has_private_garden">Private Garden</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_modified" name="is_modified">
+                        <label class="form-check-label" for="is_modified">Modified Unit</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">Active Unit</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Status Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="booking_status" class="form-label"><i class="fas fa-calendar-check"></i> Booking Status</label>
+                        <select class="form-select" id="booking_status" name="booking_status">
+                            <option value="Available">Available</option>
+                            <option value="Blocked">Blocked</option>
+                            <option value="Booked">Booked</option>
+                            <option value="Sold">Sold</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="possession_status" class="form-label"><i class="fas fa-key"></i> Possession Status</label>
+                        <select class="form-select" id="possession_status" name="possession_status">
+                            <option value="Under Construction">Under Construction</option>
+                            <option value="Ready to Move">Ready to Move</option>
+                            <option value="Handed Over">Handed Over</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="possession_date" class="form-label"><i class="fas fa-calendar"></i> Possession Date</label>
+                        <input type="date" class="form-control" id="possession_date" name="possession_date">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-file-alt"></i> Additional Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="view_description" class="form-label"><i class="fas fa-eye"></i> View Description</label>
+                        <textarea class="form-control" id="view_description" name="view_description" rows="3" placeholder="Describe the view from this unit"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="modifications" class="form-label"><i class="fas fa-edit"></i> Modifications</label>
+                        <textarea class="form-control" id="modifications" name="modifications" rows="3" placeholder="Describe any modifications made to the unit"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.property_units') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Property Units
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-plus"></i> Create Property Unit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-calculate total price
+    function calculateTotalPrice() {
+        const basePrice = parseFloat($('#base_price').val()) || 0;
+        const premiumCharges = parseFloat($('#premium_charges').val()) || 0;
+        const otherCharges = parseFloat($('#other_charges').val()) || 0;
+        const totalPrice = basePrice + premiumCharges + otherCharges;
+        
+        $('#total_price').val(totalPrice.toFixed(2));
+        calculatePricePerSqft();
+    }
+    
+    // Auto-calculate price per sqft
+    function calculatePricePerSqft() {
+        const totalPrice = parseFloat($('#total_price').val()) || 0;
+        const carpetArea = parseFloat($('#carpet_area').val()) || 0;
+        
+        if (totalPrice > 0 && carpetArea > 0) {
+            // Convert lakhs to rupees for calculation
+            const priceInRupees = totalPrice * 100000;
+            const pricePerSqft = priceInRupees / carpetArea;
+            $('#price_per_sqft').val(Math.round(pricePerSqft));
+        }
+    }
+    
+    // Bind calculation events
+    $('#base_price, #premium_charges, #other_charges').on('input', calculateTotalPrice);
+    $('#carpet_area').on('input', calculatePricePerSqft);
+    
+    // Calculate premium percentage
+    $('#premium_percentage').on('input', function() {
+        const basePrice = parseFloat($('#base_price').val()) || 0;
+        const premiumPercentage = parseFloat($(this).val()) || 0;
+        
+        if (basePrice > 0 && premiumPercentage > 0) {
+            const premiumCharges = (basePrice * premiumPercentage) / 100;
+            $('#premium_charges').val(premiumCharges.toFixed(2));
+            calculateTotalPrice();
+        }
+    });
+    
+    // Form validation
+    $('#propertyUnitForm').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = ['unit_number', 'project_id'];
+        requiredFields.forEach(field => {
+            const element = $('#' + field);
+            if (!element.val()) {
+                element.addClass('is-invalid');
+                isValid = false;
+            } else {
+                element.removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

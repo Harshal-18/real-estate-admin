@@ -1,118 +1,297 @@
 {% extends "admin/base.html" %}
 
-{% block title %}New Tower - Admin Panel{% endblock %}
+{% block title %}New Tower - Premium Real Estate Admin{% endblock %}
+{% block page_title %}New Tower{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">New Tower</h1>
-        <a href="{{ url_for('admin.towers') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Towers
-        </a>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
-            <form method="POST">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="tower_name" class="form-label">Tower Name *</label>
-                            <input type="text" class="form-control" id="tower_name" name="tower_name" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="tower_number" class="form-label">Tower Number</label>
-                            <input type="text" class="form-control" id="tower_number" name="tower_number">
-                        </div>
-                        <div class="mb-3">
-                            <label for="total_floors" class="form-label">Total Floors *</label>
-                            <input type="number" class="form-control" id="total_floors" name="total_floors" min="1" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="units_per_floor" class="form-label">Units Per Floor</label>
-                            <input type="number" class="form-control" id="units_per_floor" name="units_per_floor">
-                        </div>
-                        <div class="mb-3">
-                            <label for="total_units" class="form-label">Total Units</label>
-                            <input type="number" class="form-control" id="total_units" name="total_units">
-                        </div>
-                        <div class="mb-3">
-                            <label for="tower_type" class="form-label">Tower Type</label>
-                            <select class="form-select" id="tower_type" name="tower_type">
-                                <option value="">Select Type</option>
-                                <option value="residential">Residential</option>
-                                <option value="commercial">Commercial</option>
-                                <option value="mixed">Mixed</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="construction_status" class="form-label">Construction Status</label>
-                            <select class="form-select" id="construction_status" name="construction_status">
-                                <option value="under_construction">Under Construction</option>
-                                <option value="completed">Completed</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="possession_date" class="form-label">Possession Date</label>
-                            <input type="date" class="form-control" id="possession_date" name="possession_date">
-                        </div>
-                        <div class="mb-3">
-                            <label for="height_meters" class="form-label">Height (meters)</label>
-                            <input type="number" step="0.01" class="form-control" id="height_meters" name="height_meters">
-                        </div>
-                        <div class="mb-3">
-                            <label for="elevator_count" class="form-label">Elevator Count</label>
-                            <input type="number" class="form-control" id="elevator_count" name="elevator_count">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="project_id" class="form-label">Project *</label>
-                            <select class="form-select" id="project_id" name="project_id" required>
-                                <option value="">Select Project</option>
-                                {% for project in projects %}
-                                <option value="{{ project.project_id }}">{{ project.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="latitude" class="form-label">Latitude</label>
-                            <input type="number" step="0.00000001" class="form-control" id="latitude" name="latitude">
-                        </div>
-                        <div class="mb-3">
-                            <label for="longitude" class="form-label">Longitude</label>
-                            <input type="number" step="0.00000001" class="form-control" id="longitude" name="longitude">
-                        </div>
-                        <div class="mb-3">
-                            <label for="facing_direction" class="form-label">Facing Direction</label>
-                            <input type="text" class="form-control" id="facing_direction" name="facing_direction">
-                        </div>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="has_power_backup" name="has_power_backup">
-                            <label class="form-check-label" for="has_power_backup">Power Backup</label>
-                        </div>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="has_water_backup" name="has_water_backup">
-                            <label class="form-check-label" for="has_water_backup">Water Backup</label>
-                        </div>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="has_fire_safety" name="has_fire_safety">
-                            <label class="form-check-label" for="has_fire_safety">Fire Safety</label>
-                        </div>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
-                            <label class="form-check-label" for="is_active">Active</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Create Tower</button>
-                    <a href="{{ url_for('admin.towers') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
-        </div>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-building"></i> Create New Premium Tower</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.towers') }}">Towers</a></li>
+                <li class="breadcrumb-item active">New Tower</li>
+            </ol>
+        </nav>
     </div>
 </div>
+
+<div class="luxury-card">
+    <div class="card-header">
+        <h5><i class="fas fa-building"></i> Tower Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="towerForm">
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="tower_name" class="form-label"><i class="fas fa-tag"></i> Tower Name *</label>
+                        <input type="text" class="form-control" id="tower_name" name="tower_name" required placeholder="e.g., Tower A, Sky Tower">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="tower_number" class="form-label"><i class="fas fa-hashtag"></i> Tower Number</label>
+                        <input type="text" class="form-control" id="tower_number" name="tower_number" placeholder="e.g., T1, T2">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="project_id" class="form-label"><i class="fas fa-building"></i> Project *</label>
+                        <select class="form-select" id="project_id" name="project_id" required>
+                            <option value="">Select Project</option>
+                            {% for project in projects %}
+                            <option value="{{ project.project_id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Structure Details -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-layer-group"></i> Structure Details</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="total_floors" class="form-label"><i class="fas fa-layer-group"></i> Total Floors *</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="total_floors" name="total_floors" min="1" required placeholder="Count">
+                            <div class="input-unit">floors</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="units_per_floor" class="form-label"><i class="fas fa-home"></i> Units Per Floor</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="units_per_floor" name="units_per_floor" min="0" placeholder="Count">
+                            <div class="input-unit">units/floor</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="total_units" class="form-label"><i class="fas fa-building"></i> Total Units</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="total_units" name="total_units" min="0" placeholder="Auto-calculated">
+                            <div class="input-unit">units</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="height_meters" class="form-label"><i class="fas fa-arrows-alt-v"></i> Tower Height</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="height_meters" name="height_meters" min="0" placeholder="Enter height">
+                            <div class="input-unit">meters</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="elevator_count" class="form-label"><i class="fas fa-sort"></i> Elevator Count</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="elevator_count" name="elevator_count" min="0" placeholder="Count">
+                            <div class="input-unit">elevators</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="tower_type" class="form-label"><i class="fas fa-tag"></i> Tower Type</label>
+                        <select class="form-select" id="tower_type" name="tower_type">
+                            <option value="">Select Type</option>
+                            <option value="residential">Residential</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="mixed">Mixed</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="construction_status" class="form-label"><i class="fas fa-hard-hat"></i> Construction Status</label>
+                        <select class="form-select" id="construction_status" name="construction_status">
+                            <option value="under_construction">Under Construction</option>
+                            <option value="completed">Completed</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="possession_date" class="form-label"><i class="fas fa-calendar"></i> Possession Date</label>
+                        <input type="date" class="form-control" id="possession_date" name="possession_date">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location Details -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-map-marker-alt"></i> Location Details</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="latitude" class="form-label"><i class="fas fa-map-pin"></i> Latitude</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.00000001" class="form-control" id="latitude" name="latitude" placeholder="Enter latitude">
+                            <div class="input-unit">°</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="longitude" class="form-label"><i class="fas fa-map-pin"></i> Longitude</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.00000001" class="form-control" id="longitude" name="longitude" placeholder="Enter longitude">
+                            <div class="input-unit">°</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="facing_direction" class="form-label"><i class="fas fa-compass"></i> Facing Direction</label>
+                        <select class="form-select" id="facing_direction" name="facing_direction">
+                            <option value="">Select Direction</option>
+                            <option value="North">North</option>
+                            <option value="South">South</option>
+                            <option value="East">East</option>
+                            <option value="West">West</option>
+                            <option value="North-East">North-East</option>
+                            <option value="North-West">North-West</option>
+                            <option value="South-East">South-East</option>
+                            <option value="South-West">South-West</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Facilities -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-shield-alt"></i> Facilities & Safety</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_power_backup" name="has_power_backup">
+                        <label class="form-check-label" for="has_power_backup">
+                            <i class="fas fa-bolt"></i> Power Backup
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_water_backup" name="has_water_backup">
+                        <label class="form-check-label" for="has_water_backup">
+                            <i class="fas fa-tint"></i> Water Backup
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_fire_safety" name="has_fire_safety">
+                        <label class="form-check-label" for="has_fire_safety">
+                            <i class="fas fa-fire-extinguisher"></i> Fire Safety
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">
+                            <i class="fas fa-check-circle"></i> Active Tower
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.towers') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Towers
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-plus"></i> Create Tower
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-calculate total units
+    function calculateTotalUnits() {
+        const floors = parseInt($('#total_floors').val()) || 0;
+        const unitsPerFloor = parseInt($('#units_per_floor').val()) || 0;
+        
+        if (floors > 0 && unitsPerFloor > 0) {
+            const totalUnits = floors * unitsPerFloor;
+            $('#total_units').val(totalUnits);
+        }
+    }
+    
+    // Bind calculation events
+    $('#total_floors, #units_per_floor').on('input', calculateTotalUnits);
+    
+    // Form validation
+    $('#towerForm').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = ['tower_name', 'project_id', 'total_floors'];
+        requiredFields.forEach(field => {
+            const element = $('#' + field);
+            if (!element.val()) {
+                element.addClass('is-invalid');
+                isValid = false;
+            } else {
+                element.removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
 {% endblock %} 

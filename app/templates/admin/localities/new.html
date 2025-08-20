@@ -1,51 +1,416 @@
 {% extends "admin/base.html" %}
 
-{% block title %}New Locality - Admin Panel{% endblock %}
-{% block page_title %}Create New Locality{% endblock %}
+{% block title %}New Locality - Premium Real Estate Admin{% endblock %}
+{% block page_title %}New Locality{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-body">
-            <h3 class="card-title mb-4">Add New Locality</h3>
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="city_id" class="form-label">City</label>
-                    <select class="form-select" id="city_id" name="city_id" required>
-                        <option value="">Select City</option>
-                        {% for city in cities %}
-                        <option value="{{ city.city_id }}">{{ city.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="name" class="form-label">Locality Name</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
-                </div>
-                <div class="mb-3">
-                    <label for="locality_type" class="form-label">Type</label>
-                    <input type="text" class="form-control" id="locality_type" name="locality_type">
-                </div>
-                <div class="mb-3">
-                    <label for="pincode" class="form-label">Pincode</label>
-                    <input type="text" class="form-control" id="pincode" name="pincode">
-                </div>
-                <div class="mb-3">
-                    <label for="latitude" class="form-label">Latitude</label>
-                    <input type="number" step="0.00000001" class="form-control" id="latitude" name="latitude">
-                </div>
-                <div class="mb-3">
-                    <label for="longitude" class="form-label">Longitude</label>
-                    <input type="number" step="0.00000001" class="form-control" id="longitude" name="longitude">
-                </div>
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Create Locality</button>
-                <a href="{{ url_for('admin.localities') }}" class="btn btn-secondary ms-2">Cancel</a>
-            </form>
-        </div>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-map-marked-alt"></i> Create New Premium Locality</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.localities') }}">Localities</a></li>
+                <li class="breadcrumb-item active">New Locality</li>
+            </ol>
+        </nav>
     </div>
 </div>
+
+<div class="luxury-card">
+    <div class="card-header">
+        <h5><i class="fas fa-map-marked-alt"></i> Locality Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="localityForm">
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="name" class="form-label"><i class="fas fa-map-pin"></i> Locality Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Bandra, Andheri, Whitefield">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="city_id" class="form-label"><i class="fas fa-city"></i> City *</label>
+                        <select class="form-select" id="city_id" name="city_id" required>
+                            <option value="">Select City</option>
+                            {% for city in cities %}
+                            <option value="{{ city.city_id }}">{{ city.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="locality_type" class="form-label"><i class="fas fa-tag"></i> Locality Type</label>
+                        <select class="form-select" id="locality_type" name="locality_type">
+                            <option value="">Select Type</option>
+                            <option value="residential">Residential</option>
+                            <option value="commercial">Commercial</option>
+                            <option value="industrial">Industrial</option>
+                            <option value="mixed">Mixed</option>
+                            <option value="suburban">Suburban</option>
+                            <option value="urban">Urban</option>
+                            <option value="rural">Rural</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location Details -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-location-arrow"></i> Location Details</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="pincode" class="form-label"><i class="fas fa-mail-bulk"></i> Pincode</label>
+                        <div class="input-with-unit">
+                            <input type="text" class="form-control" id="pincode" name="pincode" pattern="[0-9]{6}" maxlength="6" placeholder="6-digit code">
+                            <div class="input-unit">PIN</div>
+                        </div>
+                        <div class="form-text">Enter 6-digit postal code</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="latitude" class="form-label"><i class="fas fa-map-marker-alt"></i> Latitude</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.00000001" min="-90" max="90" class="form-control" id="latitude" name="latitude" placeholder="Enter latitude">
+                            <div class="input-unit">°</div>
+                        </div>
+                        <div class="form-text">Valid range: -90° to 90°</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="longitude" class="form-label"><i class="fas fa-map-marker-alt"></i> Longitude</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.00000001" min="-180" max="180" class="form-control" id="longitude" name="longitude" placeholder="Enter longitude">
+                            <div class="input-unit">°</div>
+                        </div>
+                        <div class="form-text">Valid range: -180° to 180°</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Infrastructure & Connectivity -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-road"></i> Infrastructure & Connectivity</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="distance_from_airport" class="form-label"><i class="fas fa-plane"></i> Distance from Airport</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.1" class="form-control" id="distance_from_airport" name="distance_from_airport" min="0" placeholder="Enter distance">
+                            <div class="input-unit">km</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="distance_from_railway" class="form-label"><i class="fas fa-train"></i> Distance from Railway</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.1" class="form-control" id="distance_from_railway" name="distance_from_railway" min="0" placeholder="Enter distance">
+                            <div class="input-unit">km</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="distance_from_metro" class="form-label"><i class="fas fa-subway"></i> Distance from Metro</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.1" class="form-control" id="distance_from_metro" name="distance_from_metro" min="0" placeholder="Enter distance">
+                            <div class="input-unit">km</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="distance_from_highway" class="form-label"><i class="fas fa-road"></i> Distance from Highway</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.1" class="form-control" id="distance_from_highway" name="distance_from_highway" min="0" placeholder="Enter distance">
+                            <div class="input-unit">km</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Market Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-chart-line"></i> Market Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="avg_price_per_sqft" class="form-label"><i class="fas fa-rupee-sign"></i> Average Price per Sq Ft</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="1" class="form-control" id="avg_price_per_sqft" name="avg_price_per_sqft" min="0" placeholder="Enter price">
+                            <div class="input-unit">₹/sq ft</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="population_density" class="form-label"><i class="fas fa-users"></i> Population Density</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="population_density" name="population_density" min="0" placeholder="Enter density">
+                            <div class="input-unit">per km²</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="development_status" class="form-label"><i class="fas fa-chart-bar"></i> Development Status</label>
+                        <select class="form-select" id="development_status" name="development_status">
+                            <option value="">Select Status</option>
+                            <option value="well_developed">Well Developed</option>
+                            <option value="developing">Developing</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="established">Established</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-file-alt"></i> Description</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="description" class="form-label"><i class="fas fa-comment-alt"></i> Locality Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe the locality, its features, amenities, and unique selling points"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Features -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-star"></i> Locality Features</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_metro" name="has_metro">
+                        <label class="form-check-label" for="has_metro">
+                            <i class="fas fa-subway"></i> Metro Connectivity
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_schools" name="has_schools">
+                        <label class="form-check-label" for="has_schools">
+                            <i class="fas fa-school"></i> Schools Nearby
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_hospitals" name="has_hospitals">
+                        <label class="form-check-label" for="has_hospitals">
+                            <i class="fas fa-hospital"></i> Hospitals Nearby
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_shopping" name="has_shopping">
+                        <label class="form-check-label" for="has_shopping">
+                            <i class="fas fa-shopping-cart"></i> Shopping Centers
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_parks" name="has_parks">
+                        <label class="form-check-label" for="has_parks">
+                            <i class="fas fa-tree"></i> Parks & Recreation
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="has_restaurants" name="has_restaurants">
+                        <label class="form-check-label" for="has_restaurants">
+                            <i class="fas fa-utensils"></i> Restaurants
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_gated" name="is_gated">
+                        <label class="form-check-label" for="is_gated">
+                            <i class="fas fa-shield-alt"></i> Gated Community
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">
+                            <i class="fas fa-check-circle"></i> Active
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.localities') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Localities
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-plus"></i> Create Locality
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Pincode validation
+    $('#pincode').on('input', function() {
+        const pincode = $(this).val();
+        if (pincode && !(/^[0-9]{6}$/.test(pincode))) {
+            $(this).addClass('is-invalid');
+            if (!$(this).parent().find('.invalid-feedback').length) {
+                $(this).parent().append('<div class="invalid-feedback">Pincode must be exactly 6 digits.</div>');
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).parent().find('.invalid-feedback').remove();
+        }
+    });
+    
+    // Coordinate validation
+    $('#latitude').on('input', function() {
+        const lat = parseFloat($(this).val());
+        if (!isNaN(lat)) {
+            if (lat < -90 || lat > 90) {
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        }
+    });
+    
+    $('#longitude').on('input', function() {
+        const lng = parseFloat($(this).val());
+        if (!isNaN(lng)) {
+            if (lng < -180 || lng > 180) {
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        }
+    });
+    
+    // Form validation
+    $('#localityForm').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = ['name', 'city_id'];
+        requiredFields.forEach(field => {
+            const element = $('#' + field);
+            if (!element.val()) {
+                element.addClass('is-invalid');
+                isValid = false;
+            } else {
+                element.removeClass('is-invalid');
+            }
+        });
+        
+        // Validate pincode if provided
+        const pincode = $('#pincode').val();
+        if (pincode && !(/^[0-9]{6}$/.test(pincode))) {
+            $('#pincode').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate coordinates if provided
+        const lat = parseFloat($('#latitude').val());
+        const lng = parseFloat($('#longitude').val());
+        
+        if (!isNaN(lat) && (lat < -90 || lat > 90)) {
+            $('#latitude').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isNaN(lng) && (lng < -180 || lng > 180)) {
+            $('#longitude').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fix the errors in the form.');
+        }
+    });
+    
+    // Auto-suggest locality type based on features
+    $('input[type="checkbox"]').on('change', function() {
+        const hasMetro = $('#has_metro').is(':checked');
+        const hasSchools = $('#has_schools').is(':checked');
+        const hasHospitals = $('#has_hospitals').is(':checked');
+        const hasShopping = $('#has_shopping').is(':checked');
+        const isGated = $('#is_gated').is(':checked');
+        
+        if (!$('#locality_type').val()) {
+            if (isGated) {
+                $('#locality_type').val('residential');
+            } else if (hasMetro && hasShopping) {
+                $('#locality_type').val('commercial');
+            } else if (hasSchools && hasHospitals) {
+                $('#locality_type').val('residential');
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

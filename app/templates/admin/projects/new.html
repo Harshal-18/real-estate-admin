@@ -1,12 +1,30 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Add New Project - Real Estate Admin Panel{% endblock %}
+{% block title %}Add New Project - Premium Real Estate Admin{% endblock %}
 {% block page_title %}Add New Project{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="card">
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-plus-circle"></i> Create New Premium Project</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.projects') }}">Projects</a></li>
+                <li class="breadcrumb-item active">New Project</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="luxury-card">
     <div class="card-header">
-        <h5><i class="fas fa-plus"></i> Create New Project</h5>
+        <h5><i class="fas fa-building"></i> Project Information</h5>
     </div>
     <div class="card-body">
         <form method="POST" enctype="multipart/form-data" id="projectForm">
@@ -148,8 +166,11 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="mb-3">
-                        <label for="total_land_area" class="form-label">Total Land Area (acres)</label>
-                        <input type="number" step="0.01" class="form-control" id="total_land_area" name="total_land_area" value="{{ draft.total_land_area if draft and draft.total_land_area is defined else '' }}">
+                        <label for="total_land_area" class="form-label"><i class="fas fa-map"></i> Total Land Area</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="total_land_area" name="total_land_area" value="{{ draft.total_land_area if draft and draft.total_land_area is defined else '' }}" placeholder="Enter area">
+                            <div class="input-unit">acres</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -175,14 +196,20 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="park_area" class="form-label">Park Area (acres)</label>
-                        <input type="number" step="0.01" class="form-control" id="park_area" name="park_area" value="{{ draft.park_area if draft and draft.park_area is defined else '' }}">
+                        <label for="park_area" class="form-label"><i class="fas fa-tree"></i> Park Area</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="park_area" name="park_area" value="{{ draft.park_area if draft and draft.park_area is defined else '' }}" placeholder="Enter area">
+                            <div class="input-unit">acres</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="clubhouse_area" class="form-label">Clubhouse Area (sq ft)</label>
-                        <input type="number" step="0.01" class="form-control" id="clubhouse_area" name="clubhouse_area" value="{{ draft.clubhouse_area if draft and draft.clubhouse_area is defined else '' }}">
+                        <label for="clubhouse_area" class="form-label"><i class="fas fa-dumbbell"></i> Clubhouse Area</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="clubhouse_area" name="clubhouse_area" value="{{ draft.clubhouse_area if draft and draft.clubhouse_area is defined else '' }}" placeholder="Enter area">
+                            <div class="input-unit">sq ft</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -197,20 +224,29 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="min_price" class="form-label">Minimum Price</label>
-                        <input type="number" step="0.01" class="form-control" id="min_price" name="min_price" value="{{ draft.min_price if draft and draft.min_price is defined else '' }}">
+                        <label for="min_price" class="form-label"><i class="fas fa-rupee-sign"></i> Minimum Price</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="min_price" name="min_price" value="{{ draft.min_price if draft and draft.min_price is defined else '' }}" placeholder="Enter amount">
+                            <div class="input-unit">₹ lakhs</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="max_price" class="form-label">Maximum Price</label>
-                        <input type="number" step="0.01" class="form-control" id="max_price" name="max_price" value="{{ draft.max_price if draft and draft.max_price is defined else '' }}">
+                        <label for="max_price" class="form-label"><i class="fas fa-rupee-sign"></i> Maximum Price</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="max_price" name="max_price" value="{{ draft.max_price if draft and draft.max_price is defined else '' }}" placeholder="Enter amount">
+                            <div class="input-unit">₹ lakhs</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="price_per_sqft" class="form-label">Price per sq ft</label>
-                        <input type="number" step="0.01" class="form-control" id="price_per_sqft" name="price_per_sqft" value="{{ draft.price_per_sqft if draft and draft.price_per_sqft is defined else '' }}">
+                        <label for="price_per_sqft" class="form-label"><i class="fas fa-calculator"></i> Price per Sq Ft</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.01" class="form-control" id="price_per_sqft" name="price_per_sqft" value="{{ draft.price_per_sqft if draft and draft.price_per_sqft is defined else '' }}" placeholder="Auto-calculated">
+                            <div class="input-unit">₹/sq ft</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -393,14 +429,14 @@
                 <div class="col-md-12">
                     <hr>
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">
+                        <a href="{{ url_for('admin.projects') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left"></i> Back to Projects
                         </a>
-                        <div>
-                            <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-luxury-success" onclick="saveDraft()">
                                 <i class="fas fa-save"></i> Save Draft
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-luxury">
                                 <i class="fas fa-plus"></i> Create Project
                             </button>
                         </div>

@@ -1,47 +1,334 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Edit Approval - Admin Panel{% endblock %}
+{% block title %}Edit Approval - Premium Real Estate Admin{% endblock %}
+{% block page_title %}Edit Approval{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">Edit Approval</h1>
-        <a href="{{ url_for('admin.approvals') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Approvals
-        </a>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
-            <form method="POST">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="name" class="form-label">Approval Name *</label>
-                            <input type="text" class="form-control" id="name" name="name" value="{{ approval.name }}" required>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="category" class="form-label">Category *</label>
-                            <input type="text" class="form-control" id="category" name="category" value="{{ approval.category }}" required>
-                        </div>
-                        <div class="form-check form-switch mt-3">
-                            <input class="form-check-input" type="checkbox" id="is_mandatory" name="is_mandatory" {% if approval.is_mandatory %}checked{% endif %}>
-                            <label class="form-check-label" for="is_mandatory">Mandatory Approval</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3">{{ approval.description or '' }}</textarea>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Update Approval</button>
-                    <a href="{{ url_for('admin.approvals') }}" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
-        </div>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-edit"></i> Edit Premium Approval</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.approvals') }}">Approvals</a></li>
+                <li class="breadcrumb-item active">Edit Approval</li>
+            </ol>
+        </nav>
     </div>
 </div>
-{% endblock %} 
+
+<div class="luxury-card">
+    <div class="card-header">
+        <h5><i class="fas fa-certificate"></i> Approval Information</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="approvalForm">
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="name" class="form-label"><i class="fas fa-tag"></i> Approval Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ approval.name }}" required placeholder="e.g., RERA, Environmental Clearance">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="category" class="form-label"><i class="fas fa-layer-group"></i> Category *</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="">Select Category</option>
+                            <option value="regulatory" {% if approval.category == 'regulatory' %}selected{% endif %}>Regulatory</option>
+                            <option value="environmental" {% if approval.category == 'environmental' %}selected{% endif %}>Environmental</option>
+                            <option value="building" {% if approval.category == 'building' %}selected{% endif %}>Building</option>
+                            <option value="fire_safety" {% if approval.category == 'fire_safety' %}selected{% endif %}>Fire Safety</option>
+                            <option value="occupation" {% if approval.category == 'occupation' %}selected{% endif %}>Occupation</option>
+                            <option value="land" {% if approval.category == 'land' %}selected{% endif %}>Land</option>
+                            <option value="other" {% if approval.category == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="approval_authority" class="form-label"><i class="fas fa-building"></i> Approving Authority</label>
+                        <input type="text" class="form-control" id="approval_authority" name="approval_authority" value="{{ approval.approval_authority or '' }}" placeholder="e.g., RERA, Municipal Corporation">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Approval Details -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-file-contract"></i> Approval Details</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="approval_number" class="form-label"><i class="fas fa-hashtag"></i> Approval Number</label>
+                        <input type="text" class="form-control" id="approval_number" name="approval_number" value="{{ approval.approval_number or '' }}" placeholder="e.g., RERA/P/123456">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="validity_period" class="form-label"><i class="fas fa-clock"></i> Validity Period</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="validity_period" name="validity_period" value="{{ approval.validity_period if approval.validity_period else '' }}" min="0" placeholder="Enter period">
+                            <div class="input-unit">months</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="renewal_frequency" class="form-label"><i class="fas fa-sync"></i> Renewal Frequency</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="renewal_frequency" name="renewal_frequency" value="{{ approval.renewal_frequency if approval.renewal_frequency else '' }}" min="0" placeholder="Enter frequency">
+                            <div class="input-unit">years</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="issue_date" class="form-label"><i class="fas fa-calendar"></i> Issue Date</label>
+                        <input type="date" class="form-control" id="issue_date" name="issue_date" value="{{ approval.issue_date.strftime('%Y-%m-%d') if approval.issue_date else '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="expiry_date" class="form-label"><i class="fas fa-calendar-times"></i> Expiry Date</label>
+                        <input type="date" class="form-control" id="expiry_date" name="expiry_date" value="{{ approval.expiry_date.strftime('%Y-%m-%d') if approval.expiry_date else '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="processing_time" class="form-label"><i class="fas fa-hourglass-half"></i> Processing Time</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="processing_time" name="processing_time" value="{{ approval.processing_time if approval.processing_time else '' }}" min="0" placeholder="Enter time">
+                            <div class="input-unit">days</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cost Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-rupee-sign"></i> Cost Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="application_fee" class="form-label"><i class="fas fa-rupee-sign"></i> Application Fee</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="application_fee" name="application_fee" value="{{ approval.application_fee if approval.application_fee else '' }}" min="0" step="1" placeholder="Enter fee">
+                            <div class="input-unit">₹</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="renewal_fee" class="form-label"><i class="fas fa-rupee-sign"></i> Renewal Fee</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="renewal_fee" name="renewal_fee" value="{{ approval.renewal_fee if approval.renewal_fee else '' }}" min="0" step="1" placeholder="Enter fee">
+                            <div class="input-unit">₹</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="penalty_rate" class="form-label"><i class="fas fa-percentage"></i> Penalty Rate</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="penalty_rate" name="penalty_rate" value="{{ approval.penalty_rate if approval.penalty_rate else '' }}" min="0" max="100" step="0.1" placeholder="Enter rate">
+                            <div class="input-unit">%</div>
+                        </div>
+                        <div class="form-text">Late renewal penalty percentage</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compliance Requirements -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-clipboard-check"></i> Compliance Requirements</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="requirements" class="form-label"><i class="fas fa-list-check"></i> Requirements</label>
+                        <textarea class="form-control" id="requirements" name="requirements" rows="3" placeholder="List the documents and requirements needed for this approval">{{ approval.requirements or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="description" class="form-label"><i class="fas fa-comment-alt"></i> Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" placeholder="Provide detailed description of this approval">{{ approval.description or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-cog"></i> Settings</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_mandatory" name="is_mandatory" {% if approval.is_mandatory %}checked{% endif %}>
+                        <label class="form-check-label" for="is_mandatory">
+                            <i class="fas fa-exclamation-circle"></i> Mandatory Approval
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if approval.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            <i class="fas fa-check-circle"></i> Active
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="auto_renewal" name="auto_renewal" {% if approval.auto_renewal %}checked{% endif %}>
+                        <label class="form-check-label" for="auto_renewal">
+                            <i class="fas fa-sync-alt"></i> Auto Renewal
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="notify_expiry" name="notify_expiry" {% if approval.notify_expiry %}checked{% endif %}>
+                        <label class="form-check-label" for="notify_expiry">
+                            <i class="fas fa-bell"></i> Notify on Expiry
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Additional Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Additional Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="created_at" class="form-label"><i class="fas fa-calendar"></i> Created At</label>
+                        <input type="text" class="form-control" id="created_at" value="{{ approval.created_at.strftime('%d %b %Y %H:%M') if approval.created_at else '' }}" readonly>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="updated_at" class="form-label"><i class="fas fa-calendar-edit"></i> Last Updated</label>
+                        <input type="text" class="form-control" id="updated_at" value="{{ approval.updated_at.strftime('%d %b %Y %H:%M') if approval.updated_at else '' }}" readonly>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.approvals') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Approvals
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-save"></i> Update Approval
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-calculate expiry date based on issue date and validity period
+    function calculateExpiryDate() {
+        const issueDate = $('#issue_date').val();
+        const validityPeriod = parseInt($('#validity_period').val());
+        
+        if (issueDate && validityPeriod > 0) {
+            const date = new Date(issueDate);
+            date.setMonth(date.getMonth() + validityPeriod);
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            
+            $('#expiry_date').val(`${year}-${month}-${day}`);
+        }
+    }
+    
+    $('#issue_date, #validity_period').on('change', calculateExpiryDate);
+    
+    // Form validation
+    $('#approvalForm').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = ['name', 'category'];
+        requiredFields.forEach(field => {
+            const element = $('#' + field);
+            if (!element.val()) {
+                element.addClass('is-invalid');
+                isValid = false;
+            } else {
+                element.removeClass('is-invalid');
+            }
+        });
+        
+        // Validate dates
+        const issueDate = $('#issue_date').val();
+        const expiryDate = $('#expiry_date').val();
+        
+        if (issueDate && expiryDate) {
+            if (new Date(expiryDate) <= new Date(issueDate)) {
+                $('#expiry_date').addClass('is-invalid');
+                alert('Expiry date must be after issue date.');
+                isValid = false;
+            } else {
+                $('#expiry_date').removeClass('is-invalid');
+            }
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly.');
+        }
+    });
+});
+</script>
+{% endblock %}

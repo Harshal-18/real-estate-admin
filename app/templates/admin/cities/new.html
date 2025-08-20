@@ -1,12 +1,30 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Add New City - Real Estate Admin Panel{% endblock %}
+{% block title %}Add New City - Premium Real Estate Admin{% endblock %}
 {% block page_title %}Add New City{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="card">
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-city"></i> Create New Premium City</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.cities') }}">Cities</a></li>
+                <li class="breadcrumb-item active">New City</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="luxury-card">
     <div class="card-header">
-        <h5><i class="fas fa-plus"></i> Create New City</h5>
+        <h5><i class="fas fa-city"></i> City Information</h5>
     </div>
     <div class="card-body">
         {% if draft %}
@@ -15,39 +33,62 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endif %}
+        
         <form method="POST" id="cityForm">
+            <!-- Basic Information -->
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="name" class="form-label">City Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required>
+                        <label for="name" class="form-label"><i class="fas fa-city"></i> City Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required placeholder="e.g., Mumbai, Delhi, Bangalore">
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="state" class="form-label">State</label>
-                        <input type="text" class="form-control" id="state" name="state" value="{{ draft.get('state', '') }}">
+                        <label for="state" class="form-label"><i class="fas fa-map-marked-alt"></i> State</label>
+                        <input type="text" class="form-control" id="state" name="state" value="{{ draft.get('state', '') }}" placeholder="e.g., Maharashtra, Delhi, Karnataka">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="country" class="form-label"><i class="fas fa-globe-asia"></i> Country</label>
+                        <input type="text" class="form-control" id="country" name="country" value="{{ draft.get('country', 'India') }}" placeholder="e.g., India">
                     </div>
                 </div>
             </div>
 
+            <!-- Geographic Coordinates -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-map-pin"></i> Geographic Coordinates</h6>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="country" class="form-label">Country</label>
-                        <input type="text" class="form-control" id="country" name="country" value="{{ draft.get('country', 'India') }}">
+                        <label for="latitude" class="form-label"><i class="fas fa-map-marker-alt"></i> Latitude</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.00000001" min="-90" max="90" class="form-control" id="latitude" name="latitude" placeholder="Enter latitude (-90 to 90)">
+                            <div class="input-unit">°</div>
+                        </div>
+                        <div class="form-text">Valid range: -90° to 90°</div>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="latitude" class="form-label">Latitude (-90 to 90)</label>
-                        <input type="number" step="0.00000001" min="-90" max="90" class="form-control" id="latitude" name="latitude" placeholder="Optional">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="mb-3">
-                        <label for="longitude" class="form-label">Longitude (-180 to 180)</label>
-                        <input type="number" step="0.00000001" min="-180" max="180" class="form-control" id="longitude" name="longitude" placeholder="Optional">
+                        <label for="longitude" class="form-label"><i class="fas fa-map-marker-alt"></i> Longitude</label>
+                        <div class="input-with-unit">
+                            <input type="number" step="0.00000001" min="-180" max="180" class="form-control" id="longitude" name="longitude" placeholder="Enter longitude (-180 to 180)">
+                            <div class="input-unit">°</div>
+                        </div>
+                        <div class="form-text">Valid range: -180° to 180°</div>
                     </div>
                 </div>
             </div>
@@ -57,14 +98,14 @@
                 <div class="col-md-12">
                     <hr>
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('admin.cities') }}" class="btn btn-secondary">
+                        <a href="{{ url_for('admin.cities') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left"></i> Back to Cities
                         </a>
-                        <div>
-                            <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" onclick="saveDraft()">
                                 <i class="fas fa-save"></i> Save Draft
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-luxury">
                                 <i class="fas fa-plus"></i> Create City
                             </button>
                         </div>
@@ -74,8 +115,79 @@
         </form>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
+$(document).ready(function() {
+    // Coordinate validation
+    $('#latitude').on('input', function() {
+        const lat = parseFloat($(this).val());
+        if (!isNaN(lat)) {
+            if (lat < -90 || lat > 90) {
+                $(this).addClass('is-invalid');
+                if (!$(this).next('.invalid-feedback').length) {
+                    $(this).after('<div class="invalid-feedback">Latitude must be between -90 and 90 degrees.</div>');
+                }
+            } else {
+                $(this).removeClass('is-invalid');
+                $(this).next('.invalid-feedback').remove();
+            }
+        }
+    });
+    
+    $('#longitude').on('input', function() {
+        const lng = parseFloat($(this).val());
+        if (!isNaN(lng)) {
+            if (lng < -180 || lng > 180) {
+                $(this).addClass('is-invalid');
+                if (!$(this).next('.invalid-feedback').length) {
+                    $(this).after('<div class="invalid-feedback">Longitude must be between -180 and 180 degrees.</div>');
+                }
+            } else {
+                $(this).removeClass('is-invalid');
+                $(this).next('.invalid-feedback').remove();
+            }
+        }
+    });
+    
+    // Form validation
+    $('#cityForm').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = ['name'];
+        requiredFields.forEach(field => {
+            const element = $('#' + field);
+            if (!element.val()) {
+                element.addClass('is-invalid');
+                isValid = false;
+            } else {
+                element.removeClass('is-invalid');
+            }
+        });
+        
+        // Validate coordinates if provided
+        const lat = parseFloat($('#latitude').val());
+        const lng = parseFloat($('#longitude').val());
+        
+        if (!isNaN(lat) && (lat < -90 || lat > 90)) {
+            $('#latitude').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isNaN(lng) && (lng < -180 || lng > 180)) {
+            $('#longitude').addClass('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fix the errors in the form.');
+        }
+    });
+});
+
 function saveDraft() {
     // Add a hidden field to indicate this is a draft
     $('<input>').attr({
@@ -87,4 +199,4 @@ function saveDraft() {
     $('#cityForm').submit();
 }
 </script>
-{% endblock %} 
+{% endblock %}

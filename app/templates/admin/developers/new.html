@@ -1,9 +1,26 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Add New Developer - Real Estate Admin Panel{% endblock %}
+{% block title %}Add New Developer - Premium Real Estate Admin{% endblock %}
 {% block page_title %}Add New Developer{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
+
 {% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-plus-circle"></i> Create New Premium Developer</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.developers') }}">Developers</a></li>
+                <li class="breadcrumb-item active">New Developer</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 <style>
     /* Make number inputs more user-friendly */
     input[type="number"]::-webkit-inner-spin-button,
@@ -53,9 +70,9 @@
         display: block;
     }
 </style>
-<div class="card">
+<div class="luxury-card">
     <div class="card-header">
-        <h5><i class="fas fa-plus"></i> Create New Developer</h5>
+        <h5><i class="fas fa-users-cog"></i> Developer Information</h5>
     </div>
     <div class="card-body">
         {% if draft %}
@@ -67,15 +84,21 @@
         <form method="POST" enctype="multipart/form-data" id="developerForm">
             <!-- Basic Information -->
             <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
+            <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="name" class="form-label">Developer Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required>
+                        <label for="name" class="form-label"><i class="fas fa-building"></i> Developer Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required placeholder="Enter company name">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="established_year" class="form-label">Established Year</label>
+                        <label for="established_year" class="form-label"><i class="fas fa-calendar-alt"></i> Established Year</label>
                         <input type="number" class="form-control" id="established_year" name="established_year" 
                                value="{{ draft.get('established_year', '') }}"
                                min="1800" max="{{ current_year }}" 
@@ -93,13 +116,25 @@
                 <textarea class="form-control" id="description" name="description" rows="4">{{ draft.get('description', '') }}</textarea>
             </div>
             <!-- Logo Upload -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-image"></i> Branding</h6>
+                </div>
+            </div>
+            
             <div class="mb-3">
-                <label for="logo_url" class="form-label">Developer Logo</label>
+                <label for="logo_url" class="form-label"><i class="fas fa-upload"></i> Developer Logo</label>
                 <input type="file" class="form-control" id="logo_url" name="logo_url" accept="image/*">
                 <div class="form-text">Upload company logo (JPG, PNG, GIF - Max 2MB)</div>
                 <div class="file-preview mt-2"></div>
             </div>
+            
             <!-- Contact Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-address-book"></i> Contact Information</h6>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
@@ -135,47 +170,88 @@
                 <textarea class="form-control" id="address" name="address" rows="3">{{ draft.get('address', '') }}</textarea>
             </div>
             <!-- Project Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-chart-bar"></i> Portfolio Statistics</h6>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="total_projects" class="form-label">Total Projects</label>
-                        <input type="number" class="form-control" id="total_projects" name="total_projects" min="0" value="{{ draft.get('total_projects', '0') }}">
+                        <label for="total_projects" class="form-label"><i class="fas fa-building"></i> Total Projects</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="total_projects" name="total_projects" min="0" value="{{ draft.get('total_projects', '0') }}" placeholder="Enter count">
+                            <div class="input-unit">projects</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="completed_projects" class="form-label">Completed Projects</label>
-                        <input type="number" class="form-control" id="completed_projects" name="completed_projects" min="0" value="{{ draft.get('completed_projects', '0') }}">
+                        <label for="completed_projects" class="form-label"><i class="fas fa-check-circle"></i> Completed Projects</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="completed_projects" name="completed_projects" min="0" value="{{ draft.get('completed_projects', '0') }}" placeholder="Enter count">
+                            <div class="input-unit">done</div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
-                        <label for="ongoing_projects" class="form-label">Ongoing Projects</label>
-                        <input type="number" class="form-control" id="ongoing_projects" name="ongoing_projects" min="0" value="{{ draft.get('ongoing_projects', '0') }}">
+                        <label for="ongoing_projects" class="form-label"><i class="fas fa-hammer"></i> Ongoing Projects</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="ongoing_projects" name="ongoing_projects" min="0" value="{{ draft.get('ongoing_projects', '0') }}" placeholder="Enter count">
+                            <div class="input-unit">active</div>
+                        </div>
                     </div>
                 </div>
             </div>
+            
             <!-- Rating Information -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-star"></i> Customer Reviews</h6>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="rating" class="form-label">Average Rating</label>
-                        <input type="number" class="form-control" id="rating" name="rating" min="0" max="5" step="0.01" value="{{ draft.get('rating', '0') }}" placeholder="0.00">
+                        <label for="rating" class="form-label"><i class="fas fa-star"></i> Average Rating</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="rating" name="rating" min="0" max="5" step="0.01" value="{{ draft.get('rating', '0') }}" placeholder="0.00">
+                            <div class="input-unit">★ stars</div>
+                        </div>
                         <div class="form-text">Rating from 0.00 to 5.00</div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="total_reviews" class="form-label">Total Reviews</label>
-                        <input type="number" class="form-control" id="total_reviews" name="total_reviews" min="0" value="{{ draft.get('total_reviews', '0') }}">
+                        <label for="total_reviews" class="form-label"><i class="fas fa-comments"></i> Total Reviews</label>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-control" id="total_reviews" name="total_reviews" min="0" value="{{ draft.get('total_reviews', '0') }}" placeholder="Enter count">
+                            <div class="input-unit">reviews</div>
+                        </div>
                     </div>
                 </div>
             </div>
             <!-- Status -->
-            <div class="mb-3">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified">
-                    <label class="form-check-label" for="is_verified">Verified Developer</label>
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-toggle-on"></i> Status</h6>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified">
+                            <label class="form-check-label" for="is_verified">
+                                Verified Developer
+                            </label>
+                        </div>
+                        <div class="form-text">Enable this to mark the developer as verified and trustworthy</div>
+                    </div>
                 </div>
             </div>
 
@@ -184,14 +260,14 @@
                 <div class="col-md-12">
                     <hr>
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('admin.developers') }}" class="btn btn-secondary">
+                        <a href="{{ url_for('admin.developers') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left"></i> Back to Developers
                         </a>
-                        <div>
-                            <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-luxury-success" onclick="saveDraft()">
                                 <i class="fas fa-save"></i> Save Draft
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-luxury">
                                 <i class="fas fa-plus"></i> Create Developer
                             </button>
                         </div>

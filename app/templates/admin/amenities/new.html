@@ -1,12 +1,30 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Add New Amenity - Real Estate Admin Panel{% endblock %}
+{% block title %}Add New Amenity - Premium Real Estate Admin{% endblock %}
 {% block page_title %}Add New Amenity{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="card">
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-swimming-pool"></i> Create New Premium Amenity</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.amenities') }}">Amenities</a></li>
+                <li class="breadcrumb-item active">New Amenity</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="luxury-card">
     <div class="card-header">
-        <h5><i class="fas fa-plus"></i> Create New Amenity</h5>
+        <h5><i class="fas fa-swimming-pool"></i> Amenity Information</h5>
     </div>
     <div class="card-body">
         {% if draft %}
@@ -16,16 +34,23 @@
         </div>
         {% endif %}
         <form method="POST" id="amenityForm">
+            <!-- Basic Information -->
+            <div class="row">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-info-circle"></i> Basic Information</h6>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="name" class="form-label">Amenity Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required>
+                        <label for="name" class="form-label"><i class="fas fa-tag"></i> Amenity Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ draft.get('name', '') }}" required placeholder="e.g., Swimming Pool, Gym, Club House">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="category" class="form-label">Category</label>
+                        <label for="category" class="form-label"><i class="fas fa-layer-group"></i> Category</label>
                         <select class="form-select" id="category" name="category">
                             <option value="">Select Category</option>
                             <option value="lifestyle">Lifestyle</option>
@@ -41,53 +66,145 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Visual & Settings -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-palette"></i> Visual & Settings</h6>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="icon_url" class="form-label">Icon URL</label>
+                        <label for="icon_url" class="form-label"><i class="fas fa-image"></i> Icon URL</label>
                         <input type="text" class="form-control" id="icon_url" name="icon_url" value="{{ draft.get('icon_url', '') }}" placeholder="https://example.com/icon.png">
-                        <div class="form-text">URL to the icon image (e.g., https://example.com/icon.png)</div>
+                        <div class="form-text">URL to the icon image for visual representation</div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <div class="form-check form-switch">
+                        <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
                             <label class="form-check-label" for="is_active">Active Amenity</label>
                         </div>
-                        <div class="form-check form-switch mt-2">
+                        <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="is_rare" name="is_rare">
-                            <label class="form-check-label" for="is_rare">Rare Amenity</label>
+                            <label class="form-check-label" for="is_rare">Rare/Premium Amenity</label>
                         </div>
+                        <div class="form-text mt-2">Mark as rare if this is a unique or premium amenity</div>
                     </div>
                 </div>
             </div>
+            
+            <!-- Description -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h6 class="text-primary mb-3"><i class="fas fa-file-alt"></i> Description</h6>
+                </div>
+            </div>
+            
             <div class="row">
                 <div class="col-md-12">
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3">{{ draft.get('description', '') }}</textarea>
+                        <label for="description" class="form-label"><i class="fas fa-comment-alt"></i> Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" placeholder="Describe the amenity and its features">{{ draft.get('description', '') }}</textarea>
                     </div>
                 </div>
             </div>
-            <div class="d-flex justify-content-between">
-                <a href="{{ url_for('admin.amenities') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Amenities
-                </a>
-                <div>
-                    <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
-                        <i class="fas fa-save"></i> Save Draft
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Create Amenity
-                    </button>
+            
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.amenities') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Amenities
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" onclick="saveDraft()">
+                                <i class="fas fa-save"></i> Save Draft
+                            </button>
+                            <button type="submit" class="btn btn-luxury">
+                                <i class="fas fa-plus"></i> Create Amenity
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
+$(document).ready(function() {
+    // Icon preview functionality
+    $('#icon_url').on('input', function() {
+        const iconUrl = $(this).val();
+        const previewContainer = $(this).parent().find('.icon-preview');
+        
+        if (previewContainer.length === 0) {
+            $(this).parent().append('<div class="icon-preview mt-2"></div>');
+        }
+        
+        if (iconUrl) {
+            $('.icon-preview').html(`<img src="${iconUrl}" alt="Icon Preview" style="max-width: 50px; max-height: 50px; border-radius: 5px;" onerror="this.style.display='none'">`);
+        } else {
+            $('.icon-preview').empty();
+        }
+    });
+    
+    // Auto-populate icon based on category selection
+    $('#category').on('change', function() {
+        const category = $(this).val();
+        const iconMapping = {
+            'lifestyle': 'fas fa-home',
+            'sports': 'fas fa-dumbbell',
+            'entertainment': 'fas fa-gamepad',
+            'security': 'fas fa-shield-alt',
+            'transportation': 'fas fa-car',
+            'healthcare': 'fas fa-heartbeat',
+            'education': 'fas fa-graduation-cap',
+            'shopping': 'fas fa-shopping-cart',
+            'general': 'fas fa-star'
+        };
+        
+        if (category && iconMapping[category] && !$('#icon_url').val()) {
+            // Suggest a default icon class in the placeholder
+            $('#icon_url').attr('placeholder', `Suggested: ${iconMapping[category]}`);
+        }
+    });
+    
+    // Form validation
+    $('#amenityForm').on('submit', function(e) {
+        let isValid = true;
+        
+        // Check required fields
+        const requiredFields = ['name'];
+        requiredFields.forEach(field => {
+            const element = $('#' + field);
+            if (!element.val()) {
+                element.addClass('is-invalid');
+                isValid = false;
+            } else {
+                element.removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+    
+    // Initialize icon preview if URL exists
+    if ($('#icon_url').val()) {
+        $('#icon_url').trigger('input');
+    }
+});
+
 function saveDraft() {
     // Add a hidden field to indicate this is a draft
     $('<input>').attr({

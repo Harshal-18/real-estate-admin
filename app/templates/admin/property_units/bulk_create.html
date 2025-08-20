@@ -353,23 +353,45 @@ $(document).ready(function() {
     // Initial calculation
     calculateTotalUnits();
     
-    // Form validation
-    $('#bulkCreateForm').on('submit', function(e) {
-        const floorStart = parseInt($('#floor_start').val());
-        const floorEnd = parseInt($('#floor_end').val());
+    // Update the form submission handler
+    $('#bulkCreateForm').off('submit').on('submit', function(e) {
+        const numericFields = {
+            carpet_area: 0,
+            built_up_area: 0,
+            super_area: 0,
+            unit_price: 0,
+            price_per_sqft: 0,
+            maintenance_charge: 0,
+            premium_percentage: 0
+        };
         
-        if (floorEnd < floorStart) {
+        try {
+            // Set default values for empty numeric fields
+            Object.keys(numericFields).forEach(field => {
+                const input = $(`#${field}`);
+                const value = input.val().trim();
+                
+                if (!value) {
+                    input.val(numericFields[field]);
+                } else {
+                    // Remove commas and convert to float
+                    const cleanValue = value.replace(/,/g, '');
+                    const floatValue = parseFloat(cleanValue);
+                    
+                    if (isNaN(floatValue)) {
+                        throw new Error(`Please enter a valid number for ${field.replace(/_/g, ' ')}`);
+                    }
+                    input.val(floatValue);
+                }
+            });
+            
+            // Continue with form submission
+            return true;
+            
+        } catch (error) {
             e.preventDefault();
-            alert('Ending floor must be greater than or equal to starting floor');
+            alert(error.message);
             return false;
-        }
-        
-        const totalUnits = (floorEnd - floorStart + 1) * parseInt($('#units_per_floor').val());
-        if (totalUnits > 500) {
-            if (!confirm(`You are about to create ${totalUnits} units. This may take some time. Continue?`)) {
-                e.preventDefault();
-                return false;
-            }
         }
     });
 });

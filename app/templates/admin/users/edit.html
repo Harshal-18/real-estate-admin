@@ -1,18 +1,31 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Edit User - Admin Panel{% endblock %}
+{% block title %}Edit User - Premium Real Estate Admin{% endblock %}
+{% block page_title %}Edit User{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">Edit User</h1>
-        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Users
-        </a>
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-user-edit"></i> Edit Premium User</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">Users</a></li>
+                <li class="breadcrumb-item active">Edit User</li>
+            </ol>
+        </nav>
     </div>
-
-    <div class="card">
-        <div class="card-body">
+</div>
+<div class="luxury-card">
+    <div class="card-header">
+        <h5><i class="fas fa-user"></i> User Information</h5>
+    </div>
+    <div class="card-body">
             <form method="POST">
                 <div class="row">
                     <div class="col-md-6">
@@ -94,9 +107,21 @@
                         </div>
                     </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Update User</button>
-                    <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
+                <!-- Form Actions -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Users
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-luxury">
+                                    <i class="fas fa-save"></i> Update User
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

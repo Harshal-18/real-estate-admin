@@ -68,10 +68,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('admin.new_balcony_details') }}?unit_id={{ property_unit.unit_id }}" class="btn btn-outline-primary">
+                        <a href="{{ url_for('admin.new_balcony_detail') }}?unit_id={{ property_unit.unit_id }}" class="btn btn-outline-primary">
                             <i class="fas fa-plus"></i> Add Balcony Details
                         </a>
-                        <a href="{{ url_for('admin.new_door_window_specs') }}?unit_id={{ property_unit.unit_id }}" class="btn btn-outline-success">
+                        <a href="{{ url_for('admin.new_door_window_spec') }}?unit_id={{ property_unit.unit_id }}" class="btn btn-outline-success">
                             <i class="fas fa-door-open"></i> Add Door/Window Specs
                         </a>
                         <a href="{{ url_for('admin.price_history') }}?unit_id={{ property_unit.unit_id }}" class="btn btn-outline-info">
@@ -88,4 +88,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

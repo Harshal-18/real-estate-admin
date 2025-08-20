@@ -1,8 +1,26 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Edit Developer - Admin Panel{% endblock %}
+{% block title %}Edit Developer - Premium Real Estate Admin{% endblock %}
+{% block page_title %}Edit Developer{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
 
 {% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-edit"></i> Edit Premium Developer</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.developers') }}">Developers</a></li>
+                <li class="breadcrumb-item active">Edit Developer</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 <style>
     /* Make number inputs more user-friendly */
     input[type="number"]::-webkit-inner-spin-button,
@@ -52,16 +70,11 @@
         display: block;
     }
 </style>
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">Edit Developer</h1>
-        <a href="{{ url_for('admin.developers') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Developers
-        </a>
+<div class="luxury-card">
+    <div class="card-header">
+        <h5><i class="fas fa-users-cog"></i> Developer Information</h5>
     </div>
-
-    <div class="card">
-        <div class="card-body">
+    <div class="card-body">
             <form method="POST" enctype="multipart/form-data">
                 <div class="row">
                     <div class="col-md-6">
@@ -132,38 +145,68 @@
                     <label for="address" class="form-label">Address</label>
                     <textarea class="form-control" id="address" name="address" rows="3">{{ developer.address or '' }}</textarea>
                 </div>
+                <!-- Portfolio Statistics -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6 class="text-primary mb-3"><i class="fas fa-chart-bar"></i> Portfolio Statistics</h6>
+                    </div>
+                </div>
+                
                 <div class="row">
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label for="total_projects" class="form-label">Total Projects</label>
-                            <input type="number" class="form-control" id="total_projects" name="total_projects" value="{{ developer.total_projects or 0 }}" min="0">
+                            <label for="total_projects" class="form-label"><i class="fas fa-building"></i> Total Projects</label>
+                            <div class="input-with-unit">
+                                <input type="number" class="form-control" id="total_projects" name="total_projects" value="{{ developer.total_projects or 0 }}" min="0" placeholder="Enter count">
+                                <div class="input-unit">projects</div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label for="completed_projects" class="form-label">Completed Projects</label>
-                            <input type="number" class="form-control" id="completed_projects" name="completed_projects" value="{{ developer.completed_projects or 0 }}" min="0">
+                            <label for="completed_projects" class="form-label"><i class="fas fa-check-circle"></i> Completed Projects</label>
+                            <div class="input-with-unit">
+                                <input type="number" class="form-control" id="completed_projects" name="completed_projects" value="{{ developer.completed_projects or 0 }}" min="0" placeholder="Enter count">
+                                <div class="input-unit">done</div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label for="ongoing_projects" class="form-label">Ongoing Projects</label>
-                            <input type="number" class="form-control" id="ongoing_projects" name="ongoing_projects" value="{{ developer.ongoing_projects or 0 }}" min="0">
+                            <label for="ongoing_projects" class="form-label"><i class="fas fa-hammer"></i> Ongoing Projects</label>
+                            <div class="input-with-unit">
+                                <input type="number" class="form-control" id="ongoing_projects" name="ongoing_projects" value="{{ developer.ongoing_projects or 0 }}" min="0" placeholder="Enter count">
+                                <div class="input-unit">active</div>
+                            </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Customer Reviews -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6 class="text-primary mb-3"><i class="fas fa-star"></i> Customer Reviews</h6>
+                    </div>
+                </div>
+                
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="rating" class="form-label">Average Rating</label>
-                            <input type="number" class="form-control" id="rating" name="rating" value="{{ developer.rating or 0 }}" min="0" max="5" step="0.01" placeholder="0.00">
+                            <label for="rating" class="form-label"><i class="fas fa-star"></i> Average Rating</label>
+                            <div class="input-with-unit">
+                                <input type="number" class="form-control" id="rating" name="rating" value="{{ developer.rating or 0 }}" min="0" max="5" step="0.01" placeholder="0.00">
+                                <div class="input-unit">★ stars</div>
+                            </div>
                             <div class="form-text">Rating from 0.00 to 5.00</div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="total_reviews" class="form-label">Total Reviews</label>
-                            <input type="number" class="form-control" id="total_reviews" name="total_reviews" value="{{ developer.total_reviews or 0 }}" min="0">
+                            <label for="total_reviews" class="form-label"><i class="fas fa-comments"></i> Total Reviews</label>
+                            <div class="input-with-unit">
+                                <input type="number" class="form-control" id="total_reviews" name="total_reviews" value="{{ developer.total_reviews or 0 }}" min="0" placeholder="Enter count">
+                                <div class="input-unit">reviews</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -173,9 +216,21 @@
                         <label class="form-check-label" for="is_verified">Verified Developer</label>
                     </div>
                 </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Update Developer</button>
-                    <a href="{{ url_for('admin.developers') }}" class="btn btn-secondary">Cancel</a>
+                <!-- Form Actions -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.developers') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Developers
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-luxury">
+                                    <i class="fas fa-save"></i> Update Developer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>

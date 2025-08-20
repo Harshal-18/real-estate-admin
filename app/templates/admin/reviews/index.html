@@ -1,48 +1,63 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Reviews - Admin Panel{% endblock %}
+{% block title %}Reviews - Premium Real Estate Admin{% endblock %}
 {% block page_title %}Reviews Management{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-enhanced.css') }}">
+{% endblock %}
+
 {% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <h1><i class="fas fa-star"></i> Customer Reviews Management</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Reviews</li>
+            </ol>
+        </nav>
+    </div>
+</div>
 <!-- Search and Filter Section -->
 <div class="search-filter mb-3">
     <form method="GET" action="{{ url_for('admin.reviews') }}">
         <div class="row">
-            <div class="col-md-6">
-                <label for="search" class="form-label">Search Reviews</label>
-                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by reviewer or project...">
+            <div class="col-md-8">
+                <label for="search" class="form-label"><i class="fas fa-search"></i> Search Reviews</label>
+                <input type="text" class="form-control" id="search" name="search" value="{{ search }}" placeholder="Search by reviewer, project, or content...">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-luxury me-2">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <a href="{{ url_for('admin.reviews') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
             </div>
         </div>
     </form>
 </div>
 
-<!-- Reviews Table (refactored to match projects page) -->
-<div class="card">
+<!-- Reviews Table -->
+<div class="luxury-card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Reviews</h4>
-            <a href="{{ url_for('admin.new_review') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> New Review
+            <h4 class="mb-0"><i class="fas fa-list"></i> All Reviews</h4>
+            <a href="{{ url_for('admin.new_review') }}" class="btn btn-luxury">
+                <i class="fas fa-plus"></i> Add New Review
             </a>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
+        <div class="luxury-table">
+            <table class="table mb-0">
                 <thead class="table-light">
                     <tr>
                         <th>ID</th>
-                        <th>Project</th>
-                        <th>Developer</th>
-                        <th>User</th>
-                        <th>Title</th>
-                        <th>Rating</th>
-                        <th>Review</th>
-                        <th>Pros</th>
-                        <th>Cons</th>
-                        <th>Construction Quality</th>
-                        <th>Amenities</th>
-                        <th>Location</th>
-                        <th>Value for Money</th>
-                        <th>Verified</th>
+                        <th>Review Details</th>
+                        <th>Property</th>
+                        <th>Ratings</th>
+                        <th>Status</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -51,26 +66,94 @@
                     {% for review in reviews.items %}
                     <tr>
                         <td>{{ review.review_id }}</td>
-                        <td>{{ review.project.name if review.project else 'N/A' }}</td>
-                        <td>{{ review.developer.name if review.developer else 'N/A' }}</td>
-                        <td>{{ (review.user.first_name ~ ' ' ~ review.user.last_name) if review.user and review.user.first_name else review.user.email if review.user else 'N/A' }}</td>
-                        <td>{{ review.title or 'N/A' }}</td>
-                        <td>{{ review.rating or 'N/A' }}</td>
-                        <td>{{ review.review_text[:30] ~ ('...' if review.review_text and review.review_text|length > 30 else '') if review.review_text else 'N/A' }}</td>
-                        <td>{{ review.pros[:20] ~ ('...' if review.pros and review.pros|length > 20 else '') if review.pros else 'N/A' }}</td>
-                        <td>{{ review.cons[:20] ~ ('...' if review.cons and review.cons|length > 20 else '') if review.cons else 'N/A' }}</td>
-                        <td>{{ review.construction_quality_rating or 'N/A' }}</td>
-                        <td>{{ review.amenities_rating or 'N/A' }}</td>
-                        <td>{{ review.location_rating or 'N/A' }}</td>
-                        <td>{{ review.value_for_money_rating or 'N/A' }}</td>
-                        <td><span class="badge bg-{{ 'success' if review.is_verified else 'secondary' }}">{{ 'Yes' if review.is_verified else 'No' }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-start">
+                                <div class="me-3" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white;">
+                                    <i class="fas fa-comment"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">{{ review.title or 'Untitled Review' }}</div>
+                                    <div class="text-muted small mb-1">
+                                        by {{ (review.user.first_name ~ ' ' ~ review.user.last_name) if review.user and review.user.first_name else review.user.email if review.user else 'Anonymous' }}
+                                    </div>
+                                    <div class="text-muted small">
+                                        {{ review.review_text[:80] ~ ('...' if review.review_text and review.review_text|length > 80 else '') if review.review_text else 'No review text' }}
+                                    </div>
+                                    {% if review.pros or review.cons %}
+                                    <div class="mt-2">
+                                        {% if review.pros %}
+                                        <span class="badge bg-success me-1"><i class="fas fa-thumbs-up"></i> Pros</span>
+                                        {% endif %}
+                                        {% if review.cons %}
+                                        <span class="badge bg-danger"><i class="fas fa-thumbs-down"></i> Cons</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <div class="fw-bold">{{ review.project.name if review.project else 'No Project' }}</div>
+                                <small class="text-muted">{{ review.developer.name if review.developer else 'No Developer' }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <span class="fw-bold text-warning" style="font-size: 1.2em;">{{ review.rating or 0 }}★</span>
+                                    <div class="small text-muted">Overall</div>
+                                </div>
+                                {% if review.construction_quality_rating or review.amenities_rating or review.location_rating or review.value_for_money_rating %}
+                                <div class="d-flex justify-content-between small">
+                                    {% if review.construction_quality_rating %}
+                                    <div class="text-center">
+                                        <div class="text-primary">{{ review.construction_quality_rating }}★</div>
+                                        <div class="text-muted" style="font-size: 0.7em;">Quality</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if review.amenities_rating %}
+                                    <div class="text-center">
+                                        <div class="text-success">{{ review.amenities_rating }}★</div>
+                                        <div class="text-muted" style="font-size: 0.7em;">Amenities</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if review.location_rating %}
+                                    <div class="text-center">
+                                        <div class="text-info">{{ review.location_rating }}★</div>
+                                        <div class="text-muted" style="font-size: 0.7em;">Location</div>
+                                    </div>
+                                    {% endif %}
+                                    {% if review.value_for_money_rating %}
+                                    <div class="text-center">
+                                        <div class="text-warning">{{ review.value_for_money_rating }}★</div>
+                                        <div class="text-muted" style="font-size: 0.7em;">Value</div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if review.is_verified %}
+                                <span class="status-badge status-active"><i class="fas fa-check-circle"></i> Verified</span>
+                            {% else %}
+                                <span class="status-badge status-pending"><i class="fas fa-clock"></i> Pending</span>
+                            {% endif %}
+                        </td>
                         <td>{{ review.created_at.strftime('%Y-%m-%d') if review.created_at else 'N/A' }}</td>
                         <td>
-                            <a href="{{ url_for('admin.view_review', review_id=review.review_id) }}" class="btn btn-sm btn-outline-primary me-1" title="View"><i class="fas fa-eye"></i></a>
-                            <a href="{{ url_for('admin.edit_review', review_id=review.review_id) }}" class="btn btn-sm btn-outline-warning me-1" title="Edit"><i class="fas fa-edit"></i></a>
-                            <form method="POST" action="{{ url_for('admin.delete_review', review_id=review.review_id) }}" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure?')" title="Delete"><i class="fas fa-trash"></i></button>
-                            </form>
+                            <div class="action-buttons">
+                                <a href="{{ url_for('admin.view_review', review_id=review.review_id) }}" class="action-btn action-btn-primary" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('admin.edit_review', review_id=review.review_id) }}" class="action-btn action-btn-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="action-btn action-btn-danger" onclick="deleteReview({{ review.review_id }})" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -145,11 +228,20 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Floating Action Button -->
+<a href="{{ url_for('admin.new_review') }}" class="fab-add" title="Add New Review">
+    <i class="fas fa-plus"></i>
+</a>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 $(document).ready(function() {
+    // Initialize tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+    
+    // Instant search functionality
     let debounceTimer;
     $('#search').on('input', function() {
         clearTimeout(debounceTimer);
@@ -166,5 +258,39 @@ $(document).ready(function() {
         }, 350);
     });
 });
+
+// Delete review function
+function deleteReview(reviewId) {
+    if (confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
+        $.ajax({
+            url: '/admin/reviews/' + reviewId + '/delete',
+            method: 'DELETE',
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                        '<i class="fas fa-check-circle"></i> Review deleted successfully!' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                        '</div>';
+                    $('.page-header').after(alertHtml);
+                    
+                    // Remove the row with animation
+                    $('button[onclick="deleteReview(' + reviewId + ')"]').closest('tr').fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                } else {
+                    alert('Error: ' + (response.message || 'Failed to delete review'));
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = 'Error deleting review.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                alert(errorMessage);
+            }
+        });
+    }
+}
 </script>
 {% endblock %} 
