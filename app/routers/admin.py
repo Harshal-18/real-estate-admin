@@ -1384,30 +1384,37 @@ def new_property_unit():
     """Create new property unit"""
     if request.method == 'POST':
         try:
-            data = request.form.to_dict()
+            # Filter out only valid PropertyUnit fields
+            valid_fields = ['project_id', 'unit_type_id', 'tower_id', 'unit_number', 'floor_number',
+                          'block_number', 'unit_position', 'wing', 'carpet_area', 'built_up_area',
+                          'super_area', 'has_corner_unit', 'has_extra_balcony', 'has_servant_quarter',
+                          'unit_price', 'price_per_sqft', 'maintenance_charge', 'total_price', 'status',
+                          'possession_date', 'premium_percentage', 'discount_percentage',
+                          'actual_facing_direction', 'view_description', 'is_active']
             
-            # Convert integer fields
-            integer_fields = ['project_id', 'unit_type_id', 'tower_id', 'floor_number']
-            for field in integer_fields:
-                if field in data and data[field]:
-                    data[field] = int(data[field])
-                elif field in data:
-                    data[field] = None
-            
-            # Convert decimal fields
-            decimal_fields = ['carpet_area', 'built_up_area', 'super_area', 'unit_price', 
-                            'price_per_sqft', 'maintenance_charge', 'total_price',
-                            'premium_percentage', 'discount_percentage']
-            for field in decimal_fields:
-                if field in data and data[field]:
-                    data[field] = float(data[field])
-                elif field in data:
-                    data[field] = None
-            
-            # Convert boolean fields
-            boolean_fields = ['has_corner_unit', 'has_extra_balcony', 'has_servant_quarter', 'is_active']
-            for field in boolean_fields:
-                data[field] = field in request.form
+            data = {}
+            for field in valid_fields:
+                if field in request.form:
+                    value = request.form.get(field)
+                    
+                    # Convert integer fields
+                    if field in ['project_id', 'unit_type_id', 'tower_id', 'floor_number']:
+                        data[field] = int(value) if value and value.strip() else None
+                    # Convert decimal fields
+                    elif field in ['carpet_area', 'built_up_area', 'super_area', 'unit_price',
+                                 'price_per_sqft', 'maintenance_charge', 'total_price',
+                                 'premium_percentage', 'discount_percentage']:
+                        data[field] = float(value) if value and value.strip() else None
+                    # Convert boolean fields
+                    elif field in ['has_corner_unit', 'has_extra_balcony', 'has_servant_quarter', 'is_active']:
+                        data[field] = field in request.form
+                    # Date fields
+                    elif field == 'possession_date':
+                        from datetime import datetime
+                        data[field] = datetime.strptime(value, '%Y-%m-%d').date() if value and value.strip() else None
+                    # String fields
+                    else:
+                        data[field] = value if value and value.strip() else None
             
             property_unit = PropertyUnit(**data)
             db.session.add(property_unit)
@@ -1435,24 +1442,27 @@ def edit_property_unit(unit_id):
     
     if request.method == 'POST':
         try:
-            data = request.form.to_dict()
-            
-            # Convert and validate fields before setting
-            for key, value in data.items():
-                if hasattr(property_unit, key):
+            # Only update fields that exist in the model
+            for key, value in request.form.items():
+                if hasattr(property_unit, key) and key != 'unit_id':  # Don't update primary key
                     # Integer fields
                     if key in ['project_id', 'unit_type_id', 'tower_id', 'floor_number']:
-                        setattr(property_unit, key, int(value) if value else None)
+                        setattr(property_unit, key, int(value) if value and value.strip() else None)
                     # Decimal fields
-                    elif key in ['carpet_area', 'built_up_area', 'super_area', 'unit_price', 
+                    elif key in ['carpet_area', 'built_up_area', 'super_area', 'unit_price',
                                 'price_per_sqft', 'maintenance_charge', 'total_price',
                                 'premium_percentage', 'discount_percentage']:
-                        setattr(property_unit, key, float(value) if value else None)
+                        setattr(property_unit, key, float(value) if value and value.strip() else None)
                     # Boolean fields
                     elif key in ['has_corner_unit', 'has_extra_balcony', 'has_servant_quarter', 'is_active']:
-                        setattr(property_unit, key, value.lower() in ['true', '1', 'yes', 'on'])
+                        setattr(property_unit, key, key in request.form)
+                    # Date fields
+                    elif key == 'possession_date':
+                        from datetime import datetime
+                        setattr(property_unit, key, datetime.strptime(value, '%Y-%m-%d').date() if value and value.strip() else None)
+                    # String fields
                     else:
-                        setattr(property_unit, key, value if value else None)
+                        setattr(property_unit, key, value if value and value.strip() else None)
             
             db.session.commit()
             flash('Property unit updated successfully!', 'success')
@@ -1463,7 +1473,7 @@ def edit_property_unit(unit_id):
             projects = Project.query.all()
             towers = Tower.query.all()
             unit_types = UnitType.query.all()
-            return render_template('admin/property_units/edit.html', property_unit=property_unit, 
+            return render_template('admin/property_units/edit.html', property_unit=property_unit,
                                  projects=projects, towers=towers, unit_types=unit_types)
     
     projects = Project.query.all()
@@ -1471,6 +1481,119 @@ def edit_property_unit(unit_id):
     unit_types = UnitType.query.all()
     
     return render_template('admin/property_units/edit.html', property_unit=property_unit, projects=projects, towers=towers, unit_types=unit_types)
+
+@admin.route('/property-units/bulk-create', methods=['GET', 'POST'])
+def bulk_create_property_units():
+    """Bulk create property units"""
+    if request.method == 'POST':
+        try:
+            # Get form data
+            project_id = int(request.form.get('project_id'))
+            unit_type_id = int(request.form.get('unit_type_id'))
+            tower_id = int(request.form.get('tower_id'))
+            
+            # Get range parameters
+            floor_start = int(request.form.get('floor_start', 1))
+            floor_end = int(request.form.get('floor_end', 1))
+            units_per_floor = int(request.form.get('units_per_floor', 1))
+            
+            # Unit numbering pattern
+            unit_prefix = request.form.get('unit_prefix', '')
+            wing = request.form.get('wing', '')
+            
+            # Common details for all units
+            carpet_area = float(request.form.get('carpet_area')) if request.form.get('carpet_area') else None
+            built_up_area = float(request.form.get('built_up_area')) if request.form.get('built_up_area') else None
+            super_area = float(request.form.get('super_area')) if request.form.get('super_area') else None
+            unit_price = float(request.form.get('unit_price')) if request.form.get('unit_price') else None
+            price_per_sqft = float(request.form.get('price_per_sqft')) if request.form.get('price_per_sqft') else None
+            maintenance_charge = float(request.form.get('maintenance_charge')) if request.form.get('maintenance_charge') else None
+            status = request.form.get('status', 'available')
+            actual_facing_direction = request.form.get('actual_facing_direction', '')
+            
+            # Premium/discount for specific floors
+            premium_floors = request.form.get('premium_floors', '').split(',')
+            premium_percentage = float(request.form.get('premium_percentage', 0))
+            
+            units_created = 0
+            
+            # Create units for each floor
+            for floor in range(floor_start, floor_end + 1):
+                for unit_num in range(1, units_per_floor + 1):
+                    # Generate unit number
+                    if unit_prefix:
+                        unit_number = f"{unit_prefix}{floor:02d}{unit_num:02d}"
+                    else:
+                        unit_number = f"{floor}{unit_num:02d}"
+                    
+                    # Check if unit already exists
+                    existing = PropertyUnit.query.filter_by(
+                        tower_id=tower_id,
+                        unit_number=unit_number
+                    ).first()
+                    
+                    if not existing:
+                        # Determine if this floor gets premium
+                        floor_premium = 0
+                        if str(floor) in premium_floors:
+                            floor_premium = premium_percentage
+                        
+                        # Determine unit position
+                        if units_per_floor == 1:
+                            unit_position = 'single'
+                        elif unit_num == 1:
+                            unit_position = 'corner'
+                        elif unit_num == units_per_floor:
+                            unit_position = 'corner'
+                        else:
+                            unit_position = 'middle'
+                        
+                        # Create new unit
+                        new_unit = PropertyUnit(
+                            project_id=project_id,
+                            unit_type_id=unit_type_id,
+                            tower_id=tower_id,
+                            unit_number=unit_number,
+                            floor_number=floor,
+                            wing=wing,
+                            unit_position=unit_position,
+                            carpet_area=carpet_area,
+                            built_up_area=built_up_area,
+                            super_area=super_area,
+                            unit_price=unit_price,
+                            price_per_sqft=price_per_sqft,
+                            maintenance_charge=maintenance_charge,
+                            status=status,
+                            premium_percentage=floor_premium,
+                            actual_facing_direction=actual_facing_direction,
+                            has_corner_unit=(unit_position == 'corner'),
+                            is_active=True
+                        )
+                        
+                        # Calculate total price if unit_price and price_per_sqft are provided
+                        if unit_price:
+                            total = unit_price
+                            if floor_premium:
+                                total += (unit_price * floor_premium / 100)
+                            new_unit.total_price = total
+                        
+                        db.session.add(new_unit)
+                        units_created += 1
+            
+            db.session.commit()
+            flash(f'Successfully created {units_created} property units!', 'success')
+            return redirect(url_for('admin.property_units'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating units: {str(e)}', 'error')
+            
+    # GET request - show the form
+    projects = Project.query.all()
+    towers = Tower.query.all()
+    unit_types = UnitType.query.all()
+    return render_template('admin/property_units/bulk_create.html', 
+                         projects=projects, towers=towers, unit_types=unit_types)
 
 @admin.route('/property-units/<int:unit_id>/delete', methods=['POST'])
 def delete_property_unit(unit_id):
@@ -1889,6 +2012,13 @@ def delete_media(media_id):
 def view_media(media_id):
     media = ProjectMedia.query.get_or_404(media_id)
     return render_template('admin/media/view.html', media=media)
+
+@admin.route('/admin/<path:filename>')
+def serve_upload(filename):
+    """Serve uploaded files"""
+    import os
+    upload_path = os.path.join(current_app.root_path, 'static')
+    return send_file(os.path.join(upload_path, filename))
 
 # Documents Routes
 @admin.route('/documents')
@@ -3348,34 +3478,67 @@ def new_project_approval():
     projects = Project.query.all()
     approvals = Approval.query.all()
     if request.method == 'POST':
-        data = request.form.to_dict()
-        data['project_id'] = int(data['project_id']) if data.get('project_id') else None
-        data['approval_id'] = int(data['approval_id']) if data.get('approval_id') else None
-        # Dates
-        from datetime import datetime
-        for field in ['approval_date', 'expiry_date']:
-            if data.get(field):
+        try:
+            data = request.form.to_dict()
+            
+            # Validate required fields
+            if not data.get('project_id') or not data.get('approval_id'):
+                flash('Project and Approval are required fields!', 'danger')
+                return render_template('admin/project_approvals/new.html', projects=projects, approvals=approvals)
+            
+            project_id = int(data['project_id'])
+            approval_id = int(data['approval_id'])
+            
+            # Check if this combination already exists
+            existing = ProjectApproval.query.filter_by(
+                project_id=project_id,
+                approval_id=approval_id
+            ).first()
+            
+            if existing:
+                flash('This project-approval combination already exists!', 'danger')
+                return render_template('admin/project_approvals/new.html', projects=projects, approvals=approvals)
+            
+            # Process dates
+            from datetime import datetime
+            approval_date = None
+            expiry_date = None
+            
+            if data.get('approval_date'):
                 try:
-                    data[field] = datetime.strptime(data[field], '%Y-%m-%d').date()
+                    approval_date = datetime.strptime(data['approval_date'], '%Y-%m-%d').date()
                 except Exception:
-                    data[field] = None
-            else:
-                data[field] = None
-        pa = ProjectApproval(
-            project_id=data['project_id'],
-            approval_id=data['approval_id'],
-            status=data.get('status', ''),
-            approval_number=data.get('approval_number', ''),
-            approval_date=data.get('approval_date'),
-            expiry_date=data.get('expiry_date'),
-            issuing_authority=data.get('issuing_authority', ''),
-            document_url=data.get('document_url', ''),
-            notes=data.get('notes', '')
-        )
-        db.session.add(pa)
-        db.session.commit()
-        flash('Project approval added successfully!', 'success')
-        return redirect(url_for('admin.project_approvals'))
+                    pass
+            
+            if data.get('expiry_date'):
+                try:
+                    expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d').date()
+                except Exception:
+                    pass
+            
+            # Create new project approval
+            pa = ProjectApproval(
+                project_id=project_id,
+                approval_id=approval_id,
+                status=data.get('status', 'pending'),
+                approval_number=data.get('approval_number', ''),
+                approval_date=approval_date,
+                expiry_date=expiry_date,
+                issuing_authority=data.get('issuing_authority', ''),
+                document_url=data.get('document_url', ''),
+                notes=data.get('notes', '')
+            )
+            
+            db.session.add(pa)
+            db.session.commit()
+            flash('Project approval added successfully!', 'success')
+            return redirect(url_for('admin.project_approvals'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating project approval: {str(e)}', 'danger')
+            return render_template('admin/project_approvals/new.html', projects=projects, approvals=approvals)
+            
     return render_template('admin/project_approvals/new.html', projects=projects, approvals=approvals)
 
 @admin.route('/project-approvals/<int:project_id>/<int:approval_id>')
@@ -3388,25 +3551,46 @@ def edit_project_approval(project_id, approval_id):
     pa = ProjectApproval.query.filter_by(project_id=project_id, approval_id=approval_id).first_or_404()
     projects = Project.query.all()
     approvals = Approval.query.all()
+    
     if request.method == 'POST':
-        data = request.form.to_dict()
-        pa.status = data.get('status', '')
-        pa.approval_number = data.get('approval_number', '')
-        from datetime import datetime
-        for field in ['approval_date', 'expiry_date']:
-            if data.get(field):
+        try:
+            data = request.form.to_dict()
+            
+            # Update status
+            pa.status = data.get('status', 'pending')
+            pa.approval_number = data.get('approval_number', '')
+            pa.issuing_authority = data.get('issuing_authority', '')
+            pa.document_url = data.get('document_url', '')
+            pa.notes = data.get('notes', '')
+            
+            # Process dates
+            from datetime import datetime
+            
+            if data.get('approval_date'):
                 try:
-                    setattr(pa, field, datetime.strptime(data[field], '%Y-%m-%d').date())
+                    pa.approval_date = datetime.strptime(data['approval_date'], '%Y-%m-%d').date()
                 except Exception:
-                    setattr(pa, field, None)
+                    pa.approval_date = None
             else:
-                setattr(pa, field, None)
-        pa.issuing_authority = data.get('issuing_authority', '')
-        pa.document_url = data.get('document_url', '')
-        pa.notes = data.get('notes', '')
-        db.session.commit()
-        flash('Project approval updated successfully!', 'success')
-        return redirect(url_for('admin.project_approvals'))
+                pa.approval_date = None
+            
+            if data.get('expiry_date'):
+                try:
+                    pa.expiry_date = datetime.strptime(data['expiry_date'], '%Y-%m-%d').date()
+                except Exception:
+                    pa.expiry_date = None
+            else:
+                pa.expiry_date = None
+            
+            db.session.commit()
+            flash('Project approval updated successfully!', 'success')
+            return redirect(url_for('admin.project_approvals'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating project approval: {str(e)}', 'danger')
+            return render_template('admin/project_approvals/edit.html', pa=pa, projects=projects, approvals=approvals)
+            
     return render_template('admin/project_approvals/edit.html', pa=pa, projects=projects, approvals=approvals)
 
 @admin.route('/project-approvals/<int:project_id>/<int:approval_id>/delete', methods=['POST'])
@@ -3673,31 +3857,45 @@ def user_interests():
 def new_user_interest():
     """Create new user interest"""
     if request.method == 'POST':
-        data = request.form.to_dict()
-        # Convert empty strings to None for numeric fields
-        for field in ['budget_min', 'budget_max', 'assigned_to', 'user_id', 'project_id', 'unit_type_id']:
-            if data.get(field) == '':
-                data[field] = None
-        interest = UserInterest(
-            user_id=data.get('user_id'),
-            project_id=data.get('project_id'),
-            unit_type_id=data.get('unit_type_id'),
-            interest_type=data.get('interest_type'),
-            preferred_contact_method=data.get('preferred_contact_method'),
-            preferred_contact_time=data.get('preferred_contact_time'),
-            budget_min=data.get('budget_min'),
-            budget_max=data.get('budget_max'),
-            preferred_floors=data.get('preferred_floors'),
-            specific_requirements=data.get('specific_requirements'),
-            status=data.get('status'),
-            assigned_to=data.get('assigned_to'),
-            notes=data.get('notes'),
-            created_at=datetime.utcnow()
-        )
-        db.session.add(interest)
-        db.session.commit()
-        flash('User interest created successfully!', 'success')
-        return redirect(url_for('admin.user_interests'))
+        try:
+            from decimal import Decimal
+            
+            # Get form data with proper type conversion
+            user_id = int(request.form.get('user_id')) if request.form.get('user_id') else None
+            project_id = int(request.form.get('project_id')) if request.form.get('project_id') else None
+            unit_type_id = int(request.form.get('unit_type_id')) if request.form.get('unit_type_id') else None
+            assigned_to = int(request.form.get('assigned_to')) if request.form.get('assigned_to') else None
+            
+            # Convert budget values
+            budget_min = request.form.get('budget_min')
+            budget_max = request.form.get('budget_max')
+            budget_min = Decimal(budget_min) if budget_min and budget_min.strip() else None
+            budget_max = Decimal(budget_max) if budget_max and budget_max.strip() else None
+            
+            interest = UserInterest(
+                user_id=user_id,
+                project_id=project_id,
+                unit_type_id=unit_type_id,
+                interest_type=request.form.get('interest_type', ''),
+                preferred_contact_method=request.form.get('preferred_contact_method', 'phone'),
+                preferred_contact_time=request.form.get('preferred_contact_time', 'anytime'),
+                budget_min=budget_min,
+                budget_max=budget_max,
+                preferred_floors=request.form.get('preferred_floors', ''),
+                specific_requirements=request.form.get('specific_requirements', ''),
+                status=request.form.get('status', 'new'),
+                assigned_to=assigned_to,
+                notes=request.form.get('notes', ''),
+                created_at=datetime.utcnow()
+            )
+            db.session.add(interest)
+            db.session.commit()
+            flash('User interest created successfully!', 'success')
+            return redirect(url_for('admin.user_interests'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating user interest: {str(e)}', 'danger')
+            
     users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
     projects = Project.query.order_by(Project.name).all()
     unit_types = UnitType.query.filter_by(is_active=True).order_by(UnitType.type_name).all()
@@ -3712,13 +3910,35 @@ def view_user_interest(interest_id):
 def edit_user_interest(interest_id):
     interest = UserInterest.query.get_or_404(interest_id)
     if request.method == 'POST':
-        data = request.form.to_dict()
-        for key, value in data.items():
-            if hasattr(interest, key):
-                setattr(interest, key, value)
-        db.session.commit()
-        flash('User interest updated successfully!', 'success')
-        return redirect(url_for('admin.user_interests'))
+        try:
+            # Update fields with proper type conversion (don't update user_id - it should remain unchanged)
+            # interest.user_id should not be changed after creation
+            interest.project_id = int(request.form.get('project_id')) if request.form.get('project_id') else None
+            interest.unit_type_id = int(request.form.get('unit_type_id')) if request.form.get('unit_type_id') else None
+            interest.interest_type = request.form.get('interest_type', '')
+            interest.preferred_contact_method = request.form.get('preferred_contact_method', 'phone')
+            interest.preferred_contact_time = request.form.get('preferred_contact_time', 'anytime')
+            
+            # Convert budget values to Decimal
+            from decimal import Decimal
+            budget_min = request.form.get('budget_min')
+            budget_max = request.form.get('budget_max')
+            interest.budget_min = Decimal(budget_min) if budget_min and budget_min.strip() else None
+            interest.budget_max = Decimal(budget_max) if budget_max and budget_max.strip() else None
+            
+            interest.preferred_floors = request.form.get('preferred_floors', '')
+            interest.specific_requirements = request.form.get('specific_requirements', '')
+            interest.status = request.form.get('status', 'new')
+            interest.assigned_to = int(request.form.get('assigned_to')) if request.form.get('assigned_to') else None
+            interest.notes = request.form.get('notes', '')
+            
+            db.session.commit()
+            flash('User interest updated successfully!', 'success')
+            return redirect(url_for('admin.user_interests'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating user interest: {str(e)}', 'danger')
+            
     users = User.query.filter_by(is_active=True).order_by(User.first_name, User.last_name).all()
     projects = Project.query.order_by(Project.name).all()
     unit_types = UnitType.query.filter_by(is_active=True).order_by(UnitType.type_name).all()

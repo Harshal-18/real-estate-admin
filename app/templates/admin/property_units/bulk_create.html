@@ -1,0 +1,377 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Bulk Create Property Units - Admin Panel{% endblock %}
+{% block page_title %}Bulk Create Property Units{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h4 class="mb-4">Create Multiple Units at Once</h4>
+        
+        <form method="POST" id="bulkCreateForm">
+            <!-- Project, Tower, and Unit Type Selection -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label for="project_id" class="form-label">Project <span class="text-danger">*</span></label>
+                    <select class="form-select" id="project_id" name="project_id" required onchange="filterTowers()">
+                        <option value="">Select Project</option>
+                        {% for project in projects %}
+                        <option value="{{ project.project_id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="tower_id" class="form-label">Tower <span class="text-danger">*</span></label>
+                    <select class="form-select" id="tower_id" name="tower_id" required>
+                        <option value="">Select Tower</option>
+                        {% for tower in towers %}
+                        <option value="{{ tower.tower_id }}" data-project="{{ tower.project_id }}">
+                            {{ tower.tower_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="unit_type_id" class="form-label">Unit Type <span class="text-danger">*</span></label>
+                    <select class="form-select" id="unit_type_id" name="unit_type_id" required>
+                        <option value="">Select Unit Type</option>
+                        {% for unit_type in unit_types %}
+                        <option value="{{ unit_type.unit_type_id }}" data-project="{{ unit_type.project_id }}">
+                            {{ unit_type.type_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Floor Range and Units Configuration -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Unit Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="floor_start" class="form-label">Starting Floor <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="floor_start" name="floor_start" min="0" value="1" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="floor_end" class="form-label">Ending Floor <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="floor_end" name="floor_end" min="0" value="10" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="units_per_floor" class="form-label">Units per Floor <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="units_per_floor" name="units_per_floor" min="1" value="4" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Total Units to Create</label>
+                            <div class="form-control-plaintext">
+                                <strong id="totalUnits" class="text-primary">40</strong> units
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unit Numbering Pattern -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Unit Numbering</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="unit_prefix" class="form-label">Unit Prefix (Optional)</label>
+                            <input type="text" class="form-control" id="unit_prefix" name="unit_prefix" placeholder="e.g., A, B, T1">
+                            <small class="text-muted">Example: A0101 (A + floor 01 + unit 01)</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="wing" class="form-label">Wing (Optional)</label>
+                            <input type="text" class="form-control" id="wing" name="wing" placeholder="e.g., A, B, East">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Sample Unit Numbers</label>
+                            <div class="form-control-plaintext">
+                                <code id="sampleNumbers">101, 102, 103, 104...</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Common Unit Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Common Unit Details</h5>
+                    <small class="text-muted">These values will be applied to all units</small>
+                </div>
+                <div class="card-body">
+                    <!-- Area Details -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="carpet_area" class="form-label">Carpet Area (sq ft)</label>
+                            <input type="number" step="0.01" class="form-control" id="carpet_area" name="carpet_area">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="built_up_area" class="form-label">Built-up Area (sq ft)</label>
+                            <input type="number" step="0.01" class="form-control" id="built_up_area" name="built_up_area">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="super_area" class="form-label">Super Area (sq ft)</label>
+                            <input type="number" step="0.01" class="form-control" id="super_area" name="super_area">
+                        </div>
+                    </div>
+
+                    <!-- Pricing Details -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="unit_price" class="form-label">Base Unit Price</label>
+                            <input type="number" step="0.01" class="form-control" id="unit_price" name="unit_price">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="price_per_sqft" class="form-label">Price per Sq Ft</label>
+                            <input type="number" step="0.01" class="form-control" id="price_per_sqft" name="price_per_sqft">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="maintenance_charge" class="form-label">Maintenance Charge</label>
+                            <input type="number" step="0.01" class="form-control" id="maintenance_charge" name="maintenance_charge">
+                        </div>
+                    </div>
+
+                    <!-- Status and Direction -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="available" selected>Available</option>
+                                <option value="sold">Sold</option>
+                                <option value="reserved">Reserved</option>
+                                <option value="blocked">Blocked</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="actual_facing_direction" class="form-label">Facing Direction</label>
+                            <select class="form-select" id="actual_facing_direction" name="actual_facing_direction">
+                                <option value="">Select Direction</option>
+                                <option value="North">North</option>
+                                <option value="South">South</option>
+                                <option value="East">East</option>
+                                <option value="West">West</option>
+                                <option value="North-East">North-East</option>
+                                <option value="North-West">North-West</option>
+                                <option value="South-East">South-East</option>
+                                <option value="South-West">South-West</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floor Premium Settings -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Floor Premium (Optional)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="premium_floors" class="form-label">Premium Floors</label>
+                            <input type="text" class="form-control" id="premium_floors" name="premium_floors" 
+                                   placeholder="e.g., 10,11,12,15,16,17">
+                            <small class="text-muted">Enter floor numbers separated by commas</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="premium_percentage" class="form-label">Premium Percentage (%)</label>
+                            <input type="number" step="0.01" class="form-control" id="premium_percentage" 
+                                   name="premium_percentage" placeholder="e.g., 5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('admin.property_units') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancel
+                </a>
+                <div>
+                    <button type="button" class="btn btn-info" onclick="previewUnits()">
+                        <i class="fas fa-eye"></i> Preview Units
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Create Units
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Units Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <!-- Preview content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Calculate total units dynamically
+function calculateTotalUnits() {
+    const floorStart = parseInt($('#floor_start').val()) || 0;
+    const floorEnd = parseInt($('#floor_end').val()) || 0;
+    const unitsPerFloor = parseInt($('#units_per_floor').val()) || 0;
+    
+    const totalFloors = Math.max(0, floorEnd - floorStart + 1);
+    const totalUnits = totalFloors * unitsPerFloor;
+    
+    $('#totalUnits').text(totalUnits);
+    updateSampleNumbers();
+}
+
+// Update sample unit numbers
+function updateSampleNumbers() {
+    const prefix = $('#unit_prefix').val();
+    const floorStart = parseInt($('#floor_start').val()) || 1;
+    const unitsPerFloor = parseInt($('#units_per_floor').val()) || 1;
+    
+    let samples = [];
+    for (let i = 1; i <= Math.min(4, unitsPerFloor); i++) {
+        if (prefix) {
+            samples.push(`${prefix}${String(floorStart).padStart(2, '0')}${String(i).padStart(2, '0')}`);
+        } else {
+            samples.push(`${floorStart}${String(i).padStart(2, '0')}`);
+        }
+    }
+    
+    if (unitsPerFloor > 4) {
+        samples.push('...');
+    }
+    
+    $('#sampleNumbers').text(samples.join(', '));
+}
+
+// Filter towers based on selected project
+function filterTowers() {
+    const projectId = $('#project_id').val();
+    $('#tower_id option').each(function() {
+        if ($(this).val() === '') return;
+        
+        const towerProject = $(this).data('project');
+        if (projectId && towerProject != projectId) {
+            $(this).hide();
+        } else {
+            $(this).show();
+        }
+    });
+    
+    // Reset tower selection
+    $('#tower_id').val('');
+    
+    // Also filter unit types
+    $('#unit_type_id option').each(function() {
+        if ($(this).val() === '') return;
+        
+        const unitProject = $(this).data('project');
+        if (projectId && unitProject != projectId) {
+            $(this).hide();
+        } else {
+            $(this).show();
+        }
+    });
+    
+    $('#unit_type_id').val('');
+}
+
+// Preview units before creation
+function previewUnits() {
+    const floorStart = parseInt($('#floor_start').val()) || 0;
+    const floorEnd = parseInt($('#floor_end').val()) || 0;
+    const unitsPerFloor = parseInt($('#units_per_floor').val()) || 0;
+    const prefix = $('#unit_prefix').val();
+    const wing = $('#wing').val();
+    
+    let previewHtml = '<div class="table-responsive"><table class="table table-sm">';
+    previewHtml += '<thead><tr><th>Floor</th><th>Unit Numbers</th><th>Wing</th><th>Position</th></tr></thead><tbody>';
+    
+    for (let floor = floorStart; floor <= Math.min(floorEnd, floorStart + 4); floor++) {
+        let unitNumbers = [];
+        let positions = [];
+        
+        for (let unit = 1; unit <= unitsPerFloor; unit++) {
+            if (prefix) {
+                unitNumbers.push(`${prefix}${String(floor).padStart(2, '0')}${String(unit).padStart(2, '0')}`);
+            } else {
+                unitNumbers.push(`${floor}${String(unit).padStart(2, '0')}`);
+            }
+            
+            if (unitsPerFloor === 1) {
+                positions.push('Single');
+            } else if (unit === 1 || unit === unitsPerFloor) {
+                positions.push('Corner');
+            } else {
+                positions.push('Middle');
+            }
+        }
+        
+        previewHtml += `<tr>
+            <td>Floor ${floor}</td>
+            <td>${unitNumbers.join(', ')}</td>
+            <td>${wing || '-'}</td>
+            <td>${positions.join(', ')}</td>
+        </tr>`;
+    }
+    
+    if (floorEnd > floorStart + 4) {
+        previewHtml += '<tr><td colspan="4" class="text-center">...</td></tr>';
+    }
+    
+    previewHtml += '</tbody></table></div>';
+    previewHtml += `<div class="alert alert-info mt-3">
+        <strong>Total:</strong> ${(floorEnd - floorStart + 1) * unitsPerFloor} units will be created
+    </div>`;
+    
+    $('#previewContent').html(previewHtml);
+    $('#previewModal').modal('show');
+}
+
+// Initialize on page load
+$(document).ready(function() {
+    // Bind events
+    $('#floor_start, #floor_end, #units_per_floor').on('input', calculateTotalUnits);
+    $('#unit_prefix').on('input', updateSampleNumbers);
+    
+    // Initial calculation
+    calculateTotalUnits();
+    
+    // Form validation
+    $('#bulkCreateForm').on('submit', function(e) {
+        const floorStart = parseInt($('#floor_start').val());
+        const floorEnd = parseInt($('#floor_end').val());
+        
+        if (floorEnd < floorStart) {
+            e.preventDefault();
+            alert('Ending floor must be greater than or equal to starting floor');
+            return false;
+        }
+        
+        const totalUnits = (floorEnd - floorStart + 1) * parseInt($('#units_per_floor').val());
+        if (totalUnits > 500) {
+            if (!confirm(`You are about to create ${totalUnits} units. This may take some time. Continue?`)) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

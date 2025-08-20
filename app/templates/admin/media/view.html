@@ -41,14 +41,22 @@
                             <p><strong>Media Preview:</strong></p>
                             {% if media.thumbnail_url %}
                             <div class="mb-3">
-                                <img src="{{ media.thumbnail_url }}" alt="Thumbnail" class="img-thumbnail" style="max-width:200px;max-height:150px;object-fit:cover;">
+                                {% if media.thumbnail_url.startswith('http') %}
+                                    <img src="{{ media.thumbnail_url }}" alt="Thumbnail" class="img-thumbnail" style="max-width:200px;max-height:150px;object-fit:cover;cursor:pointer;" onclick="window.open('{{ media.thumbnail_url }}', '_blank')">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename=media.thumbnail_url.replace('/static/', '').replace('static/', '')) }}" alt="Thumbnail" class="img-thumbnail" style="max-width:200px;max-height:150px;object-fit:cover;cursor:pointer;" onclick="window.open('{{ url_for('static', filename=media.thumbnail_url.replace('/static/', '').replace('static/', '')) }}', '_blank')">
+                                {% endif %}
                             </div>
                             {% endif %}
                             <p><strong>Media File:</strong> 
                                 {% if media.media_url %}
-                                <a href="{{ media.media_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View File</a>
+                                    {% if media.media_url.startswith('http') %}
+                                        <a href="{{ media.media_url }}" target="_blank" class="btn btn-sm btn-outline-primary">View File</a>
+                                    {% else %}
+                                        <a href="{{ url_for('static', filename=media.media_url.replace('/static/', '').replace('static/', '')) }}" target="_blank" class="btn btn-sm btn-outline-primary">View File</a>
+                                    {% endif %}
                                 {% else %}
-                                N/A
+                                    N/A
                                 {% endif %}
                             </p>
                             <p><strong>Active:</strong> <span class="badge bg-{{ 'success' if media.is_active else 'danger' }}">{{ 'Yes' if media.is_active else 'No' }}</span></p>
@@ -66,7 +74,11 @@
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         {% if media.media_url %}
-                        <a href="{{ media.media_url }}" target="_blank" class="btn btn-outline-primary">
+                            {% if media.media_url.startswith('http') %}
+                                <a href="{{ media.media_url }}" target="_blank" class="btn btn-outline-primary">
+                            {% else %}
+                                <a href="{{ url_for('static', filename=media.media_url.replace('/static/', '').replace('static/', '')) }}" target="_blank" class="btn btn-outline-primary">
+                            {% endif %}
                             <i class="fas fa-external-link-alt"></i> Open Media
                         </a>
                         {% endif %}

@@ -53,8 +53,28 @@
                             <td>{{ media_item.media_category or 'N/A' }}</td>
                             <td>{{ media_item.title or 'N/A' }}</td>
                             <td>{% if media_item.description %}{{ media_item.description[:40] ~ ('...' if media_item.description|length > 40 else '') }}{% else %}N/A{% endif %}</td>
-                            <td>{% if media_item.media_url %}<a href="{{ media_item.media_url }}" target="_blank">View</a>{% else %}N/A{% endif %}</td>
-                            <td>{% if media_item.thumbnail_url %}<img src="{{ media_item.thumbnail_url }}" alt="Thumbnail" style="width:40px;height:40px;object-fit:cover;">{% else %}N/A{% endif %}</td>
+                            <td>
+                                {% if media_item.media_url %}
+                                    {% if media_item.media_url.startswith('http') %}
+                                        <a href="{{ media_item.media_url }}" target="_blank">View</a>
+                                    {% else %}
+                                        <a href="{{ url_for('static', filename=media_item.media_url.replace('/static/', '').replace('static/', '')) }}" target="_blank">View</a>
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if media_item.thumbnail_url %}
+                                    {% if media_item.thumbnail_url.startswith('http') %}
+                                        <img src="{{ media_item.thumbnail_url }}" alt="Thumbnail" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="window.open('{{ media_item.thumbnail_url }}', '_blank')">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename=media_item.thumbnail_url.replace('/static/', '').replace('static/', '')) }}" alt="Thumbnail" style="width:40px;height:40px;object-fit:cover;cursor:pointer;" onclick="window.open('{{ url_for('static', filename=media_item.thumbnail_url.replace('/static/', '').replace('static/', '')) }}', '_blank')">
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
                             <td><span class="badge bg-{{ 'success' if media_item.is_active else 'danger' }}">{{ 'Yes' if media_item.is_active else 'No' }}</span></td>
                             <td>{{ media_item.created_at.strftime('%Y-%m-%d') if media_item.created_at else 'N/A' }}</td>
                             <td>
